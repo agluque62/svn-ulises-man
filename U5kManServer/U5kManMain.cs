@@ -1167,6 +1167,7 @@ namespace U5kManServer
                     LocalUdpPort = serv == 0 ? 9998 : 9999;
                     FailuresCounter = 0;
                     FailuresLimit = 3;
+                    name = String.Empty;
                 }
 
                 /// <summary>
@@ -1215,36 +1216,32 @@ namespace U5kManServer
                                 {
                                     // EndReceive failed and we ended up here
                                     LogException<U5kServiceMain>("Recibiendo Data... ", x);
-                                    if (online_status != 0 && ++FailuresCounter >= FailuresLimit)
-                                    {
-                                        online_status = 0;
-                                        name = String.Format(idiomas.strings.CLUSTER_ERROR_01/*"Nodo en ({0}:{1}) Error Obteniendo Info"*/, ip, port);
-                                        FailuresCounter = 0;
-                                    }
+                                    SetError(String.Format(idiomas.strings.CLUSTER_ERROR_01/*"Nodo en ({0}:{1}) Error Obteniendo Info"*/, ip, port));
                                 }
                             }
                             else
                             {
                                 // The operation wasn't completed before the timeout and we're off the hook
-                                if (online_status != 0 && ++FailuresCounter >= FailuresLimit)
-                                {
-                                    online_status = 0;
-                                    name = String.Format(idiomas.strings.CLUSTER_ERROR_02/*"Nodo en ({0}:{1}) no Responde"*/, ip, port);
-                                    FailuresCounter = 0;
-                                }
+                                SetError(String.Format(idiomas.strings.CLUSTER_ERROR_02/*"Nodo en ({0}:{1}) no Responde"*/, ip, port));
                             }
                         }
                     }
                     catch (Exception x)
                     {
                         LogException<U5kServiceMain>("Enviando data.... ", x);
-                        if (online_status != 0 && ++FailuresCounter >= FailuresLimit)
-                        {
-                            online_status = 0;
-                            name = String.Format(idiomas.strings.CLUSTER_ERROR_03/*"Nodo en ({0}:{1}) Error Solicitando Info"*/, ip, port);
-                            FailuresCounter = 0;
-                        }
+                        SetError(String.Format(idiomas.strings.CLUSTER_ERROR_03/*"Nodo en ({0}:{1}) Error Solicitando Info"*/, ip, port));
                     }
+                }
+
+                private void SetError(string strError)
+                {
+                    if (name==String.Empty || (online_status != 0 && ++FailuresCounter >= FailuresLimit))
+                    {
+                        online_status = 0;
+                        name = String.Format(idiomas.strings.CLUSTER_ERROR_03/*"Nodo en ({0}:{1}) Error Solicitando Info"*/, ip, port);
+                        FailuresCounter = 0;
+                    }
+
                 }
             };
 
@@ -1271,6 +1268,7 @@ namespace U5kManServer
 
                 return cluster;
             }
+
 
             List<OnCLusterServerData> servers = new List<OnCLusterServerData>();
         };
