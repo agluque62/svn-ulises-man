@@ -62,6 +62,8 @@ namespace U5kManServer
             {
                 LogInfo<PabxItfService>(String.Format("{0}: Iniciando Servicio...", Name));
 
+                U5kManService._std.STDG.stdPabx.Estado = std.NoInfo;
+
                 PbxIp = U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString();
                 HayPbx = U5kManService.PbxEndpoint != null;
                 _Status = ServiceStatus.Running;
@@ -222,6 +224,14 @@ namespace U5kManServer
         private bool HayPbx { get; set; }
         private string PbxIp { get; set; }
 
+        private string InfoString
+        {
+            get
+            {
+                return String.Format("HayPbx={0}, PbxUrl={1}, Estado={2}", HayPbx, PabxUrl, _pabxStatus);
+            }
+        }
+        
         #endregion
 
         #region Callbacks
@@ -400,24 +410,59 @@ namespace U5kManServer
                             //U5kGenericos.SetCurrentCulture();
                             if (Properties.u5kManServer.Default.PabxSimulada == false)
                             {
+                                
+                                /** 20181114. Supervisa los cambios de configuracion */
+                                ChangeConfigSpv(() =>
+                                {
+                                    U5KStdGeneral stdg = U5kManService._std.STDG;
+                                    stdg.stdPabx.Estado = std.NoInfo;
+                                    U5kManService._std.STDG = stdg;
+                                    if (_pabxStatus != ePabxStatus.epsDesconectado)
+                                    {
+                                        try
+                                        {
+                                            _pabxws.Close();
+                                        }
+                                        finally
+                                        {
+                                        }
+                                    }
+
+                                    PbxIp = U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString();
+                                    PabxUrl = "ws://" + PbxIp + ":" + Properties.u5kManServer.Default.PabxWsPort +
+                                        "/pbx/ws?login_user=sa&login_password=" + Properties.u5kManServer.Default.PabxSaPwd + "&user=*&registered=True&status=True&line=*";
+                                    HayPbx = U5kManService.PbxEndpoint != null;
+                                    _pabxws = new WebSocket(PabxUrl);
+                                    _pabxws.Opened += new EventHandler(websocket_Opened);
+                                    _pabxws.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs>(websocket_Error);
+                                    _pabxws.Closed += new EventHandler(websocket_Closed);
+                                    _pabxws.MessageReceived += new EventHandler<MessageReceivedEventArgs>(websocket_MessageReceived);
+                                    _pabxStatus = ePabxStatus.epsDesconectado;
+
+                                    LogInfo<PabxItfService>(Name + ": Servicio Reinicializado por cambio de configuracion.");
+                                });
+
                                 switch (_pabxStatus)
                                 {
                                     case ePabxStatus.epsDesconectado:
                                         if (Ping(PbxIp, _pabxStatus))
                                         {
-                                            _pabxStatus = ePabxStatus.epsConectando;
                                             _pabxws.Open();
+                                            _pabxStatus = ePabxStatus.epsConectando;
                                         }
                                         break;
 
                                     case ePabxStatus.epsConectando:
+                                        /** 20181114. Han pasado 5 segundos sin respuesta. Fuerzo otro ping....*/
+                                        _pabxStatus = ePabxStatus.epsDesconectado;
+                                        _pabxws.Close();
                                         break;
 
                                     case ePabxStatus.epsConectado:
                                         if (!Ping(PbxIp, _pabxStatus))
                                         {
                                             LogWarn<PabxItfService>("Fallo de Ping....Cierro WS");
-                                            _pabxws.Close();
+
                                             _pabxStatus = ePabxStatus.epsDesconectado;
 
                                             U5KStdGeneral stdg = U5kManService._std.STDG;
@@ -433,6 +478,8 @@ namespace U5kManServer
                                             /** Actualizar Estados */
                                             U5kManService._std.STDPBXS = stdpbxs;
                                             U5kManService._std.STDG = stdg;
+
+                                            _pabxws.Close();
                                         }
                                         break;
 
@@ -456,7 +503,7 @@ namespace U5kManServer
 
             IamAlive.Tick("PbxItfService-Timer", () =>
             {
-                IamAlive.Message("PbxItfService-Timer. Is Alive.");
+                IamAlive.Message(String.Format("PbxItfService-Timer ({0}). Is Alive.", InfoString));
             });
         }
 
@@ -702,7 +749,22 @@ namespace U5kManServer
         {
             LogError<PabxItfService>("Invocando Rutina Obsoleta...");
         }
-        
+
+        /// <summary>
+        /// 20181114. No se estaba supervisando los cambios de configuracion....
+        /// </summary>
+        /// <param name="processChange"></param>
+        private void ChangeConfigSpv(Action processChange)
+        {
+            string actualPbxIp = U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString();
+            bool actualHayPbx = U5kManService.PbxEndpoint != null;
+
+            if (actualHayPbx != HayPbx || actualPbxIp != PbxIp)
+            {
+                processChange();             
+            }
+        }
+
         #endregion
 
     }
