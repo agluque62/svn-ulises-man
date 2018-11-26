@@ -306,7 +306,7 @@ namespace U5kManServer
             pos.stdpos = CambiaEstado(pos.stdpos, estado, 0,
                                       estado == std.Ok ? eIncidencias.ITO_ENTRADA : eIncidencias.ITO_CAIDA,
                                       eTiposInci.TEH_TOP, pos.name);
-            pos.stdg = pos.stdGlobal();
+            pos.stdg = pos/*.stdGlobal()*/.StdGlobal;
             //if (stdg_old != pos.stdg)
             //{
             //    switch (pos.stdg)           // Ha habido un cambio de estado global...

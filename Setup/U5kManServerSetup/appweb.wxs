@@ -37,6 +37,12 @@
             <Component Id="cmpA48186739B73E5E7BBE8F59B510F980D" Directory="dirFF886818DC70C18C5F6F734D8ACBD8C6" Guid="*">
                 <File Id="fil812341BF3F2A3D9D1E4DEFF38616D1CD" KeyPath="yes" Source="$(var.SourcePath)\login.html" />
             </Component>
+            <Component Id="cmp47E90FB58ACC10ADB6B518D141C87E90" Directory="dirFF886818DC70C18C5F6F734D8ACBD8C6" Guid="*">
+                <File Id="filC8205539F3EFD19E09CB9AF3F5678098" KeyPath="yes" Source="$(var.SourcePath)\mongoose-free-6.1.exe" />
+            </Component>
+            <Component Id="cmp390F1189A19840F6AB6319C30124DDD7" Directory="dirFF886818DC70C18C5F6F734D8ACBD8C6" Guid="*">
+                <File Id="fil40DD657428127AEFD569AE9F8B6180FB" KeyPath="yes" Source="$(var.SourcePath)\mongoose.conf" />
+            </Component>
             <Component Id="cmp60C58290D19B8F9AE718A72B9EB1DB99" Directory="dirFF886818DC70C18C5F6F734D8ACBD8C6" Guid="*">
                 <File Id="filE657D652854478A464EA11011E8FE39E" KeyPath="yes" Source="$(var.SourcePath)\noserver.html" />
             </Component>

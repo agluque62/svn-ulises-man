@@ -561,7 +561,7 @@ namespace U5kManServer
                 npos = stdpos.Count;
                 foreach (stdPos pos in stdpos)
                 {
-                    switch (pos.stdGlobal())
+                    switch (pos/*.stdGlobal()*/.StdGlobal)
                     {
                         case std.NoInfo:
                             no_presentes++;

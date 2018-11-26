@@ -148,6 +148,7 @@ namespace U5kManServer.WebAppServer
         public string version { get; set; }
         public string cfg { get; set; }
         public int hf { get; set; }
+        public int recw { get; set; }
         public itemData sv1 { get; set; }
         public itemData sv2 { get; set; }
         public itemData cwp { get; set; }
@@ -204,6 +205,7 @@ namespace U5kManServer.WebAppServer
                     version = U5kGenericos.Version;
                     cfg = stdg.CfgId;                // .cfgVersion;
                     hf = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.HayAltavozHF ? 1 : 0;
+                    recw = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.OpcOpeCableGrabacion ? 1 : 0;
                     sv1 = new itemData()
                     {
                         name = stdg.stdServ1.name,
@@ -427,7 +429,7 @@ namespace U5kManServer.WebAppServer
                         lan1 = pos.lan1 == std.Ok ? 1 : pos.lan1 == std.Error ? 2 : 0,
                         lan2 = pos.lan2 == std.Ok ? 1 : pos.lan2 == std.Error ? 2 : 0,
                         alt_hf = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.HayAltavozHF ? (pos.alt_hf == std.Ok ? 1 : 0) : -1,
-                        rec_w = pos.rec_w == std.Ok ? 1 : 0
+                        rec_w = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.OpcOpeCableGrabacion ? (pos.rec_w == std.Ok ? 1 : 0) : -1
                     });
                 }
 #endif
@@ -1703,6 +1705,19 @@ namespace U5kManServer.WebAppServer
                 }
             },
             {
+                "OpcOpCableGrabacion",
+                new itemProperty()
+                {
+                    id="Cables de Grabacion" /*idiomas.strings.WAP_MSG_015*/,      // "AltavozHF", TODO
+                    tp=1,
+                    opt=new List<string>()
+                    {
+                        "False",
+                        "True"
+                    }
+                }
+            },
+            {
                 "SonidoAlarmas",
                 new itemProperty()
                 {
@@ -1850,6 +1865,9 @@ namespace U5kManServer.WebAppServer
                 case "HayAltavozHF":
                     return Prop.HayAltavozHF ? "1" : "0";
 
+                case "OpcOpCableGrabacion":
+                    return Prop.OpcOpeCableGrabacion ? "1" : "0";
+
                 case "SonidoAlarmas":
                     return Prop.SonidoAlarmas ? "1" : "0";
 
@@ -1912,6 +1930,10 @@ namespace U5kManServer.WebAppServer
 
                 case "HayAltavozHF":
                     Prop.HayAltavozHF = (val == "1");
+                    break;
+
+                case "OpcOpCableGrabacion":
+                    Prop.OpcOpeCableGrabacion = (val == "1");
                     break;
 
                 case "SonidoAlarmas":

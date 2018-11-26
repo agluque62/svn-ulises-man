@@ -533,8 +533,8 @@ namespace U5kManServer
             lan1 = lan2 = panel = jack_exe = jack_ayu = alt_r = alt_t = alt_hf = rec_w = std.NoInfo;
         }
 
-        /** */
-        public std stdGlobal()
+        /** Obsoleta */
+        /*public */std stdGlobal()
         {
             if (stdpos == std.NoInfo)
                 return std.NoInfo;
@@ -564,6 +564,24 @@ namespace U5kManServer
                     return std.Error;
             }
             return std.Ok;
+        }
+
+        /** 20181123. Calculo en funcion de Opciones */
+        public std StdGlobal
+        {
+            get
+            {
+                bool IsThereAnError = (
+                    alt_r == std.NoInfo ||
+                    alt_t == std.NoInfo ||
+                    lan1 != std.Ok ||
+                    lan2 != std.Ok ||
+                    (U5kManService.cfgSettings.HayAltavozHF && alt_hf == std.NoInfo) ||
+                    (U5kManService.cfgSettings.OpcOpeCableGrabacion && rec_w == std.NoInfo)
+                    );
+
+                return stdpos == std.NoInfo ? std.NoInfo : IsThereAnError ? std.Error : std.Ok;
+            }
         }
 
         /** 20171023. Copy */
@@ -2674,6 +2692,16 @@ namespace U5kManServer
             }
         }
 
+        /** 20181123 */
+        public bool OpcOpeCableGrabacion
+        {
+            get { return OnBdt ? true : onlocal.OpcOpCableGrabacion; }
+            set
+            {
+                if (OnBdt) { }
+                onlocal.OpcOpCableGrabacion = value;
+            }
+        }
         #endregion
 
         U5kBdtService Bdt { get; set; }
