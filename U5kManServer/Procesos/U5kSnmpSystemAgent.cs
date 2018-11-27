@@ -319,7 +319,7 @@ namespace U5kManServer
 #endif
                         stdPos pos = stdpos.Find(r => r.ip == ipfrom.Address.ToString());                                                                   // Busco si es una posicion.
                         List<stdGw> stdgws = U5kManService._std.STDGWS;
-                        stdGw gw = stdgws.Find(r => r.gwA.ip == ipfrom.Address.ToString() || r.gwB.ip == ipfrom.Address.ToString());      // Busco si es una Pasarela.
+                        stdGw gw = stdgws.Find(r => r.ip==ipfrom.Address.ToString() || r.gwA.ip == ipfrom.Address.ToString() || r.gwB.ip == ipfrom.Address.ToString());      // Busco si es una Pasarela.
                         if (oidvar.StartsWith(Properties.u5kManServer.Default.HfEventOids) ||
                             oidvar.StartsWith(Properties.u5kManServer.Default.CfgEventOid))
                         {

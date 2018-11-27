@@ -578,8 +578,8 @@ namespace NucleoGeneric
             public StoreFilter()
             {
                 // PttAndSqhFilter = U5kManService.cfgSettings/* U5kManServer.Properties.u5kManServer.Default*/.Historico_PttSqhOnBdt;
-                LogRepeatControlTime = U5kManServer.Properties.u5kManServer.Default.LogRepeatFilterTime;
-                LogRepeatSupervisionTime = U5kManServer.Properties.u5kManServer.Default.LogRepeatSupervisionTime;
+                LogRepeatControlTime = U5kManServer.Properties.u5kManServer.Default.LogRepeatFilterSecs;
+                LogRepeatSupervisionTime = U5kManServer.Properties.u5kManServer.Default.LogRepeatSupervisionMin;
             }
             public bool ToStore(string keyString)
             {

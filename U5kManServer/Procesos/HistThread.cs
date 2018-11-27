@@ -326,7 +326,7 @@ namespace U5kManServer
             /// <returns></returns>
             public bool StoreFilterPass(U5kIncidencia inci)
             {
-                if (U5kManService.cfgSettings/* Properties.u5kManServer.Default*/.Historico_PttSqhOnBdt == true)
+                if (U5kManService.cfgSettings/* Properties.u5kManServer.Default*/.Historico_PttSqhOnBdt == false)
                 {
                     if (inci.id == (int)eIncidencias.ITO_PTT)      // PTT de Puesto.
                         return false;

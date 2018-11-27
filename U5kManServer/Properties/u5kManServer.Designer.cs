@@ -752,19 +752,19 @@ namespace U5kManServer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("30")]
-        public int LogRepeatFilterTime {
+        [global::System.Configuration.DefaultSettingValueAttribute("2")]
+        public int LogRepeatFilterSecs {
             get {
-                return ((int)(this["LogRepeatFilterTime"]));
+                return ((int)(this["LogRepeatFilterSecs"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("30")]
-        public int LogRepeatSupervisionTime {
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int LogRepeatSupervisionMin {
             get {
-                return ((int)(this["LogRepeatSupervisionTime"]));
+                return ((int)(this["LogRepeatSupervisionMin"]));
             }
         }
         
