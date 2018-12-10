@@ -539,7 +539,11 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
+#if _HAY_NODEBOX__
                 sb.Append(JsonConvert.SerializeObject(U5kManService._sessions_data));
+#else
+                sb.Append(Services.CentralServicesMonitor.Monitor.RadioSessionsString);
+#endif
             }
             else
             {
@@ -556,7 +560,11 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
+#if _HAY_NODEBOX__
                 sb.Append(JsonConvert.SerializeObject(U5kManService._MNMan_data));
+#else
+                sb.Append(Services.CentralServicesMonitor.Monitor.RadioMNDataString);
+#endif
             }
             else
             {
@@ -573,7 +581,11 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
+#if _HAY_NODEBOX__
                 sb.Append(JsonConvert.SerializeObject(U5kManService._txhf_data));
+#else
+                sb.Append(Services.CentralServicesMonitor.Monitor.HFRadioDataString);
+#endif
             }
             else
             {
@@ -590,7 +602,11 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
+#if _HAY_NODEBOX__
                 sb.Append(U5kManService._ps_data);
+#else
+                sb.Append(Services.CentralServicesMonitor.Monitor.PresenceDataString);
+#endif
             }
             else
             {

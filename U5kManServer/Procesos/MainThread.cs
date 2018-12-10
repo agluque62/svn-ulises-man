@@ -45,7 +45,11 @@ namespace U5kManServer
         GwExplorer _gwExplorer;
         TopSnmpExplorer _topExplorer;
         U5kSnmpSystemAgent _snmpagent;
+#if _HAY_NODEBOX__
         NbxSpv _nbx_scan;
+#else
+        Services.CentralServicesMonitor MonitorOfServices;
+#endif
         U5kManServer.ExtEquSpvSpace.ExtEquSpv _ext_sup = null;
         PabxItfService pabxService = null;
 
@@ -118,8 +122,35 @@ namespace U5kManServer
 
                 _topExplorer = new TopSnmpExplorer(CambiaEstado);
 
+#if _HAY_NODEBOX__
                 _nbx_scan = new NbxSpv();
-
+#else
+                MonitorOfServices = new Services.CentralServicesMonitor(() =>                
+                    {
+                        NucleoGeneric.BaseCode.ConfigCultureSet();
+                        return U5kManService._Master;
+                    },
+                    (alarma, str1, str2, str3) =>                
+                    {
+                        eIncidencias inci = alarma == true ? eIncidencias.IGRL_NBXMNG_ALARM : eIncidencias.IGRL_NBXMNG_EVENT;
+                        RecordEvent<MainThread>(DateTime.Now, inci, eTiposInci.TEH_SISTEMA, "SPV",
+                            new object[] { str1, " Server en " + str2, str3, "", "", "", "", "" });
+                    },
+                    (m, x) =>
+                    {
+                        if (x != null)
+                            LogException<MainThread>("CentralServiceMonitor", x);
+                        else
+                            LogDebug<MainThread>(m);
+                    },
+                    (l, m) =>
+                    {
+                        LogTrace<MainThread>(m);
+                    },
+                        Properties.u5kManServer.Default.nbxSupPort
+                );
+                MonitorOfServices.Start();
+#endif
                 _ext_sup = new ExtEquSpvSpace.ExtEquSpv();
 
                 pabxService = new PabxItfService();
@@ -645,7 +676,9 @@ namespace U5kManServer
                 _snmpagent,
                 _gwExplorer,
                 _topExplorer,
+#if _HAY_NODEBOX__
                 _nbx_scan,
+#endif
                 _ext_sup,
                 pabxService
             };
@@ -736,6 +769,9 @@ namespace U5kManServer
                 }
             });
 
+#if !_HAY_NODEBOX__
+            MonitorOfServices.Dispose();
+#endif
             LogInfo<MainThread>("Finalizado...");
         }
 

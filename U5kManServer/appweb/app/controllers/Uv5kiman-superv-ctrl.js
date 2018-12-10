@@ -31,19 +31,19 @@ angular.module("Uv5kiman")
     ctrl.pagina = function (pagina) {
         var menu = $lserv.Submenu(pagina);
         return menu ? menu : 0;
-    }
+    };
 
     /** */
     ctrl.std_class = function (item) {
         // return stdc_class[stdc.Ok];
-        if (item==undefined)
+        if (item == undefined)
             return stdc_class[stdc.NoInfo];
         if (item.std == stdc.Ok && item.sel == 2)
             return stdc_class[stdc.Reserva];
         if (item.std <= stdc.Error)
             return stdc_class[item.std];
         return stdc_class[stdc.NoInfo];
-    }
+    };
 
     /** Servicios de Estado especificos para los Servidores */
     ctrl.serv_std_class = function (serv, item) {
@@ -58,7 +58,7 @@ angular.module("Uv5kiman")
         var item_colateral = (serv == 0 ? ctrl.std.sv2 : ctrl.std.sv1);
         var estado_colateral = item_colateral == undefined ? stdc.NoInfo : item_colateral.std;
 
-        if (estado_propio == stdc.Ok && item.sel==1 && estado_colateral == stdc.NoInfo)
+        if (estado_propio == stdc.Ok && item.sel == 1 && estado_colateral == stdc.NoInfo)
             return stdc_class[stdc.Aviso];
 
         if (item.std == stdc.Ok && item.sel == 2)
@@ -66,14 +66,14 @@ angular.module("Uv5kiman")
         if (item.std <= stdc.Error)
             return stdc_class[estado_propio];
 
-        return stdc_class[stdc.NoInfo]; 
+        return stdc_class[stdc.NoInfo];
 
-    }
+    };
 
 
     ctrl.serv_url = function () {
         return ctrl.std.perfil == 3 ? ctrl.std.sv1.url : "";
-    }
+    };
 
     /** Retorno el Detalle de los Nodebox Presentes */
     ctrl.nbx_detail = function () {
@@ -94,27 +94,27 @@ angular.module("Uv5kiman")
             return detail;
         }
         return $lserv.translate("Servidor Radio no Presente");
-    }
+    };
 
     /** Para el estado especifico de los NBX */
     ctrl.nbx_std_class = function (nbx) {
         return nbx.modo == "Master" ? stdc_class[stdc.Ok] :
             nbx.modo == "Slave" ? stdc_class[stdc.Aviso] : stdc_class[stdc.Error];
-    }
+    };
 
     /** Para la info adicional de un NBX */
     ctrl.nbx_info = function (nbx) {
         var info = sprintf(
             "<table class='nbxtb'>" +
-	            "<tr><td>CFG</td><td class='res'>%1$s</td><td>Radio</td><td class='res'>%2$s</td></tr>" +
-	            "<tr><td>TIFX</td><td class='res'>%3$s</td><td>Presencia</td><td class='res'>%4$s</td></tr>" +
+            "<tr><td>CFG</td><td class='res'>%1$s</td><td>Radio</td><td class='res'>%2$s</td></tr>" +
+            "<tr><td>TIFX</td><td class='res'>%3$s</td><td>Presencia</td><td class='res'>%4$s</td></tr>" +
             "</table>",
             nbx_detail_std(nbx.CfgService),
             nbx_detail_std(nbx.RadioService),
             nbx_detail_std(nbx.TifxService),
             nbx_detail_std(nbx.PresenceService));
         return info;
-    }
+    };
 
     function nbx_detail_std(std) {
         return std == 0 ? $lserv.translate('Slave') :
@@ -122,13 +122,67 @@ angular.module("Uv5kiman")
             std == 2 ? $lserv.translate('Stopped') : $lserv.translate('Error');
     }
 
+    /** Nuevas funciones para el NBX SPLIT */
+    ctrl.nbx_splitted_enable = nbx_splitted;
+    ctrl.nbx_radio_std_class = function () {
+        var clase = ctrl.std === undefined || ctrl.std.csi === undefined || ctrl.std.csi.radio === undefined || ctrl.std.csi.radio.std === undefined ? stdc_class[stdc.Error] :
+            ctrl.std.csi.radio.std === "Ok" ? stdc_class[stdc.Ok] :
+                ctrl.std.csi.radio.std === "Warning" ? stdc_class[stdc.Aviso] :
+                    ctrl.std.csi.radio.std === "Alarm" ? stdc_class[stdc.Error] : stdc_class[stdc.Error];
+        return clase;
+    };
+    ctrl.nbx_radio_name = function () {
+        var name = ctrl.std === undefined || ctrl.std.csi === undefined || ctrl.std.csi.radio === undefined || ctrl.std.csi.radio.mas === undefined ? "???" :
+            ctrl.std.csi.radio.mas === "" ? "---" : ctrl.std.csi.radio.mas;
+        return name;
+    };
+    ctrl.nbx_phone_std_class = function () {
+        var clase = ctrl.std === undefined || ctrl.std.csi === undefined || ctrl.std.csi.phone === undefined || ctrl.std.csi.phone.std === undefined ? stdc_class[stdc.Error] :
+            ctrl.std.csi.phone.std === "Ok" ? stdc_class[stdc.Ok] :
+                ctrl.std.csi.phone.std === "Warning" ? stdc_class[stdc.Aviso] :
+                    ctrl.std.csi.phone.std === "Alarm" ? stdc_class[stdc.Error] : stdc_class[stdc.Error];
+        return clase;
+    };
+    ctrl.nbx_phone_name = function () {
+        var name = ctrl.std === undefined || ctrl.std.csi === undefined || ctrl.std.csi.radio === undefined || ctrl.std.csi.phone.mas === undefined ? "???" :
+            ctrl.std.csi.phone.mas === "" ? "---" : ctrl.std.csi.phone.mas;
+        return name;
+    };
+    ctrl.nbx_radio_list_class = function () {
+        return stdc_class[stdc.Ok];
+    };
+    ctrl.nbx_radio_info_services = function (item) {
+        var info = sprintf(
+            "<table class='nbxtb'>" +
+            "<tr><td>Config</td><td class='res'>%1$s</td><td>Radio</td><td class='res'>%2$s</td></tr>" +
+            "</table>",
+            item.CfgService,
+            item.RadioService);
+        return info;
+    };
+    ctrl.nbx_phone_list_class = function () {
+        return stdc_class[stdc.Ok];
+    };
+    ctrl.nbx_phone_info_services = function (item) {
+        var info = sprintf(
+            "<table class='nbxtb'>" +
+            "<tr><td>Focus</td><td class='res'>%1$s</td><td>Presencia</td><td class='res'>%2$s</td></tr>" +
+            "<tr><td>TIFX</td><td class='res'>%3$s</td></tr>" +
+            "</table>",
+            item.PhoneService,
+            item.PresenceService,
+            item.TifxService);
+        return info;
+    };
+    /* ******************************/
+
     /** Rutinas especificas para SACTA */
     ctrl.SactaServiceStd = function (std) {
         return {
             text: $lserv.translate(std == true ? 'Servicio Arrancado: Detener' : 'Servicio Detenido: Arrancar'),
             clase: std == true ? 'btn btn-default' : 'btn btn-danger'
         };
-    }
+    };
 
     ctrl.SactaServiceStartStop = function (std) {
         var pregunta = std == true ? $lserv.translate('Desea Detener el Sevicio?') : $lserv.translate('Desea Arrancar el Servicio?');
@@ -141,17 +195,16 @@ angular.module("Uv5kiman")
                     alertify.success(mensaje);
                     setTimeout(function () { get_std(); }, 1000);
                 }
-                , function (response) {
-                    console.log(response);
-                    alertify.error($lserv.translate("Error ejecutando la operacion..."));
-                });
+                    , function (response) {
+                        console.log(response);
+                        alertify.error($lserv.translate("Error ejecutando la operacion..."));
+                    });
             },
             function () {
                 alertify.message($lserv.translate("Operacion Cancelada"));
             }
         );
-
-    }
+    };
 
     /** Retorna el Detalle de un operador 
         Texto HTML para POPOVER
@@ -166,7 +219,7 @@ angular.module("Uv5kiman")
             current.popover('show');
 
             /** Timeout de 10 segundos */
-            popoverTimers[current] = 
+            popoverTimers[current] =
                 setTimeout(function () {
                     current.popover('hide');
                     popoverTimers[current] = null;
@@ -176,7 +229,8 @@ angular.module("Uv5kiman")
             clearTimeout(popoverTimers[current]);
             current.popover('hide');
         }
-    }
+    };
+
     /** */
     ctrl.ope_detail = function (item) {
         var detail = "<table>";
@@ -199,7 +253,7 @@ angular.module("Uv5kiman")
         }
         detail += "</table>";
         return detail;
-    }
+    };
 
     /** */
     function ctrl_ope_detail_lan(lan, std) {
@@ -211,7 +265,7 @@ angular.module("Uv5kiman")
                                   ("<i>" + "Unknown" + "</i>"));
         detail += "</td></tr>";
         return detail;
-    }
+    };
 
     /** Abre y Gestiona la Ventana de Version del operador */
     ctrl.ope_version = {};
@@ -222,25 +276,26 @@ angular.module("Uv5kiman")
             ctrl.ope_shown = ope;
             $("#opeVersiones").modal('show');
         }
-        , function (response) {
-            console.log(response);
-            alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
-        });
-    }
+            , function (response) {
+                console.log(response);
+                alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
+            });
+    };
+
     ctrl.export_ope_version = function () {
         var csvData = "Terminal;" +
-                      "Version;" +
-                      "Componente;" +
-                      "Fichero;" +
-                      "Tamano;" +
-                      "Fecha;" +
-                      "Hash\r\n";
+            "Version;" +
+            "Componente;" +
+            "Fichero;" +
+            "Tamano;" +
+            "Fecha;" +
+            "Hash\r\n";
         $.each(ctrl.ope_version.Components, function (index, comp) {
             $.each(comp.Files, function (index1, file) {
                 var item = (ctrl.ope_version.Server + ";") +
-                           (ctrl.ope_version.Version + ";") +
-                           (comp.Name + ";") +
-                           (file.Path + ";") + (file.Size + ";") + (file.Date + ";") + (file.MD5 + "\r\n");
+                    (ctrl.ope_version.Version + ";") +
+                    (comp.Name + ";") +
+                    (file.Path + ";") + (file.Size + ";") + (file.Date + ";") + (file.MD5 + "\r\n");
                 csvData += item;
             });
         });
@@ -249,7 +304,7 @@ angular.module("Uv5kiman")
         myLink.download = 'pict_' + ctrl.ope_shown.name + '_versiones.csv';
         myLink.href = "data:application/csv," + escape(csvData);
         myLink.click();
-    }
+    };
 
     /** Retorna la Imagen de Una pasarela segun el tipo y el estado de cpu0 y cpu1 si es dual */
     var Type1Images = [
@@ -274,7 +329,7 @@ angular.module("Uv5kiman")
             var col = item.cpu1 >= 0 && item.cpu1 < 3 ? item.cpu1 : 0;
             return Type1Images[row][col];
         }
-    }
+    };
 
     /** Retorna el Detalle de una Pasarela 
         Texto HTML para POPOVER
@@ -283,31 +338,31 @@ angular.module("Uv5kiman")
         var detail = "<table>"
         detail += "<tr><td>" + "<strong>IP</strong>" + "</td><td>" + item.ip + "</td></tr>";
         if (item.std != 0) {
-            detail += "<tr><td>" + "<strong>LAN1</strong>" + "</td><td>" + (item.lan1 == 1 ? $lserv.translate('SCT_MSG_00')/*"Ok"*/ : ("<i>" + $lserv.translate('SCT_MSG_01')/*"Fallo"*/+"</i>")) + "</td></tr>";
+            detail += "<tr><td>" + "<strong>LAN1</strong>" + "</td><td>" + (item.lan1 == 1 ? $lserv.translate('SCT_MSG_00')/*"Ok"*/ : ("<i>" + $lserv.translate('SCT_MSG_01')/*"Fallo"*/ + "</i>")) + "</td></tr>";
             detail += "<tr><td>" + "<strong>LAN2</strong>" + "</td><td>" + (item.lan2 == 1 ? $lserv.translate('SCT_MSG_00')/*"Ok"*/ : ("<i>" + $lserv.translate('SCT_MSG_01')/*"Fallo"*/ + "</i>")) + "</td></tr>";
             detail += "<tr><td>" + "<strong>" + (item.tipo != 0 ? "MAIN" : "") + "</strong>" + "</td><td>" + (item.tipo != 0 ? (item.main == 0 ? "0" : "1") : "") + "</td></tr>";
         }
         detail += "</table>";
         return detail;
-    }
+    };
 
     /** Pone el titulo a la ventana de Detalle de la Pasarela */
-    ctrl.gw_detail_title = function() {
-        if (ctrl.gwdata.tipo===0)
+    ctrl.gw_detail_title = function () {
+        if (ctrl.gwdata.tipo === 0)
             return ctrl.gwdata.name + " (" + ctrl.gwdata.ip + ")";
         else {
             return ctrl.gwdata.name + ",[CPU-" + ctrl.gwdata.main + "]" + " (" + ctrl.gwdata.ip + ")";
         }
-    }
+    };
 
     /** Abre y Gestiona la ventana de Detalle de la Pasarela */
-    ctrl.gw_open = function(gw) {
+    ctrl.gw_open = function (gw) {
         $serv.gw_detail_get(gw).then(function (response) {
             ctrl.gwdata = response.data;
-            ctrl.itfs = ctrl.gwdata.tipo==0 ? ctrl.gwdata.cpus[0].recs :
-                        ctrl.gwdata.main==0 ? ctrl.gwdata.cpus[0].recs : ctrl.gwdata.cpus[1].recs;
+            ctrl.itfs = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].recs :
+                ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].recs : ctrl.gwdata.cpus[1].recs;
             ctrl.tars = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].tars :
-                        ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].tars : ctrl.gwdata.cpus[1].tars;
+                ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].tars : ctrl.gwdata.cpus[1].tars;
 
             ctrl.gwgen = [];
             ctrl.gwgen[0] = {
@@ -315,7 +370,7 @@ angular.module("Uv5kiman")
                 fa: ctrl.gwdata.cpus[0].fa,            // ctrl.gwdata.fa,
                 cpu: 0,
                 ip: ctrl.gwdata.cpus[0].ip,
-                lan1:ctrl.gwdata.cpus[0].lan1,
+                lan1: ctrl.gwdata.cpus[0].lan1,
                 lan2: ctrl.gwdata.cpus[0].lan2,
                 sipMod: ctrl.gwdata.cpus[0].sipMod,
                 cfgMod: ctrl.gwdata.cpus[0].cfgMod,
@@ -327,57 +382,58 @@ angular.module("Uv5kiman")
                     fa: ctrl.gwdata.cpus[1].fa,    // "",
                     cpu: 1,
                     ip: ctrl.gwdata.cpus[1].ip,
-                    lan1:ctrl.gwdata.cpus[1].lan1,
+                    lan1: ctrl.gwdata.cpus[1].lan1,
                     lan2: ctrl.gwdata.cpus[1].lan2,
                     sipMod: ctrl.gwdata.cpus[1].sipMod,
                     cfgMod: ctrl.gwdata.cpus[1].cfgMod,
                     snmpMod: ctrl.gwdata.cpus[1].snmpMod
 
-                };                
+                };
             }
 
             // console.log(response.data);
             $("#gwDataModal").modal('show');
         }
-        , function (response) {
-            console.log(response);
-            alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
-        });
-    }
+            , function (response) {
+                console.log(response);
+                alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
+            });
+    };
 
     /** */
-    ctrl.gw_ir = function(gw) {
+    ctrl.gw_ir = function (gw) {
         var win = window.open('http://' + gw.ip + ':8080', '_blank');
         win.focus();
-    }
+    };
 
     /** Abre y Gestiona la Ventana de Version de la Pasarela */
-    ctrl.gw_version = function(gw) {
+    ctrl.gw_version = function (gw) {
         $serv.gw_version_get(gw).then(function (response) {
             console.log(response.data);
             ctrl.gwdata = response.data;
-            ctrl.version = JSON.parse(response.data.versiones); 
+            ctrl.version = JSON.parse(response.data.versiones);
             $("#gwVersionModal").modal('show');
         }
-        , function (response) {
-            console.log(response);
-            alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
-        });
-    }
+            , function (response) {
+                console.log(response);
+                alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
+            });
+    };
+
     ctrl.export_gw_version = function () {
         var csvData = "Pasarela;" +
-                      "Version;" +
-                      "Componente;" +
-                      "Fichero;" +
-                      "Tamano;" +
-                      "Fecha;" +
-					  "Hash\r\n";
+            "Version;" +
+            "Componente;" +
+            "Fichero;" +
+            "Tamano;" +
+            "Fecha;" +
+            "Hash\r\n";
         $.each(ctrl.version.Components, function (index, comp) {
             $.each(comp.Files, function (index1, file) {
                 var item = (ctrl.gw_detail_title() + ";") +
-                           (ctrl.version.Version + ";") +
-                           (comp.Name + ";") +
-                           (file.Path + ";") + (file.Size + ";") + (file.Date + ";") + ( file.Hash + "\r\n");
+                    (ctrl.version.Version + ";") +
+                    (comp.Name + ";") +
+                    (file.Path + ";") + (file.Size + ";") + (file.Date + ";") + (file.Hash + "\r\n");
                 csvData += item;
             });
         });
@@ -386,12 +442,12 @@ angular.module("Uv5kiman")
         myLink.download = 'gw_' + ctrl.gwdata.name + '_versiones.csv';
         myLink.href = "data:application/csv," + escape(csvData);
         myLink.click();
-    }
+    };
 
     /** */
     ctrl.verfname = function (path) {
         return path.substring(path.lastIndexOf('/') + 1);
-    }
+    };
 
     /** Mando de Control P/R de Pasarela */
     ctrl.gw_control_pr = function (gw) {
@@ -412,10 +468,10 @@ angular.module("Uv5kiman")
                     $serv.gw_pr_change(gw).then(function (response) {
                         alertify.success($lserv.translate('SCT_MSG_11')/*"Operacion Efectuada Correctamente..."*/)
                     }
-                    , function (response) {
-                        console.log(response);
-                        alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
-                    });
+                        , function (response) {
+                            console.log(response);
+                            alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
+                        });
                 },
                 function () {
                     alertify.message($lserv.translate('Operacion Cancelada'));
@@ -425,13 +481,13 @@ angular.module("Uv5kiman")
         else {
             alertify.error($lserv.translate('El cambio no es posible...'));
         }
-    }
+    };
 
     /** Retorna la Imagen de Equipo Externo */
     ctrl.exteq_img = function (item) {
         if (item.tipo == 3)
             return "./images/voiptel.jpg";
-        else if(item.tipo==5)
+        else if (item.tipo == 5)
             return "./images/audio-recorder.jpg";
         else if (item.tipo == 2) {
             if (item.modelo == 1000) {
@@ -445,7 +501,7 @@ angular.module("Uv5kiman")
             }
         }
         return "./images/TifxGris.png";
-    }
+    };
 
     /* */
     ctrl.exteq_detail = function (item) {
@@ -455,12 +511,12 @@ angular.module("Uv5kiman")
             /** Los grabadores no tienen agente SIP */
             detail += "<tr class=\"small\"><td>" + "<strong>SIP</strong>" + "</td><td class=\"hyp-none\">" + item.uri + "</td><td>" +
                 (item.std_sip == 1 ? $lserv.translate('SCT_MSG_00')/*"Ok"*/ :
-                 item.std_sip == 4 ? /*$lserv.translate('NI')*//*"Ok"*/ item.lor : 
-                    ("<i>" + $lserv.translate('Error')/*"Desconectada"*/ + "</i>")) + "</td></tr>";
+                    item.std_sip == 4 ? /*$lserv.translate('NI')*//*"Ok"*/ item.lor :
+                        ("<i>" + $lserv.translate('Error')/*"Desconectada"*/ + "</i>")) + "</td></tr>";
         }
         detail += "</table>";
         return detail;
-    }
+    };
 
     /** */
     ctrl.exteq_std_class = function (item) {
@@ -475,7 +531,7 @@ angular.module("Uv5kiman")
                 return stdc_class[stdc.Error];
         }
         return stdc_class[item.std];
-    }
+    };
 
     /* */
     ctrl.exteq_grupo = function (grp) {
@@ -495,7 +551,7 @@ angular.module("Uv5kiman")
             ctrl.exteq_grps = ctrl.exteq.filter($lserv.exteq_filter_all);
         }
         ctrl.exteq_grp = grp;
-    }
+    };
 
     /** Servicios Pagina de Estado */
     /** */
@@ -508,7 +564,7 @@ angular.module("Uv5kiman")
         , function (response) {
             console.log(response);
         });
-    }
+    };
 
     /** */
     function get_cwps() {
@@ -520,7 +576,7 @@ angular.module("Uv5kiman")
         , function (response) {
             console.log(response);
         });
-    }
+    };
 
     /** */
     function get_gws() {
@@ -535,7 +591,7 @@ angular.module("Uv5kiman")
         , function (response) {
             console.log(response);
         });        
-    }
+    };
 
     /** */
     function get_exteq() {
@@ -547,7 +603,7 @@ angular.module("Uv5kiman")
         , function (response) {
             console.log(response);
         });        
-    }
+    };
 
     /** */
     function get_pbxab() {
@@ -558,13 +614,13 @@ angular.module("Uv5kiman")
         , function (response) {
             console.log(response);
         });                
-    }
+    };
 
     /** TODO... */
     function new_cwps(data) {
         // return data.length != ctrl.cwps.length;
         return true;
-    }
+    };
 
     /** Funcion Periodica del controlador */
     var timer = $interval(function () {

@@ -307,7 +307,7 @@ namespace U5kManServer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1022")]
+        [global::System.Configuration.DefaultSettingValueAttribute("8103")]
         public int nbxSupPort {
             get {
                 return ((int)(this["nbxSupPort"]));
@@ -752,7 +752,7 @@ namespace U5kManServer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2")]
+        [global::System.Configuration.DefaultSettingValueAttribute("20")]
         public int LogRepeatFilterSecs {
             get {
                 return ((int)(this["LogRepeatFilterSecs"]));

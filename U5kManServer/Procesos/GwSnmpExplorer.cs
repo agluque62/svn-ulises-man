@@ -830,8 +830,7 @@ namespace U5kManServer
                 case ".1.3.6.1.4.1.7916.8.3.2.1.5":         // Evento de Historicos.
                     if (oidvar == ".1.3.6.1.4.1.7916.8.3.2.1.7.0")
                     {
-                        LogTrace<GwExplorer>(String.Format("GWU-HISTORICO: <<<{0}>>>", data.ToString())
-                            );
+                        LogTrace<GwExplorer>(String.Format("GWU-HISTORICO: <<<{0}>>>", data.ToString()));
 
                         Redan2UlisesHist conv = new Redan2UlisesHist(data.ToString());
                         U5kIncidencia inci;

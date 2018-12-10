@@ -9,6 +9,8 @@ using Lextm.SharpSnmpLib.Messaging;
 using Lextm.SharpSnmpLib.Security;
 using Lextm.SharpSnmpLib.Objects;
 
+using Newtonsoft.Json;
+
 using NucleoGeneric;
 
 namespace U5kManServer 
@@ -579,13 +581,16 @@ namespace U5kManServer
         public U5kStdGenTb()
             : base(U5kManMibOids.MttoV2Oid_StdgTbBase, 5)
         {
-                AddRow("Servidor 1", "127.0.0.1", std.NoInfo, "00000000", "---");
-                AddRow("Servidor 2", "127.0.0.1", std.NoInfo, "00000000", "---");
-                AddRow("Servidor Radio", "127.0.0.1", std.NoInfo, "00000000", "---");
-                AddRow("PBX", "127.0.0.1", std.NoInfo, "00000000", "---");
-                AddRow("NTP", "127.0.0.1", std.NoInfo, "00000000", "---");
-                AddRow("SACTA 1", "127.0.0.1", std.NoInfo, "00000000", "---");
-                AddRow("SACTA 2", "127.0.0.1", std.NoInfo, "00000000", "---");
+            AddRow("Servidor 1", "127.0.0.1", std.NoInfo, "00000000", "---");
+            AddRow("Servidor 2", "127.0.0.1", std.NoInfo, "00000000", "---");
+            AddRow("Servidor Radio", "127.0.0.1", std.NoInfo, "00000000", "---");
+            AddRow("PBX", "127.0.0.1", std.NoInfo, "00000000", "---");
+            AddRow("NTP", "127.0.0.1", std.NoInfo, "00000000", "---");
+            AddRow("SACTA 1", "127.0.0.1", std.NoInfo, "00000000", "---");
+            AddRow("SACTA 2", "127.0.0.1", std.NoInfo, "00000000", "---");
+#if !_HAY_NODEBOX__
+            AddRow("Servidor Telefonia", "127.0.0.1", std.NoInfo, "00000000", "---");
+#endif
         }
 
         /// <summary>
@@ -616,19 +621,29 @@ namespace U5kManServer
                         ((SnmpStringObject)(ElementAt(1, 3))).Value = MibHelper.stdlans2snmp(sg.stdServ2.lanes.Values.ToArray());
                         ((SnmpStringObject)(ElementAt(1, 4))).Value = sg.stdServ2.ntp_sync;
 
-                        /** Datos de NBX */
+                    /** Datos de NBX */
+#if _HAY_NODEBOX__
 #if _LISTANBX_V0
                         StdServ masternbx = sg.lstNbx.Find(x => x.Seleccionado == sel.Seleccionado);
                         ((SnmpStringObject)(ElementAt(2, 1))).Value = masternbx != null ? masternbx.name : "???";
                         ((SnmpIntObject)(ElementAt(2, 2))).Value = (int)(masternbx != null ? (sg.lstNbx.Count > 1 ? masternbx.Estado : std.Aviso) : std.NoInfo);
 #elif _LISTANBX_
-                        U5KStdGeneral.StdNbx masternbx = sg.lstNbx.Find(n => n.CfgService == U5KStdGeneral.NbxServiceState.Master);
+                    U5KStdGeneral.StdNbx masternbx = sg.lstNbx.Find(n => n.CfgService == U5KStdGeneral.NbxServiceState.Master);
                         ((SnmpStringObject)(ElementAt(2, 1))).Value = masternbx != null ? masternbx.ip : "???";
                         ((SnmpIntObject)(ElementAt(2, 2))).Value = (int)(masternbx != null ? (sg.lstNbx.Count > 1 ? std.Ok : std.Aviso) : std.NoInfo);
 #endif
+#else
+                    Services.CentralServicesMonitor.Monitor.DataGetForSnmpAgent((idRadio, countRadio, idPhone, countPhone) =>
+                    {
+                        ((SnmpStringObject)(ElementAt(2, 1))).Value = idRadio;
+                        ((SnmpIntObject)(ElementAt(2, 2))).Value = (int)(countRadio == 0 ? std.NoInfo : countRadio == 1 ? std.Aviso : std.Ok);
 
-                        /** Datos de PABX */
-                        ((SnmpStringObject)(ElementAt(3, 1))).Value = sg.stdPabx.name;
+                        ((SnmpStringObject)(ElementAt(7, 1))).Value = idPhone;
+                        ((SnmpIntObject)(ElementAt(7, 2))).Value = (int)(countPhone == 0 ? std.NoInfo : countPhone == 1 ? std.Aviso : std.Ok);
+                    });
+#endif
+                    /** Datos de PABX */
+                    ((SnmpStringObject)(ElementAt(3, 1))).Value = sg.stdPabx.name;
                         ((SnmpIntObject)(ElementAt(3, 2))).Value = (int)sg.stdPabx.Estado;
 
                         /** Datos de NTP */
@@ -978,7 +993,7 @@ namespace U5kManServer
             : base(U5kManMibOids.MttoV2Oid_PbxAbTbBase, 3)
         {
             Size = 0;
-#if STD_ACCESS_V0            
+#if STD_ACCESS_V0
             foreach (Uv5kManDestinosPabx.DestinoPabx destino in U5kManService._std.pabxdest.Destinos)
             {
                 AddRow(destino.Id, "", destino.Estado);
@@ -1046,6 +1061,7 @@ namespace U5kManServer
         /** */
         public override void Tick()
         {
+#if _HAY_NODEBOX__
             lock (U5kManService._sessions_data)
             {
                 int row = 0;
@@ -1059,6 +1075,19 @@ namespace U5kManServer
                     row++;
                 }
             }
+#else
+            var sessions_data = JsonConvert.DeserializeObject<List<U5kManService.radioSessionData>>(Services.CentralServicesMonitor.Monitor.RadioSessionsString);
+            int row = 0;
+            SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_RadioSesNum).Value = (int)sessions_data.Count;
+
+            foreach (U5kManService.radioSessionData ses in sessions_data)
+            {
+                mod_element(row,
+                    ses.frec, ses.ftipo, ses.prio, ses.fstd, ses.fp_climax_mc, ses.fp_bss_win,
+                    ses.uri, ses.tipo, ses.std, ses.tx_rtp, ses.tx_cld, ses.tx_owd, ses.rx_rtp, ses.rx_qidx);
+                row++;
+            }
+#endif
         }
     }
     /// <summary>
@@ -1078,6 +1107,7 @@ namespace U5kManServer
         /** */
         public override void Tick()
         {
+#if _HAY_NODEBOX__
             lock (U5kManService._MNMan_data)
             {
                 int row = 0;
@@ -1090,6 +1120,18 @@ namespace U5kManServer
                     row++;
                 }
             }
+#else
+            var MNMan_data = JsonConvert.DeserializeObject<List<U5kManService.equipoMNData>>(Services.CentralServicesMonitor.Monitor.RadioMNDataString);
+            int row = 0;
+            SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_RadioMnNum).Value = (int)MNMan_data.Count;
+
+            foreach (U5kManService.equipoMNData eq in MNMan_data)
+            {
+                mod_element(row, eq.equ ?? "null", eq.grp, eq.mod, eq.tip, eq.std,
+                    eq.frec ?? "---", eq.prio ?? -1, eq.sip, eq.ip ?? "---", eq.emp ?? "---", eq.tfrec);
+                row++;
+            }
+#endif
         }
     }
 

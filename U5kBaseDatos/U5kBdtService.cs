@@ -267,6 +267,7 @@ namespace U5kBaseDatos
         object _DB = null;
         string _strConn = String.Empty;
         System.Globalization.CultureInfo _idioma = new System.Globalization.CultureInfo("es");
+        public string BdtLanguage { get { return _idioma.ToString(); } }
 
         #region PUBLIC
 

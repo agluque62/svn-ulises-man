@@ -100,8 +100,8 @@
     <Compile Include="FtpClient.cs" />
     <Compile Include="NAudioWavPlayer.cs" />
     <Compile Include="Procesos\ExtEquSpv.cs" />
-    <Compile Include="Procesos\NbxSpv.cs" />
     <Compile Include="Properties\u5kManServer.cs" />
+    <Compile Include="Services\CentralServicesMonitor.cs" />
     <Compile Include="Services\PresenceDataService.cs">
       <SubType>Code</SubType>
     </Compile>

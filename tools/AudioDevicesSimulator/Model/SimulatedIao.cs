@@ -15,17 +15,24 @@ namespace AudioDevicesSimulator.Model
 
         public SimulatedIao() 
         {
-            fsw = new FileSystemWatcher()
+            try
             {
-                Path = PathOfDir,
-                EnableRaisingEvents = true
-            };
+                fsw = new FileSystemWatcher()
+                {
+                    Path = PathOfDir,
+                    EnableRaisingEvents = true
+                };
 
-            fsw.Changed += (sender, ev) =>
+                fsw.Changed += (sender, ev) =>
+                {
+                    if (NotifyChange != null)
+                        NotifyChange(ev.FullPath);
+                };
+            }
+            catch(Exception x)
             {
-                if (NotifyChange != null)
-                    NotifyChange(ev.FullPath);
-            };
+                LogManager.GetLogger("AudioDeviceSimulator").Error("Excepcion en Construtor", x);
+            }
         }
         
         public void Dispose() 
@@ -183,7 +190,7 @@ namespace AudioDevicesSimulator.Model
             get
             {
                 return Properties.Settings.Default.PathOfHmi == String.Empty ? 
-                    String.Format("{0}\\DF Nucleo\\Ulises5000I-TA\\cmedia_sim\\", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)) :
+                    String.Format("{0}\\NucleoCC\\Ulises5000I-TA\\cmedia_sim\\", Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)) :
                     String.Format("{0}\\cmedia_sim\\", Properties.Settings.Default.PathOfHmi);
             }
         }

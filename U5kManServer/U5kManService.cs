@@ -237,6 +237,9 @@ namespace U5kManServer
         public std stdGlobalGw2 = std.NoInfo;
         [DataMember]
         public std stdGlobalExt = std.NoInfo;
+
+#if _HAY_NODEBOX__
+
 #if _LISTANBX_V0
         [DataMember]
         public List<StdServ> lstNbx = new List<StdServ>();
@@ -259,6 +262,9 @@ namespace U5kManServer
 #else
         public StdServ stdNbx = new StdServ() { Estado = std.NoInfo, Seleccionado = sel.NoInfo, name = "???" };
 #endif
+
+#endif // Nodebox antiguo.
+
         [DataMember]
         public StdServ stdPabx = new StdServ() { Estado = std.Inicio, name = "???", Seleccionado = sel.NoInfo };
 
@@ -362,6 +368,7 @@ namespace U5kManServer
             stdGlobalGw2 = from.stdGlobalGw2;
             stdGlobalExt = from.stdGlobalExt;
 
+#if _HAY_NODEBOX__
             /** */
             lstNbx = from.lstNbx.Select(nbx => new StdNbx() 
             {
@@ -374,6 +381,7 @@ namespace U5kManServer
                 PresenceService = nbx.PresenceService,
                 timer = nbx.timer
             }).ToList();
+#endif
         }
 
         public bool Equals(U5KStdGeneral other)
@@ -1291,7 +1299,7 @@ namespace U5kManServer
             string peticionario = String.Format("[{0}.{1},{2}]", System.IO.Path.GetFileNameWithoutExtension(file), caller, lineNumber);
             if (writeAccess.WaitOne(waitingMilliseconds) == false)          
             {
-#if !_TESTING_ && DEBUG 
+#if !_TESTING_ && DEBUG
                 LogFatal<U5kManStdData>(String.Format("Timeout SEM ({2}): ({0}=>{1})", peticionario, ocupadopor,waitingMilliseconds));
 #endif
                 return false;
@@ -1851,7 +1859,7 @@ namespace U5kManServer
     [ServiceBehavior (IncludeExceptionDetailInFaults =true)]
     class U5kManService : BaseCode, IU5kManService
     {
-        #region Atributos Estaticos
+#region Atributos Estaticos
         /// <summary>
         /// 20170309. AGL. Para sincronizar los THREAD que tocan la configuracion....
         /// </summary>
@@ -1913,7 +1921,7 @@ namespace U5kManServer
             public long mcast_conf_port_base { get; set; }
         };
         public static Config st_config = new Config() { mcast_conf_grp = "", mcast_conf_port_base = -1 };
-        #region Servicio Radio
+#region Servicio Radio
         /// <summary>
         /// 
         /// </summary>
@@ -2000,6 +2008,7 @@ namespace U5kManServer
 
 
         /** */
+#if _HAY_NODEBOX__
         static public List<radioSessionData> _sessions_data = new List<radioSessionData>();
         static public List<equipoMNData> _MNMan_data = new List<equipoMNData>();
         static public List<txHF> _txhf_data = new List<txHF>();
@@ -2012,10 +2021,11 @@ namespace U5kManServer
          *           2: Sin Proxy activo (modo emergencia)
          */
         static public int tlf_mode = 2;
+#endif
 
-        #endregion
+#endregion
 
-        #endregion
+#endregion
 
         #region Procedimientos Estaticos
 
@@ -2332,9 +2342,10 @@ namespace U5kManServer
         /// 
         /// </summary>
         /// <returns></returns>
-        static public List<U5kIncidenciaDescr> bdtListaIncidencias()
+        static public List<U5kIncidenciaDescr> stListaIncidencias(Action<string> log)
         {
             OpenBdt();
+            log(_bdt.BdtLanguage);
             return _bdt.ListaDeIncidencias(Properties.u5kManServer.Default.FiltroIncidencias);
         }
 
@@ -2708,5 +2719,5 @@ namespace U5kManServer
         Properties.u5kManServer onlocal = Properties.u5kManServer.Default;
         U5kiLocalConfigInDb onbdt = null;
     }
-    #endif
-}
+#endif
+    }

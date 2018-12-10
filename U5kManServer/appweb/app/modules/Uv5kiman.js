@@ -5,6 +5,7 @@ var maxPreconf = 8;
 var InciPoll = 10;
 var userLang = navigator.language;
 var default_logs_limit = "2000";
+var nbx_splitted = true;
 
 /** */
 var Uv5kiman = angular.module('Uv5kiman',

@@ -153,7 +153,9 @@ namespace U5kManServer.WebAppServer
         public itemData sv2 { get; set; }
         public itemData cwp { get; set; }
         public itemData gws { get; set; }
+#if _HAY_NODEBOX__
         public itemData nbx { get; set; }
+#endif
         public itemData pbx { get; set; }
         public itemData ntp { get; set; }
         public bool sactaservicerunning { get; set; }
@@ -161,6 +163,7 @@ namespace U5kManServer.WebAppServer
         public itemData sct1 { get; set;}
         public itemData sct2 { get; set; }
         public itemData ext { get; set; }
+#if _HAY_NODEBOX__
 #if _LISTANBX_V0
         public class itemNbx
         {
@@ -181,6 +184,9 @@ namespace U5kManServer.WebAppServer
             public bool Running { get; set; }
         }
         public List<itemNbx> nbxs = new List<itemNbx>();
+#endif
+#else
+        public dynamic csi { get; set; }
 #endif
         public int perfil { get; set; }
         public string lang { get; set; }
@@ -240,6 +246,9 @@ namespace U5kManServer.WebAppServer
                         sel = 0,
                         url = ""
                     };
+
+#if _HAY_NODEBOX__
+
 #if _LISTANBX_V0
                     /** Busco el Master en la lista */
                     int nbx_count = U5kManService._std._gen.lstNbx.Count;
@@ -275,6 +284,12 @@ namespace U5kManServer.WebAppServer
                     url = U5kGenericos.NodeboxUrl(U5kManService._std._gen.stdNbx.name)
 #endif
                     };
+#else
+                    Services.CentralServicesMonitor.Monitor.DataGetForWebServer((csid) =>
+                    {
+                        csi = csid;
+                    });
+#endif
                     pbx = new itemData()
                     {
                         name = stdg.stdPabx.name,
@@ -309,6 +324,8 @@ namespace U5kManServer.WebAppServer
                         sel = 0,
                         url = ""
                     };
+#if _HAY_NODEBOX__
+
 #if _LISTANBX_V0
                     nbxs.Clear();
                     foreach (StdServ nodebox in U5kManService._std._gen.lstNbx)
@@ -332,6 +349,9 @@ namespace U5kManServer.WebAppServer
                         });
                     }
 #endif
+#else
+                    // TODO...
+#endif
                     ext = new itemData()
                     {
                         name = idiomas.strings.EquiposExternos,
@@ -345,6 +365,7 @@ namespace U5kManServer.WebAppServer
                     lang = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.Idioma;
 
                     /** Estado Global Radio */
+#if _HAY_NODEBOX__
                     var fr = U5kManService._sessions_data.Count();                              // Frecuencias Configuradas.
                     var fa = U5kManService._sessions_data.Where(f => f.fstd == 0).Count();      // Frecuencias No disponibles
                     var fd = U5kManService._sessions_data.Where(f => f.fstd == 2).Count();      // Frecuencias Degradadas.
@@ -352,6 +373,25 @@ namespace U5kManServer.WebAppServer
 
                     /** Estado Global Telefonia: 0=>OK, 1=>Con PROXY ALT, 2=>Emergencia */
                     tf_status = U5kManService.tlf_mode;
+
+#else
+                    var sessions_data = JsonConvert.DeserializeObject<List<U5kManService.radioSessionData>>(Services.CentralServicesMonitor.Monitor.RadioSessionsString);
+                    var fr = sessions_data.Count();                              // Frecuencias Configuradas.
+                    var fa = sessions_data.Where(f => f.fstd == 0).Count();      // Frecuencias No disponibles
+                    var fd = sessions_data.Where(f => f.fstd == 2).Count();      // Frecuencias Degradadas.
+                    rd_status = fr == 0 ? -1 /** No INFO */ : fa > 0 ? 2 /** Alarma */ : fd > 0 ? 1 /** Warning */: 0; /** OK */
+
+                    /** 20181010. De los datos obtenemos el estado de emergencia */
+                    JArray grps = JsonHelper.SafeJArrayParse(Services.CentralServicesMonitor.Monitor.PresenceDataString);
+                    JObject prx_grp = grps == null ? null :
+                        grps.Where(u => u.Value<int>("tp") == 4).FirstOrDefault() as JObject;
+                    JProperty prx_prop = prx_grp == null ? null : prx_grp.Property("res");
+                    JArray proxies = prx_prop == null ? null : prx_prop.Value as JArray;
+                    int ppal = proxies == null ? 0 : proxies.Where(u => u.Value<int>("tp") == 5 && u.Value<int>("std") == 0).Count();
+                    int alt = proxies == null ? 0 : proxies.Where(u => u.Value<int>("tp") == 6 && u.Value<int>("std") == 0).Count();
+
+                    tf_status = ppal > 0 ? 0 /** OK */ : alt > 0 ? 1 /** DEG */ : 2 /** EMG */;
+#endif
                 }
             }
         }
@@ -1100,7 +1140,7 @@ namespace U5kManServer.WebAppServer
             {
                 try
                 {
-                    lista = U5kManService.bdtListaIncidencias();
+                    lista = U5kManService.stListaIncidencias((idioma)=> { LogDebug<U5kManWADDbInci>("Lista de Incidencias en " + idioma); });
                 }
                 catch (Exception x)
                 {

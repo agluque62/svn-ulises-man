@@ -56,18 +56,32 @@
             </div>
 
             <div class="col-md-4">
-                <a ng-href="" class="thumbnail" ng-show="ctrl.std.nbx.enable==1">
-                    <!--
-                    <img ng-src="./images/radioserver.jpg" alt="Nodebox" class="{{ctrl.std_class(ctrl.std.nbx)}}"
-                        bs-popover
-                        data-content="{{ctrl.nbx_detail()}}"
-                        ng-click="ctrl.popover_click($event)">
-                    <div class="div_titulo">{{ctrl.std.nbx.name}}</div>
-                    -->
+                <a ng-href="" class="thumbnail" ng-show="(ctrl.nbx_splitted_enable==false && ctrl.std.nbx.enable==1)">
                     <img ng-src="./images/radioserver.jpg" alt="Nodebox" class="{{ctrl.std_class(ctrl.std.nbx)}}" height="128"
-                        ng-click="ctrl.pagina(3)">
+                         ng-click="ctrl.pagina(3)">
                     <div class="div_titulo">{{ctrl.std.nbx.name}}</div>
                 </a>
+                <table class="table" ng-show="ctrl.nbx_splitted_enable==true">
+                    <tr>
+                        <td class="text-center">
+                            <!--<p class="text-info text-center" translate>Radio</p>-->
+                            <a ng-href="" class="thumbnail">
+                                <img ng-src="./images/radioserver.jpg" alt="Radio" class="{{ctrl.nbx_radio_std_class()}}" height="128"
+                                     ng-click="ctrl.pagina(3)">
+                                <div class="div_titulo">{{ctrl.nbx_radio_name()}}</div>
+                            </a>
+                        </td>
+                        <td class="text-center">
+<!--                        <p class="text-info text-center" translate>Telefonia</p>-->
+                        <a ng-href="" class="thumbnail">
+                            <img ng-src="./images/phone-focus.jpg" alt="Telefonia" class="{{ctrl.nbx_phone_std_class()}}" height="128"
+                                 ng-click="ctrl.pagina(3)">
+                            <div class="div_titulo">{{ctrl.nbx_phone_name()}}</div>
+                        </a>
+                        </td>
+                    </tr>
+                </table>
+
             </div>
 
             <div class="col-md-4">
@@ -76,7 +90,6 @@
                     <div class="div_titulo">{{ctrl.std.gws.name}}</div>
                 </a>
             </div>
-
 
         </div>
         <div class="row">
@@ -92,18 +105,6 @@
                     <div class="div_titulo">{{ctrl.std.ext.name}}</div>
                 </a>
             </div>
-<!--            <div class="col-md-2">
-                <a ng-href="{{ctrl.std.sct1.url}}" class="thumbnail" ng-show="ctrl.std.sct1.enable==1">
-                    <img ng-src="./images/_sacta.jpg" alt="Sacta-1" class="{{ctrl.std_class(ctrl.std.sct1)}}">
-                    <div class="div_titulo">{{ctrl.std.sct1.name}}</div>
-                </a>
-            </div>
-            <div class="col-md-2">
-                <a ng-href="{{ctrl.std.sct2.url}}" class="thumbnail" ng-show="ctrl.std.sct2.enable==1">
-                    <img ng-src="./images/_sacta.jpg" alt="Sacta-2" class="{{ctrl.std_class(ctrl.std.sct2)}}">
-                    <div class="div_titulo">{{ctrl.std.sct2.name}}</div>
-                </a>
-            </div>-->
             <div class="col-md-4" >
                 <table class="table" ng-show="ctrl.std.sct1.enable==1 || ctrl.std.sct2.enable==1">
                     <tr>
@@ -187,7 +188,8 @@
     <!-- Pantalla de Estado de Nodeboxes -->
     <div id="spvNodebox" data-ng-show="ctrl.pagina()==3">
         <h1><strong translate>Elementos con Servicios Centralizados</strong></h1>
-        <div class="row" ng-repeat="equ in ctrl.std.nbxs track by $index" ng-if="$index % 3 == 0">
+        
+        <div class="row" ng-repeat="equ in ctrl.std.nbxs track by $index" ng-if="$index % 3 == 0" ng-show="ctrl.nbx_splitted_enable==false">
             <div class="col-md-4" ng-repeat="i in [$index, $index + 1, $index + 2]"
                 ng-if="ctrl.std.nbxs[i] != null">
                 <a target="_blank" ng-href="{{ctrl.std.nbxs[i].url}}" class="thumbnail" ng-show="true" 
@@ -198,6 +200,45 @@
                 </a>
             </div>
         </div>
+
+        <div ng-show="ctrl.nbx_splitted_enable==true">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="text-info text-center"><strong translate>Radio</strong></p>
+
+                    <div class="row" ng-repeat="equ in ctrl.std.csi.radio.rdsl track by $index" ng-if="$index % 2 == 0">
+                        <div class="col-md-6" ng-repeat="i in [$index, $index + 1]"
+                             ng-if="ctrl.std.csi.radio.rdsl[i] != null">
+                            <a target="_blank" ng-href="{{ctrl.std.csi.radio.rdsl[i].Value.url}}" class="thumbnail" ng-show="true"
+                               style=":hover {text-decoration: none;}">
+                                <img ng-src="./images/radioserver.jpg" alt="" class="{{ctrl.nbx_radio_list_class()}}">
+                                <p class="text-info text-center mt-1">{{ctrl.std.csi.radio.rdsl[i].Value.ip}}</p>
+                                <div ng-bind-html="ctrl.nbx_radio_info_services(ctrl.std.csi.radio.rdsl[i].Value)"></div>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-md-6">
+                    <p class="text-info text-center" ><strong translate>Telefonia</strong></p>
+
+                    <div class="row" ng-repeat="equ in ctrl.std.csi.phone.phsl track by $index" ng-if="$index % 2 == 0">
+                        <div class="col-md-6" ng-repeat="i in [$index, $index + 1]"
+                             ng-if="ctrl.std.csi.phone.phsl[i] != null">
+                            <a target="_blank" ng-href="{{ctrl.std.csi.phone.phsl[i].Value.url}}" class="thumbnail" ng-show="true"
+                               style=":hover {text-decoration: none;}">
+                                <img ng-src="./images/phone-focus.jpg" alt="" class="{{ctrl.nbx_phone_list_class()}}">
+                                <p class="text-info text-center mt-1">{{ctrl.std.csi.phone.phsl[i].Value.ip}}</p>
+                                <div ng-bind-html="ctrl.nbx_phone_info_services(ctrl.std.csi.phone.phsl[i].Value)"></div>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>            
+        </div>
+
+
     </div>
 
     <!-- Pantalla de Estado de Abonados PABX -->

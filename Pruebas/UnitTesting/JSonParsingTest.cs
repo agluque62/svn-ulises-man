@@ -61,5 +61,22 @@ namespace UnitTesting
             int locales1 = proxies1 == null ? 0 : proxies1.Where(u => (u.Value<int>("tp") == 5 || u.Value<int>("tp") == 6)
                     && u.Value<int>("std") == 0).Count();
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public class DateClass
+        {
+            public string Id { get; set; }
+            public DateTime TimeStamp { get; set; }
+        }
+        [TestMethod]
+        public void JsonParseDateTest()
+        {
+            DateClass test1 = new DateClass() { Id = "Identificador", TimeStamp = DateTime.Now };
+            string str_test1 = JsonConvert.SerializeObject(test1);
+
+            var test2 = JsonConvert.DeserializeObject<DateClass>(str_test1);
+        }
     }
 }

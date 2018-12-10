@@ -40,7 +40,7 @@ namespace NucleoGeneric
         #region Logs
 
         #region Logs - Base
-        private static StoreFilter filter = new StoreFilter();
+        private static BaseStoreFilter filter = new BaseStoreFilter();
 
         /// <summary>
         /// Utiliza esta funcion para escribir en la consola.
@@ -113,7 +113,12 @@ namespace NucleoGeneric
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
             string key = string.Format("{0}_{1}_{2}", (Int32)inci, idhw, StrParams(parametros));
-            Log<T>(key, LogLevel.Info, String.Format("Historico [{0},{1}] de {2}", inci, thw, idhw), inci, thw, idhw, parametros, lineNumber, caller);
+            /** 20181210. Para que el filtro de incidencias repetidas no afecte a los eventos de PTT y SQH */
+            LogLevel level = inci == eIncidencias.ITO_PTT || 
+                (inci == eIncidencias.IGW_EVENTO && 
+                Array.FindIndex(parametros, e => (e as string).ToLower().Contains("ptt") ||  (e as string).ToLower().Contains("sqh")) >= 0 ) ? LogLevel.Debug : LogLevel.Info;
+
+            Log<T>(key, level, String.Format("Historico [{0},{1}] de {2}", inci, thw, idhw), inci, thw, idhw, parametros, lineNumber, caller);
         }
         /// <summary>
         /// 
@@ -568,14 +573,14 @@ namespace NucleoGeneric
         /// <summary>
         /// 
         /// </summary>
-        protected class StoreFilter
+        protected class BaseStoreFilter
         {
             class StoreFilteData
             {
                 public DateTime timestamp { get; set; }
                 public Int32 repeats { get; set; }
             }
-            public StoreFilter()
+            public BaseStoreFilter()
             {
                 // PttAndSqhFilter = U5kManService.cfgSettings/* U5kManServer.Properties.u5kManServer.Default*/.Historico_PttSqhOnBdt;
                 LogRepeatControlTime = U5kManServer.Properties.u5kManServer.Default.LogRepeatFilterSecs;

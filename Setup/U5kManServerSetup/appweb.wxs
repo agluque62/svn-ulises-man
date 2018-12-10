@@ -217,6 +217,15 @@
             <Component Id="cmp19A4E8A799855BE9EF57B44458AC0877" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
                 <File Id="fil2391BD5D5946CC2CD2C14D6D90297891" KeyPath="yes" Source="$(var.SourcePath)\images\pabxip.png" />
             </Component>
+            <Component Id="cmpDEC5707EA1FA785CAEFFFB25042DC79B" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="fil221BD2E17C559BAAE157EEA6843547BB" KeyPath="yes" Source="$(var.SourcePath)\images\phone-focus-01.jpg" />
+            </Component>
+            <Component Id="cmp62C8E165C2880F6ADF67F048D4EE601F" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="fil19E0AC538FE3960B8F2F87EDB9DF0729" KeyPath="yes" Source="$(var.SourcePath)\images\phone-focus-02.jpg" />
+            </Component>
+            <Component Id="cmp585FAB9DB9F05364C23DFB1EFCEEAB98" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="fil9F13B4EBFC19BDA8C5A34DD69EB5AF57" KeyPath="yes" Source="$(var.SourcePath)\images\phone-focus.jpg" />
+            </Component>
             <Component Id="cmpDB78EA3294CF502402F47D9C70383F8F" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
                 <File Id="filF0BA4AF9B196D95AC7AD0FD757194F59" KeyPath="yes" Source="$(var.SourcePath)\images\radio.jpg" />
             </Component>
@@ -465,6 +474,9 @@
             </Component>
             <Component Id="cmp711F9956D9957A135F2295CA7CC209AF" Directory="dirD24EF8CCDED4C89A8CED71EE1DFB76FF" Guid="*">
                 <File Id="filC4DE6F3EBA04950DCF16E06FB7BB1827" KeyPath="yes" Source="$(var.SourcePath)\simulate\sacta.json" />
+            </Component>
+            <Component Id="cmp7D53E6486986EDDA03135A7EE56B3CC3" Directory="dirD24EF8CCDED4C89A8CED71EE1DFB76FF" Guid="*">
+                <File Id="filF10940CAA18F3EC3EF1393F02B3FF1EB" KeyPath="yes" Source="$(var.SourcePath)\simulate\std - copia (2).json" />
             </Component>
             <Component Id="cmp85E8DCA64CF55239317D5207AB979F3E" Directory="dirD24EF8CCDED4C89A8CED71EE1DFB76FF" Guid="*">
                 <File Id="fil0E129D6CA5F80E537E7F0C7F2B7A8AFE" KeyPath="yes" Source="$(var.SourcePath)\simulate\std - copia.json" />

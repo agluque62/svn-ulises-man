@@ -5,7 +5,7 @@
     Name="U5kManServer"
     Language="1033"
     Version="!(bind.fileVersion.U5kManServer_exe)"
-    Manufacturer="DF Nucleo"
+    Manufacturer="NucleoCC"
     UpgradeCode="55dc56f3-459f-48ff-8c86-7fe468622b8d">
 
     <Package InstallerVersion="200"
@@ -15,7 +15,7 @@
     <Property Id="NETFRAMEWORK452">
       <RegistrySearch Id="NetFramework" Root="HKLM" Type="raw" Name="Release" Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"/>
     </Property>
-    <Property Id="COMPANYFOLDER_NAME" Value="DF Nucleo"></Property>
+    <Property Id="COMPANYFOLDER_NAME" Value="NucleoCC"></Property>
     <Property Id="INSTALLFOLDER_NAME" Value="UlisesV5000SSM"></Property>
     <Property Id="PVERSION" Value="!(bind.fileVersion.U5kManServer_exe)"></Property>
     <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
@@ -53,7 +53,7 @@
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder">
-        <Directory Id="COMPANYFOLDER" Name="DF Nucleo">
+        <Directory Id="COMPANYFOLDER" Name="NucleoCC">
           <Directory Id="INSTALLFOLDER" Name="UlisesV5000SSM" >
             <Component Id="CreateProgramFolder" Guid="{101A449D-B8F2-4B36-880F-0BFC46AF3FA3}">
               <CreateFolder>

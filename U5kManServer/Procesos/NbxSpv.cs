@@ -45,7 +45,6 @@ namespace U5kManServer
                 timer_largo = 0;
             }
         }
-
         // TODO. Falta Incluir PabxService solo cuando está activado...
         /// <summary>
         /// 
@@ -89,8 +88,7 @@ namespace U5kManServer
                     eNbxMngEvents.ERROR);
             }
             return nuevo;
-        }
-        
+        }        
         /// <summary>
         /// 
         /// </summary>
