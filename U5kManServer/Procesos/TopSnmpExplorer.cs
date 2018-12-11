@@ -290,13 +290,6 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        protected void Dispose()
-        {
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="estado"></param>

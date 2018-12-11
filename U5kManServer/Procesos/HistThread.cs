@@ -168,6 +168,7 @@ namespace U5kManServer
                     LogException<HistThread>("", x);
                 }
             }
+            Dispose();
             LogInfo<HistThread>("Finalizado...");
         }
 

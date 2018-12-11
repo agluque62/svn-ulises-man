@@ -12,7 +12,7 @@ namespace Utilities
 {
     public class HttpHelper
     {
-        public static string Get(string ip, string port, string localpath)
+        public static string Get(string ip, string port, string localpath, string defaultReturn="{}")
         {
             try
             {
@@ -34,7 +34,7 @@ namespace Utilities
             catch (Exception )
             {
             }
-            return "{}";
+            return defaultReturn;
         }
     }
 }

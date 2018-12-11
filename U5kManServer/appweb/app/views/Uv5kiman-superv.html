@@ -68,16 +68,22 @@
                             <a ng-href="" class="thumbnail">
                                 <img ng-src="./images/radioserver.jpg" alt="Radio" class="{{ctrl.nbx_radio_std_class()}}" height="128"
                                      ng-click="ctrl.pagina(3)">
-                                <div class="div_titulo">{{ctrl.nbx_radio_name()}}</div>
+                                <div class="nbxip">
+                                    <p>{{ctrl.nbx_radio_name()}}</p>
+                                    <p>{{ctrl.nbx_radio_count()}}</p>
+                                </div>
                             </a>
                         </td>
                         <td class="text-center">
 <!--                        <p class="text-info text-center" translate>Telefonia</p>-->
-                        <a ng-href="" class="thumbnail">
-                            <img ng-src="./images/phone-focus.jpg" alt="Telefonia" class="{{ctrl.nbx_phone_std_class()}}" height="128"
-                                 ng-click="ctrl.pagina(3)">
-                            <div class="div_titulo">{{ctrl.nbx_phone_name()}}</div>
-                        </a>
+                            <a ng-href="" class="thumbnail">
+                                <img ng-src="./images/phone-focus.jpg" alt="Telefonia" class="{{ctrl.nbx_phone_std_class()}}" height="128"
+                                     ng-click="ctrl.pagina(3)">
+                                <div class="nbxip">
+                                    <p >{{ctrl.nbx_phone_name()}}</p>
+                                    <p >{{ctrl.nbx_phone_count()}}</p>
+                                </div>
+                            </a>
                         </td>
                     </tr>
                 </table>

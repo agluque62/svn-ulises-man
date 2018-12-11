@@ -181,15 +181,22 @@ namespace NucleoGeneric
                 {
                     LogFatal<NGThread>(String.Format("Timeout Stopping Thread ({0})", Name));
                 }
-                tm.Dispose();
-                tm = null;
-                //taskObject.Dispose();
-                taskObject= null;
-                cancel.Dispose();
-                cancel = null;
-                LogDebug<NGThread>(String.Format("Thread ({0}) Stopped", Name));
+                else
+                {
+                    LogDebug<NGThread>(String.Format("Thread ({0}) Stopped", Name));
+                }
             }
         }
+        public void StopAsync(Action<Task> cb)
+        {
+            if (cancel != null)
+            {
+                LogDebug<NGThread>(String.Format("Async Stopping Thread ({0})", Name));
+                cancel.Cancel();
+                cb(taskObject);
+            }
+        }
+
         public void Sleep(int iMsec)
         {
             Decimal ticks = (Decimal)(iMsec / 50);
@@ -200,8 +207,8 @@ namespace NucleoGeneric
                 ticks--;
             }
         }
-        
-        protected virtual void Run() 
+
+        protected virtual void Run()
         {
             while (Running)
             {
@@ -218,7 +225,7 @@ namespace NucleoGeneric
 #if DEBUG
                     LogWarn<NGThread>(msg);
 #else
-                LogDebug<NGThread>(msg);
+                    LogDebug<NGThread>(msg);
 #endif
                 });
             });
@@ -234,13 +241,29 @@ namespace NucleoGeneric
             }
         }
 
+        protected void Dispose()
+        {
+            if (tm != null)
+            {
+                tm.Dispose();
+                tm = null;
+            }
+            //taskObject.Dispose();
+            taskObject = null;
+            if (cancel != null)
+            {
+                cancel.Dispose();
+                cancel = null;
+            }
+        }
+
         protected Task taskObject = null;
-        protected CancellationTokenSource cancel=null;
+        protected CancellationTokenSource cancel = null;
         protected TaskTimer timer = null;
         protected TimeMeasurement tm = null;
 
     }
 #endif
 
-            }		// PISoftware
+}		// PISoftware
 

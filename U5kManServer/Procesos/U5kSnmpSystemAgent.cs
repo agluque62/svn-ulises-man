@@ -134,6 +134,7 @@ namespace U5kManServer
                 }
             }            
             SnmpAgentStop();
+            Dispose();
             LogInfo<U5kSnmpSystemAgent>("U5kSnmpSystemAgent stopped...");
         }
 

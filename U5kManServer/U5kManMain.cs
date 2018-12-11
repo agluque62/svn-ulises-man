@@ -70,7 +70,7 @@ namespace U5kManServer
             //bMainServiceThreadExit = true;
             //thMainService.Join(5000);
             BaseCode.Log<U5kManMain>(NLog.LogLevel.Debug, String.Format("Finishing service"), eIncidencias.IGNORE);
-            thMainService.Stop(TimeSpan.FromSeconds(10));
+            thMainService.Stop(TimeSpan.FromSeconds(20));
             BaseCode.Log<U5kManMain>(NLog.LogLevel.Debug, String.Format("Service Finished"), eIncidencias.IGNORE);
 #else
             if (_started)
@@ -107,7 +107,7 @@ namespace U5kManServer
 #if MASTER_SLAVE
             //bMainServiceThreadExit = true;
             //thMainService.Join(5000);
-            thMainService.Stop(TimeSpan.FromSeconds(10));
+            thMainService.Stop(TimeSpan.FromSeconds(20));
 #else
             if (_started == true)
             {
@@ -315,7 +315,7 @@ namespace U5kManServer
             /*****************************************************/
 
             if (U5kManService._main.Running)
-                U5kManService._main.Stop(TimeSpan.FromSeconds(10));
+                U5kManService._main.Stop(TimeSpan.FromSeconds(20));
 
             CheckSactaService(false, null);
             DeactivateService();
@@ -828,7 +828,7 @@ namespace U5kManServer
                     bool main_running = U5kManService._main.Running;
                     if (main_running)
                     {
-                        U5kManService._main.Stop(TimeSpan.FromSeconds(10));
+                        U5kManService._main.Stop(TimeSpan.FromSeconds(20));
                         // TODO. Inicializar _std con los valores convenientes.
 
                         U5KStdGeneral stdg = U5kManService._std.STDG;

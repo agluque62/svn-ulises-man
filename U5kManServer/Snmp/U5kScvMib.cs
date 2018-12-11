@@ -633,13 +633,13 @@ namespace U5kManServer
                         ((SnmpIntObject)(ElementAt(2, 2))).Value = (int)(masternbx != null ? (sg.lstNbx.Count > 1 ? std.Ok : std.Aviso) : std.NoInfo);
 #endif
 #else
-                    Services.CentralServicesMonitor.Monitor.DataGetForSnmpAgent((idRadio, countRadio, idPhone, countPhone) =>
+                    Services.CentralServicesMonitor.Monitor.DataGetForSnmpAgent((idRadio, stdRadio, idPhone, stdPhone) =>
                     {
                         ((SnmpStringObject)(ElementAt(2, 1))).Value = idRadio;
-                        ((SnmpIntObject)(ElementAt(2, 2))).Value = (int)(countRadio == 0 ? std.NoInfo : countRadio == 1 ? std.Aviso : std.Ok);
+                        ((SnmpIntObject)(ElementAt(2, 2))).Value = (int)(stdRadio == "Ok" ? std.Ok : stdRadio == "Warning" ? std.Aviso : std.Alarma);
 
                         ((SnmpStringObject)(ElementAt(7, 1))).Value = idPhone;
-                        ((SnmpIntObject)(ElementAt(7, 2))).Value = (int)(countPhone == 0 ? std.NoInfo : countPhone == 1 ? std.Aviso : std.Ok);
+                        ((SnmpIntObject)(ElementAt(7, 2))).Value = (int)(stdPhone == "Ok" ? std.Ok : stdPhone == "Warning" ? std.Aviso : std.Alarma);
                     });
 #endif
                     /** Datos de PABX */

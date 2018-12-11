@@ -136,6 +136,13 @@ angular.module("Uv5kiman")
             ctrl.std.csi.radio.mas === "" ? "---" : ctrl.std.csi.radio.mas;
         return name;
     };
+    ctrl.nbx_radio_count = function () {
+        var count = ctrl.std === undefined ||
+            ctrl.std.csi === undefined ||
+            ctrl.std.csi.radio === undefined ||
+            ctrl.std.csi.radio.rdsl === undefined ? 0 : ctrl.std.csi.radio.rdsl.length;
+        return "(" + count.toString() + ")";
+    };
     ctrl.nbx_phone_std_class = function () {
         var clase = ctrl.std === undefined || ctrl.std.csi === undefined || ctrl.std.csi.phone === undefined || ctrl.std.csi.phone.std === undefined ? stdc_class[stdc.Error] :
             ctrl.std.csi.phone.std === "Ok" ? stdc_class[stdc.Ok] :
@@ -147,6 +154,13 @@ angular.module("Uv5kiman")
         var name = ctrl.std === undefined || ctrl.std.csi === undefined || ctrl.std.csi.radio === undefined || ctrl.std.csi.phone.mas === undefined ? "???" :
             ctrl.std.csi.phone.mas === "" ? "---" : ctrl.std.csi.phone.mas;
         return name;
+    };
+    ctrl.nbx_phone_count = function () {
+        var count = ctrl.std === undefined ||
+            ctrl.std.csi === undefined ||
+            ctrl.std.csi.phone === undefined ||
+            ctrl.std.csi.phone.phsl === undefined ? 0 : ctrl.std.csi.phone.phsl.length;
+        return "(" + count.toString() + ")";
     };
     ctrl.nbx_radio_list_class = function () {
         return stdc_class[stdc.Ok];

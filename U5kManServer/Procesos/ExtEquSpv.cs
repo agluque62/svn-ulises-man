@@ -38,7 +38,7 @@ namespace U5kManServer.ExtEquSpvSpace
         /// <summary>
         /// 
         /// </summary>
-        protected void Dispose()
+        protected void LocalDispose()
         {
             sips.Dispose();
             LogDebug<ExtEquSpv>("ExtEquSpv Dispose...");
@@ -113,6 +113,7 @@ namespace U5kManServer.ExtEquSpvSpace
                     GoToSleepInTimer();
                 }
             }
+            LocalDispose();
             Dispose();
             LogInfo<ExtEquSpv>("Finalizado...");
         }

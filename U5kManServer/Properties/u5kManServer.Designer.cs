@@ -752,7 +752,7 @@ namespace U5kManServer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("20")]
+        [global::System.Configuration.DefaultSettingValueAttribute("60")]
         public int LogRepeatFilterSecs {
             get {
                 return ((int)(this["LogRepeatFilterSecs"]));

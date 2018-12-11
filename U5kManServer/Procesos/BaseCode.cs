@@ -84,16 +84,12 @@ namespace NucleoGeneric
                 // Clear the string
                 message = message.Replace("'", "").Replace("\"", "");
 
-                /** Filtro de Mensajes Repetidos. No aplica a trazas... */
-                if (level == LogLevel.Debug || level == LogLevel.Trace || filter.ToStore(key) == true)
-                {
-                    LogLogger<T>(level, (type != eIncidencias.IGNORE ? "[" + ((Int32)type).ToString() + "] " : "") + msgOrg + ": " + message);
+                LogLogger<T>(level, (type != eIncidencias.IGNORE ? "[" + ((Int32)type).ToString() + "] " : "") + msgOrg + ": " + message);
 
-                    if (type != eIncidencias.IGNORE)
-                    {
-                        if (HistThread.hproc != null)
-                            HistThread.hproc.AddInci(DateTime.Now, 0, type, (int)thw, idhw, issueMessages);
-                    }
+                if (type != eIncidencias.IGNORE)
+                {
+                    if (HistThread.hproc != null && filter.ToStore(key) == true)
+                        HistThread.hproc.AddInci(DateTime.Now, 0, type, (int)thw, idhw, issueMessages);
                 }
             }
             catch (Exception x)
@@ -114,9 +110,9 @@ namespace NucleoGeneric
         {
             string key = string.Format("{0}_{1}_{2}", (Int32)inci, idhw, StrParams(parametros));
             /** 20181210. Para que el filtro de incidencias repetidas no afecte a los eventos de PTT y SQH */
-            LogLevel level = inci == eIncidencias.ITO_PTT || 
-                (inci == eIncidencias.IGW_EVENTO && 
-                Array.FindIndex(parametros, e => (e as string).ToLower().Contains("ptt") ||  (e as string).ToLower().Contains("sqh")) >= 0 ) ? LogLevel.Debug : LogLevel.Info;
+            LogLevel level = inci == eIncidencias.ITO_PTT ||
+                (inci == eIncidencias.IGW_EVENTO &&
+                Array.FindIndex(parametros, e => (e as string).ToLower().Contains("ptt") || (e as string).ToLower().Contains("sqh")) >= 0) ? LogLevel.Debug : LogLevel.Info;
 
             Log<T>(key, level, String.Format("Historico [{0},{1}] de {2}", inci, thw, idhw), inci, thw, idhw, parametros, lineNumber, caller);
         }
@@ -130,7 +126,7 @@ namespace NucleoGeneric
         /// <param name="issueMessages"></param>
         /// <param name="lineNumber"></param>
         /// <param name="caller"></param>
-        static protected void Log<T>(LogLevel level, String message, 
+        static protected void Log<T>(LogLevel level, String message,
             eIncidencias type, Object[] issueMessages,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
@@ -150,7 +146,7 @@ namespace NucleoGeneric
             string key = string.Format("{0}_{1}_{2}", (Int32)type, "MTTO", msgInci);
             Log<T>(key, level, message, type, eTiposInci.TEH_SISTEMA, "MTTO", new Object[] { msgInci }, lineNumber, caller);
         }
-        
+
         /// <summary>
         /// Utiliza esta función para realizar un log, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
         /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
@@ -160,7 +156,7 @@ namespace NucleoGeneric
         {
             Log<T>(level, message, type, null, lineNumber, caller);
         }
-        
+
         /// <summary>
         /// Utiliza esta función para realizar un log, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
         /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
@@ -184,7 +180,7 @@ namespace NucleoGeneric
         {
             Log<T>(LogLevel.Trace, message, eIncidencias.IGNORE, lineNumber, caller);
         }
-        
+
         ///// <summary>
         ///// Utiliza esta función para realizar un log de tipo TRACE, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
         ///// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
@@ -330,7 +326,7 @@ namespace NucleoGeneric
         static protected void LogError<T>(/*String from, */String message,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
-            Log<T>(/*from, */LogLevel.Error, message/*, U5kiIncidencias.U5kiIncidencia.U5KI_ERROR_GENERIC*/,lineNumber,caller);
+            Log<T>(/*from, */LogLevel.Error, message/*, U5kiIncidencias.U5kiIncidencia.U5KI_ERROR_GENERIC*/, lineNumber, caller);
         }
 
         /// <summary>
@@ -364,7 +360,7 @@ namespace NucleoGeneric
         static protected void LogFatal<T>(/*String from, */Exception ex,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
-            Log<T>(/*from, */LogLevel.Error, ex.Message/*, U5kiIncidencias.U5kiIncidencia.U5KI_ERROR_GENERIC*/,lineNumber,caller);
+            Log<T>(/*from, */LogLevel.Error, ex.Message/*, U5kiIncidencias.U5kiIncidencia.U5KI_ERROR_GENERIC*/, lineNumber, caller);
         }
 
         /// <summary>
@@ -374,7 +370,7 @@ namespace NucleoGeneric
         static protected void LogFatal<T>(/*String from, */String message,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
-            Log<T>(/*from, */LogLevel.Fatal, message/*, U5kiIncidencias.U5kiIncidencia.U5KI_ERROR_GENERIC*/,lineNumber,caller);
+            Log<T>(/*from, */LogLevel.Fatal, message/*, U5kiIncidencias.U5kiIncidencia.U5KI_ERROR_GENERIC*/, lineNumber, caller);
         }
 
         /// <summary>
@@ -384,7 +380,7 @@ namespace NucleoGeneric
         static protected void LogFatal<T>(/*String from, */String message, eIncidencias type,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
-            Log<T>(/*from, */LogLevel.Fatal, message, type,lineNumber,caller);
+            Log<T>(/*from, */LogLevel.Fatal, message, type, lineNumber, caller);
         }
 
         /// <summary>
@@ -414,7 +410,7 @@ namespace NucleoGeneric
             /** */
             if (bRegistroHistorico == true)
             {
-                Log<T>(/*from, */LogLevel.Error, "EXCEPTION ERROR", eIncidencias.IGRL_U5KI_SERVICE_ERROR, new object[] { ex.Message }, lineNumber, caller);                
+                Log<T>(/*from, */LogLevel.Error, "EXCEPTION ERROR", eIncidencias.IGRL_U5KI_SERVICE_ERROR, new object[] { ex.Message }, lineNumber, caller);
             }
         }
 
@@ -429,9 +425,9 @@ namespace NucleoGeneric
             StringBuilder str = new StringBuilder("[");
             if (objs != null)
             {
-                foreach(Object obj in objs)
+                foreach (Object obj in objs)
                 {
-                    str.Append(obj.ToString()+",");
+                    str.Append(obj.ToString() + ",");
                 }
             }
             str.Append("]");
@@ -512,7 +508,7 @@ namespace NucleoGeneric
             {
                 if (!sems.ContainsKey(id))
                     Throw("ManagedSemaphore no creado: " + id);
-                if (sems[id].WaitOne(60000)==false)
+                if (sems[id].WaitOne(60000) == false)
                     Throw(String.Format("Semaforo Pillado: {0}", id));
 
                 owners[id] = System.Threading.Thread.CurrentThread.ManagedThreadId;
@@ -525,7 +521,7 @@ namespace NucleoGeneric
 
                 if (sems[id].WaitOne(0) == true)
                     Throw("ManagedSemaphore. Release fuera de lugar: " + id);
-                
+
                 sems[id].Release();
                 owners[id] = -1;
             }
@@ -554,7 +550,7 @@ namespace NucleoGeneric
                 if (elapsed <= TimeSpan.FromSeconds(0))
                 {
                     if (cb != null) cb();
-                    next = DateTime.Now + interval;                
+                    next = DateTime.Now + interval;
                 }
             }
             public void Message(string msg)
@@ -608,7 +604,6 @@ namespace NucleoGeneric
                     }
 
                     _control[key] = new StoreFilteData() { timestamp = now, repeats = repeats };
-
                     /** Limpiar los eventos que no se repiten... */
                     CleanOld(now);
                     return bStore;
@@ -641,7 +636,7 @@ namespace NucleoGeneric
 
         public static void ConfigCultureSet()
         {
-            U5kGenericos.CurrentCultureSet((idioma)=>
+            U5kGenericos.CurrentCultureSet((idioma) =>
             {
                 LogInfo<BaseCode>("ConfigCultureSet => " + idioma);
             });

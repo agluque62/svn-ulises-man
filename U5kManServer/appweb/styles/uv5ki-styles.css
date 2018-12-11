@@ -1312,7 +1312,14 @@ p.nbxDetail
         color: black;
     }
 
-
+.nbxip {
+    padding-top: 8px;
+}
+    .nbxip p {
+        font-size: 80%;
+        margin: 0;
+        padding: 0;
+    }
 
 .mt-1
 {

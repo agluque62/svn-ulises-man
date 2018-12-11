@@ -270,6 +270,7 @@ namespace U5kManServer
                     GoToSleepInTimer();
                 }
             }
+            Dispose();
             LogInfo<GwExplorer>("Finalizado...");
         }
         /// <summary>

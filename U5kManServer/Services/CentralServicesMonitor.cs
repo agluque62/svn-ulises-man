@@ -169,17 +169,17 @@ namespace U5kManServer.Services
             }
         }
 
-        public void DataGetForSnmpAgent(Action<string, int, string, int> cb)
+        public void DataGetForSnmpAgent(Action<string, string, string, string> cb)
         {
             if (GetDataAccess())
             {
                 var idRadio = RadioServer != null ? RadioServer.ip : "???";
                 var idPhone = PhoneServer != null ? PhoneServer.ip : "???";
-                var countRadio = DataAndStates.Where(e => e.Value.ServerType == "Radio").Count();
-                var countPhone = DataAndStates.Where(e => e.Value.ServerType == "Phone").Count();
+                var stdRadio = GlobalRadioServiceState.ToString();
+                var stdPhone = GlobalPhoneServiceState.ToString();
                 ReleaseDataAccess();
 
-                cb(idRadio, countRadio, idPhone, countPhone);
+                cb(idRadio, stdRadio, idPhone, stdPhone);
             }
         }
 
@@ -391,9 +391,9 @@ namespace U5kManServer.Services
 
                             TraceMsg(2, "Getting Data Of Radio...");
 
-                            string LocalRadioSessionsString = HttpHelper.Get(master.ip, master.WebPort, "/rdsessions");
-                            string LocalRadioMNDataString = HttpHelper.Get(master.ip, master.WebPort, "/gestormn");
-                            string LocalHFRadioDataString = HttpHelper.Get(master.ip, master.WebPort, "/rdhf");
+                            string LocalRadioSessionsString = HttpHelper.Get(master.ip, master.WebPort, "/rdsessions", "[]");
+                            string LocalRadioMNDataString = HttpHelper.Get(master.ip, master.WebPort, "/gestormn", "[]");
+                            string LocalHFRadioDataString = HttpHelper.Get(master.ip, master.WebPort, "/rdhf", "{}");
 
                             if (GetDataAccess())
                             {

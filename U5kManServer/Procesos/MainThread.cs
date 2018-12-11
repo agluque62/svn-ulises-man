@@ -753,25 +753,36 @@ namespace U5kManServer
                     GoToSleepInTimer();
                 }
             }
+
             /** Detener los procesos... */
-            process.ForEach(proc =>
-            {
-                try
+            //process.ForEach(proc =>
+            //{
+            //    try
+            //    {
+            //        if (proc.Running)
+            //        {
+            //            proc.Stop(TimeSpan.FromSeconds(5));
+            //        }
+            //    }
+            //    catch (Exception x)
+            //    {
+            //        LogException<MainThread>(proc.Name, x);
+            //    }
+            //});
+
+            List<Task> task2sync = new List<Task>();
+            process.ForEach(p => {
+                p.StopAsync((t) =>
                 {
-                    if (proc.Running)
-                    {
-                        proc.Stop(TimeSpan.FromSeconds(5));
-                    }
-                }
-                catch (Exception x)
-                {
-                    LogException<MainThread>(proc.Name, x);
-                }
+                    task2sync.Add(t);
+                });
             });
+            Task.WaitAll(task2sync.ToArray(), TimeSpan.FromSeconds(15));
 
 #if !_HAY_NODEBOX__
             MonitorOfServices.Dispose();
 #endif
+            Dispose();
             LogInfo<MainThread>("Finalizado...");
         }
 
