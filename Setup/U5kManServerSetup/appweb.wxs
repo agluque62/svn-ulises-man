@@ -91,6 +91,9 @@
             <Component Id="cmp3E80C8278E291B15CA67FDA6A7014D5D" Directory="dir70D1689F8EA88A0A0E9828B65D117C73" Guid="*">
                 <File Id="fil72F08E1EE2006087C73E588D735FDCE2" KeyPath="yes" Source="$(var.SourcePath)\app\views\Uv5kiman-ope.html" />
             </Component>
+            <Component Id="cmp19F4CB5A1F163805815CD0F1D7B5CDED" Directory="dir70D1689F8EA88A0A0E9828B65D117C73" Guid="*">
+                <File Id="fil397B219ED6ECEB9E23F26B8887B51636" KeyPath="yes" Source="$(var.SourcePath)\app\views\Uv5kiman-superv - copia.html" />
+            </Component>
             <Component Id="cmp6958B5E9545FD75C7728F50197049BB9" Directory="dir70D1689F8EA88A0A0E9828B65D117C73" Guid="*">
                 <File Id="fil8B88F39611C38CE44E5B8AC5F492C2E2" KeyPath="yes" Source="$(var.SourcePath)\app\views\Uv5kiman-superv.html" />
             </Component>
@@ -226,6 +229,12 @@
             <Component Id="cmp585FAB9DB9F05364C23DFB1EFCEEAB98" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
                 <File Id="fil9F13B4EBFC19BDA8C5A34DD69EB5AF57" KeyPath="yes" Source="$(var.SourcePath)\images\phone-focus.jpg" />
             </Component>
+            <Component Id="cmp58110201D92D648D3C30DCA65EB36B93" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="fil9D3B53256D9AF809EB8E7E882A95E1DD" KeyPath="yes" Source="$(var.SourcePath)\images\radio-server-new - copia.png" />
+            </Component>
+            <Component Id="cmp53028897F755931FAC8FEF084F93BAC9" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="filA31BD9DA9E3FF4C876D9D0127BEF3920" KeyPath="yes" Source="$(var.SourcePath)\images\radio-server-new.png" />
+            </Component>
             <Component Id="cmpDB78EA3294CF502402F47D9C70383F8F" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
                 <File Id="filF0BA4AF9B196D95AC7AD0FD757194F59" KeyPath="yes" Source="$(var.SourcePath)\images\radio.jpg" />
             </Component>
@@ -243,6 +252,9 @@
             </Component>
             <Component Id="cmpE9D0F90DEE593DBFEC0B4EC81886E141" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
                 <File Id="filD036A7A7523D9840BC2D8D12B33AB95C" KeyPath="yes" Source="$(var.SourcePath)\images\radiorh_rx.jpg" />
+            </Component>
+            <Component Id="cmp2E748F9FA45B2174C4C11EBDDB9AF7C9" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="fil410DC269DE797B1E4228E5551F4BEADF" KeyPath="yes" Source="$(var.SourcePath)\images\radioserver - copia.jpg" />
             </Component>
             <Component Id="cmpCC55251DFA7A638C0AC917BF1DA79AE3" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
                 <File Id="fil8730AC87AB6FC394F29C2FCF2541662B" KeyPath="yes" Source="$(var.SourcePath)\images\radioserver.jpg" />

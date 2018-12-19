@@ -61,27 +61,33 @@
                          ng-click="ctrl.pagina(3)">
                     <div class="div_titulo">{{ctrl.std.nbx.name}}</div>
                 </a>
+
                 <table class="table" ng-show="ctrl.nbx_splitted_enable==true">
                     <tr>
                         <td class="text-center">
                             <!--<p class="text-info text-center" translate>Radio</p>-->
+                            
                             <a ng-href="" class="thumbnail">
-                                <img ng-src="./images/radioserver.jpg" alt="Radio" class="{{ctrl.nbx_radio_std_class()}}" height="128"
-                                     ng-click="ctrl.pagina(3)">
+<div class="nbx-img-container">                                                            
+                                <img ng-src="./images/radio-server-new.png" alt="Radio" class="{{ctrl.nbx_radio_std_class()}}"  ng-click="ctrl.pagina(3)" width="100%">
+                                <div class="nbx-img-bottom-right">{{ctrl.nbx_radio_count()}}</div>
+</div>
                                 <div class="nbxip">
                                     <p>{{ctrl.nbx_radio_name()}}</p>
-                                    <p>{{ctrl.nbx_radio_count()}}</p>
                                 </div>
                             </a>
+
                         </td>
                         <td class="text-center">
 <!--                        <p class="text-info text-center" translate>Telefonia</p>-->
                             <a ng-href="" class="thumbnail">
-                                <img ng-src="./images/phone-focus.jpg" alt="Telefonia" class="{{ctrl.nbx_phone_std_class()}}" height="128"
-                                     ng-click="ctrl.pagina(3)">
+<div class="nbx-img-container">                                                            
+
+                                <img ng-src="./images/phone-focus.jpg" alt="Telefonia" class="{{ctrl.nbx_phone_std_class()}}"   ng-click="ctrl.pagina(3)" width="100%">
+                                <div class="nbx-img-bottom-right">{{ctrl.nbx_phone_count()}}</div>
+</div>
                                 <div class="nbxip">
                                     <p >{{ctrl.nbx_phone_name()}}</p>
-                                    <p >{{ctrl.nbx_phone_count()}}</p>
                                 </div>
                             </a>
                         </td>
@@ -217,7 +223,7 @@
                              ng-if="ctrl.std.csi.radio.rdsl[i] != null">
                             <a target="_blank" ng-href="{{ctrl.std.csi.radio.rdsl[i].Value.url}}" class="thumbnail" ng-show="true"
                                style=":hover {text-decoration: none;}">
-                                <img ng-src="./images/radioserver.jpg" alt="" class="{{ctrl.nbx_radio_list_class()}}">
+                                <img ng-src="./images/radio-server-new.png" alt="" class="{{ctrl.nbx_radio_list_class()}}">
                                 <p class="text-info text-center mt-1">{{ctrl.std.csi.radio.rdsl[i].Value.ip}}</p>
                                 <div ng-bind-html="ctrl.nbx_radio_info_services(ctrl.std.csi.radio.rdsl[i].Value)"></div>
                             </a>

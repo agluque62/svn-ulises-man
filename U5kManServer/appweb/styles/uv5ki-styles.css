@@ -1325,3 +1325,17 @@ p.nbxDetail
 {
     margin-top: 1em;
 }
+
+/**/
+.nbx-img-container{
+  position: relative;
+  text-align: center;
+  color: BlueViolet;    
+}
+
+.nbx-img-bottom-right {
+  position: absolute;
+  bottom: 0px;
+  right: 2px;
+  /*border: 1px solid;*/
+}
