@@ -148,6 +148,30 @@
             <Component Id="cmpAA5FB2B29C3CD0071AC7454AB4C4B79C" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
                 <File Id="filB6870EAD7189850EC5B76F11237E5985" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo1.png" />
             </Component>
+            <Component Id="cmpD85C45FE7CC1D57732699313158C523C" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="fil9E254F30EC5023D34F970DF90FA25AF4" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo2-1.png" />
+            </Component>
+            <Component Id="cmp6EA7C1D601BF2B8FEC5F0016F073E712" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="fil8269C9B3711E31162049FC5BD9B27D12" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo2-2.png" />
+            </Component>
+            <Component Id="cmpD0BF461B2C732D56529EA5B78F2B3A8D" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="filB2BBAA8683DDF84AE585241EA342D466" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo2-3.png" />
+            </Component>
+            <Component Id="cmp28817E09A5898734BDE9A0F311F8AA8B" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="fil3B1BC787A01A77818CC7B7510BDD9E36" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo2-4.png" />
+            </Component>
+            <Component Id="cmp2E37997C12CEBD447A8555C86CF9A0F5" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="fil29F5BC54B727D9CC6E3BEC62F6677A6D" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo2-5.png" />
+            </Component>
+            <Component Id="cmp4BBC3D1F5AC24F8BCD96FB82E5E2BAF0" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="fil1A95D7D0F6F2F76DC893DC71D4C46D58" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo2-6.png" />
+            </Component>
+            <Component Id="cmp221224C63F3309B198D96A614EB5177E" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="filC2F45833F9D1EA6ACC7E7E819E4962DB" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo2-7.png" />
+            </Component>
+            <Component Id="cmp8234260EE84592D21A701FC471B84EB5" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="filBD5D970F94335134A2048D5CFE649908" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo2-8.png" />
+            </Component>
             <Component Id="cmp20243BBFF8FF3102B5337B8034DB0436" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
                 <File Id="fil9F3ABBC1A6F5229A1EF2E41A0C153693" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo2.png" />
             </Component>

@@ -220,6 +220,10 @@
                         File = "[#U5kManServer.config]"
                         ElementPath="/configuration/userSettings/U5kManServer.Properties.u5kManServer/setting[\[]@name='Snmp_AgentPort'[\]]/value"
                         Value="[SNMPAGPORT]"/>
+        <util:XmlFile Id="Gdt" Action="setValue"
+                        File = "[#U5kManServer.config]"
+                        ElementPath="/configuration/applicationSettings/U5kManServer.Properties.u5kManServer/setting[\[]@name='GatewaysDualityType'[\]]/value"
+                        Value="[GDT]"/>
       </Component>
       <Component Id="nlog_config" Guid="{6B208E0B-DADA-4740-9C73-190B2FC69AB5}">
         <File Id="NLog.config" Name="NLog.config"></File>
@@ -233,6 +237,8 @@
 
           <RegistryValue Name='LANG_Property' Value='[LANG]' Type='string' />
           <RegistryValue Name='SNMPAGPORT_Property' Value='[SNMPAGPORT]' Type='string' />
+          
+          <RegistryValue Name='GDT_Property' Value='[GDT]' Type='string' />
         </RegistryKey>
       </Component>
     </ComponentGroup>

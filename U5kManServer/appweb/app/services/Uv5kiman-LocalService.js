@@ -190,8 +190,9 @@ angular
             , texto_tipogw: function (tp) {
                 if (tp === 0)
                     return $translate('LVS_TYP_00')/*"Simple"*/;
-                else if (tp === 1)
-                    return $translate('LVS_TYP_01')/*"CPU Dual"*/;
+                else if (tp === 1) {
+                    return gwDualityType() == 0 ? $translate('LVS_TYP_01')/*"CPU Dual"*/ : $translate('LVS_TYP_02')/*"ITF Dual"*/;
+                }
                 else if (tp === 2)
                     return $translate('LVS_TYP_02')/*"ITF Dual"*/;
                 else if (tp == "")
@@ -383,6 +384,9 @@ angular
 			    LocalConfigOnServer.sound = SoundOnClient === null ? false : SoundOnClient==='true';
 				return LocalConfigOnServer.sound;
 			}
+            , GatewayDualityType: function (newtype) {
+                return gwDualityType(newtype);
+            }
         };
 
         /** */
@@ -465,6 +469,20 @@ angular
             }
 
             return found;
+        }
+
+        
+        function gwDualityType(newtype) {
+
+            if (newtype != undefined) {
+                if (newtype === 0) {
+                    localStorage.GwDualityType = 0;
+                }
+                else {
+                    localStorage.GwDualityType = 1;
+                }
+            }
+            return localStorage.GwDualityType == undefined ? 0 : localStorage.GwDualityType;
         }
 
     });

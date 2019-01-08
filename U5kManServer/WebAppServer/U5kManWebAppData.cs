@@ -504,6 +504,8 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         public List<GWData> lista = new List<GWData>();
 
+        public int gdt { get; set; }
+
         public U5kManWADGws(bool bGenerate = false)
         {
             if (bGenerate)
@@ -539,6 +541,8 @@ namespace U5kManServer.WebAppServer
                     cpu0 = gw.Dual == false ? (gw.gwA.presente ? 1 : 0) : (gw.gwA.presente ? (gw.gwA.Seleccionada ? 1 : 2) : (0)),
                     cpu1 = gw.Dual == false ? (0) : (gw.gwB.presente ? (gw.gwB.Seleccionada ? 1 : 2) : (0))
                 }).ToList();
+
+                gdt = Properties.u5kManServer.Default.GatewaysDualityType;
 #endif
             }
         }

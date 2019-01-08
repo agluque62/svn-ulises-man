@@ -326,6 +326,12 @@ angular.module("Uv5kiman")
         ["./images/gw-tipo1-3.png", "./images/gw-tipo1-8.png", "./images/gw-tipo1-5.png"],
         ["./images/gw-tipo1-4.png", "./images/gw-tipo1-6.png", "./images/gw-tipo1-7.png"]
     ];
+    var Type2Images = [
+        ["./images/gw-tipo2.png", "./images/gw-tipo2-1.png", "./images/gw-tipo2-2.png"],
+        ["./images/gw-tipo2-3.png", "./images/gw-tipo2-8.png", "./images/gw-tipo2-5.png"],
+        ["./images/gw-tipo2-4.png", "./images/gw-tipo2-6.png", "./images/gw-tipo2-7.png"]
+    ];
+
     ctrl.gw_img = function (item) {
 
         //return item.tipo==0 ? "./images/gw-tipo0.png" :
@@ -341,7 +347,10 @@ angular.module("Uv5kiman")
         else if (item.tipo == 1) {
             var row = item.cpu0 >= 0 && item.cpu0 < 3 ? item.cpu0 : 0;
             var col = item.cpu1 >= 0 && item.cpu1 < 3 ? item.cpu1 : 0;
-            return Type1Images[row][col];
+            if ($lserv.GatewayDualityType()==0)
+                return Type1Images[row][col];
+            else
+                return Type2Images[row][col];
         }
     };
 
@@ -601,6 +610,8 @@ angular.module("Uv5kiman")
 				return a.name > b.name ? 1 : a.name < b.name ? -1 : 0;
 			});
             // console.log(ctrl.gws);
+            /** Para el tipo dualidad de pasarelas */
+            localStorage.GwDualityType = response.data.gdt;
         }
         , function (response) {
             console.log(response);
