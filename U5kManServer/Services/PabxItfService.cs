@@ -15,11 +15,12 @@ using Newtonsoft.Json;
 
 using Utilities;
 using NucleoGeneric;
+using System.Threading.Tasks;
 
 namespace U5kManServer
 {
     public enum ServiceStatus { Running, Stopped, Disabled }
-    
+
     /// <summary>
     /// 
     /// </summary>
@@ -32,27 +33,15 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        protected bool IsOperative
-        {
-            get
-            {
-                return (U5kManService._Master == true && HayPbx);
-            }
-        }
+        protected bool IsOperative { get => U5kManService._Master == true && HayPbx; }
         /// <summary>
         /// 
         /// </summary>
-        public new string Name
-        {
-            get { return "PabxItfService"; }
-        }
+        public new string Name { get => "PabxItfService"; }
         /// <summary>
         /// 
         /// </summary>
-        public ServiceStatus Status
-        {
-            get { return _Status; }
-        }
+        public ServiceStatus Status { get => _Status; }
         /// <summary>
         /// 
         /// </summary>
@@ -62,42 +51,45 @@ namespace U5kManServer
             {
                 LogInfo<PabxItfService>(String.Format("{0}: Iniciando Servicio...", Name));
 
-                U5kManService._std.STDG.stdPabx.Estado = std.NoInfo;
-
-                PbxIp = U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString();
-                HayPbx = U5kManService.PbxEndpoint != null;
-                _Status = ServiceStatus.Running;
-                _WorkingThread.Start();
-
-                _TimerPbax = new Timer();
-                _TimerPabxSimulada = new Timer(5000);
-                
-                // Inicializar WebSocket. 
-                if (Properties.u5kManServer.Default.PabxSimulada)
+                GlobalServices.GetWriteAccess((data) =>
                 {
-                    _TimerPabxSimulada.AutoReset = false;
-                    _TimerPabxSimulada.Elapsed += OnTimePabxSimuladaElapsed;
-                    _TimerPabxSimulada.Enabled = true;
-                }
-                else
-                {
-                    PabxUrl = "ws://" + PbxIp + ":" + Properties.u5kManServer.Default.PabxWsPort +
-                        "/pbx/ws?login_user=sa&login_password=" + Properties.u5kManServer.Default.PabxSaPwd + "&user=*&registered=True&status=True&line=*";
-                    _pabxws = new WebSocket(PabxUrl);
-                    _pabxws.Opened += new EventHandler(websocket_Opened);
-                    _pabxws.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs>(websocket_Error);
-                    _pabxws.Closed += new EventHandler(websocket_Closed);
-                    _pabxws.MessageReceived += new EventHandler<MessageReceivedEventArgs>(websocket_MessageReceived);
-                    _pabxStatus = ePabxStatus.epsDesconectado;
-                }
+                    data.STDG.stdPabx.Estado = std.NoInfo;
 
-                _TimerPbax.Interval = 5000;
-                _TimerPbax.AutoReset = false;
-                _TimerPbax.Elapsed += OnTimePabxElapsed;
+                    PbxIp = U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString();
+                    HayPbx = U5kManService.PbxEndpoint != null;
+                    _Status = ServiceStatus.Running;
+                    _WorkingThread.Start();
 
-                Init();
-                LogInfo<PabxItfService>(Name + ": Servicio Iniciado.");
-                base.Start();   // salir = false; // Compatibilidad con IsRunning
+                    _TimerPbax = new Timer();
+                    _TimerPabxSimulada = new Timer(5000);
+
+                    // Inicializar WebSocket. 
+                    if (Properties.u5kManServer.Default.PabxSimulada)
+                    {
+                        _TimerPabxSimulada.AutoReset = false;
+                        _TimerPabxSimulada.Elapsed += OnTimePabxSimuladaElapsed;
+                        _TimerPabxSimulada.Enabled = true;
+                    }
+                    else
+                    {
+                        PabxUrl = "ws://" + PbxIp + ":" + Properties.u5kManServer.Default.PabxWsPort +
+                            "/pbx/ws?login_user=sa&login_password=" + Properties.u5kManServer.Default.PabxSaPwd + "&user=*&registered=True&status=True&line=*";
+                        _pabxws = new WebSocket(PabxUrl);
+                        _pabxws.Opened += new EventHandler(Websocket_Opened);
+                        _pabxws.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs>(Websocket_Error);
+                        _pabxws.Closed += new EventHandler(Websocket_Closed);
+                        _pabxws.MessageReceived += new EventHandler<MessageReceivedEventArgs>(Websocket_MessageReceived);
+                        _pabxStatus = EPabxStatus.epsDesconectado;
+                    }
+
+                    _TimerPbax.Interval = 5000;
+                    _TimerPbax.AutoReset = false;
+                    _TimerPbax.Elapsed += OnTimePabxElapsed;
+
+                    Init();
+                    LogInfo<PabxItfService>(Name + ": Servicio Iniciado.");
+                    base.Start();   // salir = false; // Compatibilidad con IsRunning
+                }, false);
                 return true;
             }
             catch (Exception ex)
@@ -112,15 +104,14 @@ namespace U5kManServer
         /// </summary>
         public override void Stop(TimeSpan timeout)
         {
-            Action stopbase = () => { base.Stop(TimeSpan.FromSeconds(5)); };
-
+            Action stopbase = () => { base.Stop(timeout); };
             List<Tuple<bool, Action>> ConditionalStopActions = new List<Tuple<bool, Action>>()
             {
                 new Tuple<bool, Action>(_Status == ServiceStatus.Running, Dispose),
                 new Tuple<bool, Action>(true, _WorkingThread.Stop),
                 new Tuple<bool, Action>(true, stopbase),
             };
-            
+
             LogInfo<PabxItfService>("Iniciando parada servicio.");
 
             ConditionalStopActions.ForEach(action =>
@@ -136,73 +127,54 @@ namespace U5kManServer
                 }
             });
             _Status = ServiceStatus.Stopped;
-
-            //try
-            //{
-            //    if (_Status == ServiceStatus.Running)
-            //    {
-            //        Dispose();
-            //    }
-            //    _WorkingThread.Stop();
-            //    base.Stop();
-            //}
-            //catch (Exception x)
-            //{
-            //    LogException<PabxItfService>("", x);
-            //}
-            //finally 
-            //{
-            //    _Status = ServiceStatus.Stopped;
-            //}
             LogInfo<PabxItfService>("Servicio Detenido.");
         }
         /// <summary>
         /// 
         /// </summary>
-        public string PabxUrl
+        /// <param name="cb"></param>
+        public override void StopAsync(Action<Task> cb)
         {
-            get;
-            set;
+            Stop(TimeSpan.FromSeconds(5));
         }
-
-
-        #region Formatos de Tablas..
-
         /// <summary>
         /// 
         /// </summary>
-        class pabxParamInfo
+        public string PabxUrl { get; set; }
+
+        #region Formatos de Tablas..
+        /// <summary>
+        /// 
+        /// </summary>
+        class PabxParamInfo
         {
             // Evento Register
-            public string registered { get; set; }
-            public string user { get; set; }
+            public string Registered { get; set; }
+            public string User { get; set; }
             // Evento Status,
-            public long time { get; set; }
-            public string other_number { get; set; }
-            public string status { get; set; }
+            public long Time { get; set; }
+            public string Other_number { get; set; }
+            public string Status { get; set; }
             // public string user { get; set; }
         };
-
-        class pabxEvent
+        class PabxEvent
         {
-            public string jsonrpc { get; set; }
-            public string method { get; set; }
-            public pabxParamInfo parametros { get; set; }
+            public string Jsonrpc { get; set; }
+            public string Method { get; set; }
+            public PabxParamInfo Parametros { get; set; }
         };
-
         #endregion
 
         #region Private Members
-
         /// <summary>
         /// 
         /// </summary>
-        enum ePabxStatus { epsDesconectado, epsConectando, epsConectado };
+        enum EPabxStatus { epsDesconectado, epsConectando, epsConectado };
         /// <summary>
         /// 
         /// </summary>
         //private bool _Master = false;
-        private ePabxStatus _pabxStatus = ePabxStatus.epsDesconectado;
+        private EPabxStatus _pabxStatus = EPabxStatus.epsDesconectado;
         /// <summary>
         /// 
         /// </summary>
@@ -214,7 +186,7 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        private WebSocket _pabxws=null;
+        private WebSocket _pabxws = null;
         /// <summary>
         /// 
         /// </summary>
@@ -223,41 +195,20 @@ namespace U5kManServer
 
         private bool HayPbx { get; set; }
         private string PbxIp { get; set; }
-
-        private string InfoString
-        {
-            get
-            {
-                return String.Format("HayPbx={0}, PbxUrl={1}, Estado={2}", HayPbx, PabxUrl, _pabxStatus);
-            }
-        }
-        
+        private string InfoString { get => String.Format("HayPbx={0}, PbxUrl={1}, Estado={2}", HayPbx, PabxUrl, _pabxStatus); }
         #endregion
 
         #region Callbacks
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void websocket_Opened(object sender, EventArgs e)
+        private void Websocket_Opened(object sender, EventArgs e)
         {
             U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_opened");
             if (IsOperative)
             {
-                //_WorkingThread.Enqueue("websocket_Opened", delegate()
-                //{
-                //    U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_opened enqueue");
-                //    try
-                //    {
-                //        LogInfo<PabxItfService>("WebSocket Abierto en " + PabxUrl);
-                //    }
-                //    catch (Exception x)
-                //    {
-                //        LogException<PabxItfService>("", x);
-                //    }
-                //});
             }
             LogInfo<PabxItfService>("WebSocket Abierto en " + PabxUrl);
         }
@@ -266,48 +217,35 @@ namespace U5kManServer
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void websocket_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
+        private void Websocket_Error(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
         {
             U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_error");
             if (IsOperative)
             {
-                //_WorkingThread.Enqueue("websocket_Error", delegate()
-                //{
-                //    try
-                //    {
-                //        U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_error enqueue");
-                //        LogError<PabxItfService>("WebSocketError en " + PabxUrl + ": " + e.Exception.Message);
-                //    }
-                //    catch (Exception x)
-                //    {
-                //        LogException<PabxItfService>("", x);
-                //    }
-                //});
             }
             LogError<PabxItfService>("WebSocketError en " + PabxUrl + ": " + e.Exception.Message);
         }
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void websocket_Closed(object sender, EventArgs e)
+        private void Websocket_Closed(object sender, EventArgs e)
         {
             U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_closed");
 
-            _WorkingThread.Enqueue("websocket_Closed", delegate()
+            _WorkingThread.Enqueue("websocket_Closed", delegate ()
             {
                 U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_closed enqueue");
-                if (U5kManService._std.wrAccAcquire())
+
+                GlobalServices.GetWriteAccess((data) =>
                 {
+                    U5KStdGeneral stdg = data.STDG;
                     try
                     {
                         if (IsOperative)
                         {
-                            _pabxStatus = ePabxStatus.epsDesconectado;
-
-                            U5KStdGeneral stdg = U5kManService._std.STDG;
+                            _pabxStatus = EPabxStatus.epsDesconectado;
 
                             if (stdg.stdPabx.Estado != std.NoInfo)
                                 RecordEvent<PabxItfService>(DateTime.Now, U5kBaseDatos.eIncidencias.IGRL_U5KI_SERVICE_ERROR, U5kBaseDatos.eTiposInci.TEH_SISTEMA, "SPV",
@@ -317,41 +255,32 @@ namespace U5kManServer
                             // stdg.stdPabx.name = idiomas.strings.PBX_Desconocida/*"Desconocido"*/;
 
                             /* Desregistrar. */
-                            List<Uv5kManDestinosPabx.DestinoPabx> stdpbxs = U5kManService._std.STDPBXS;
+                            List<Uv5kManDestinosPabx.DestinoPabx> stdpbxs = data.STDPBXS;
                             stdpbxs.ForEach(d => d.Estado = std.NoInfo);
-
-                            /** Actualizar Estados */
-                            U5kManService._std.STDPBXS = stdpbxs;
-                            U5kManService._std.STDG = stdg;
                         }
                     }
                     catch (Exception x)
                     {
                         LogException<PabxItfService>("", x);
                     }
-                    finally
-                    {
-                        U5kManService._std.wrAccRelease();
-                    }
-                }
+                });
             });
             LogInfo<PabxItfService>("WebSocket Cerrado en " + PabxUrl);
         }
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void websocket_MessageReceived(object sender, MessageReceivedEventArgs e)
+        private void Websocket_MessageReceived(object sender, MessageReceivedEventArgs e)
         {
             U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_msg");
 
-            _WorkingThread.Enqueue("websocket_MessageReceived", delegate()
+            _WorkingThread.Enqueue("websocket_MessageReceived", delegate ()
             {
                 U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_msg enqueue");
                 // Como este evento puede tocar la tabla de estado, adquiero el acceso.
-                if (U5kManService._std.wrAccAcquire())
+                GlobalServices.GetWriteAccess((data) =>
                 {
                     try
                     {
@@ -361,15 +290,15 @@ namespace U5kManServer
 
                             if (msg.StartsWith("{"))
                             {
-                                pabxEvent _evento = JsonConvert.DeserializeObject<pabxEvent>(msg);
-                                ProcessEvent(_evento);
+                                PabxEvent _evento = JsonConvert.DeserializeObject<PabxEvent>(msg);
+                                ProcessEvent(data, _evento);
                             }
                             else if (msg.StartsWith("["))
                             {
-                                pabxEvent[] _eventos = JsonConvert.DeserializeObject<pabxEvent[]>(msg);
-                                foreach (pabxEvent _evento in _eventos)
+                                PabxEvent[] _eventos = JsonConvert.DeserializeObject<PabxEvent[]>(msg);
+                                foreach (PabxEvent _evento in _eventos)
                                 {
-                                    ProcessEvent(_evento);
+                                    ProcessEvent(data, _evento);
                                 }
                             }
                         }
@@ -378,16 +307,11 @@ namespace U5kManServer
                     {
                         LogException<PabxItfService>("", x);
                     }
-                    finally
-                    {
-                        U5kManService._std.wrAccRelease();
-                    }
-                }
+                });
             });
-            
+
             LogTrace<PabxItfService>(String.Format("WebSocket en {0}: Mensaje Recibido: {1}", PabxUrl, e.Message));
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -397,107 +321,97 @@ namespace U5kManServer
         {
             U5kGenericos.TraceCurrentThread(this.GetType().Name + " TimePbxElapsed");
 
-            _WorkingThread.Enqueue("OnTimePabxElapsed", delegate()
+            _WorkingThread.Enqueue("OnTimePabxElapsed", delegate ()
             {
                 U5kGenericos.TraceCurrentThread(this.GetType().Name + " TimePbxElapsed enqueue");
                 ConfigCultureSet();
-                if (U5kManService._std.wrAccAcquire())
+                try
                 {
-                    try
+                    if (IsOperative)
                     {
-                        if (IsOperative)
+                        if (Properties.u5kManServer.Default.PabxSimulada == false)
                         {
-                            //U5kGenericos.SetCurrentCulture();
-                            if (Properties.u5kManServer.Default.PabxSimulada == false)
+                            /** 20181114. Supervisa los cambios de configuracion */
+                            ChangeConfigSpv(() =>
                             {
-                                
-                                /** 20181114. Supervisa los cambios de configuracion */
-                                ChangeConfigSpv(() =>
+                                GlobalServices.GetWriteAccess((gdata) =>
                                 {
-                                    U5KStdGeneral stdg = U5kManService._std.STDG;
-                                    stdg.stdPabx.Estado = std.NoInfo;
-                                    U5kManService._std.STDG = stdg;
-                                    if (_pabxStatus != ePabxStatus.epsDesconectado)
-                                    {
-                                        try
-                                        {
-                                            _pabxws.Close();
-                                        }
-                                        finally
-                                        {
-                                        }
-                                    }
-
-                                    PbxIp = U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString();
-                                    PabxUrl = "ws://" + PbxIp + ":" + Properties.u5kManServer.Default.PabxWsPort +
-                                        "/pbx/ws?login_user=sa&login_password=" + Properties.u5kManServer.Default.PabxSaPwd + "&user=*&registered=True&status=True&line=*";
-                                    HayPbx = U5kManService.PbxEndpoint != null;
-                                    _pabxws = new WebSocket(PabxUrl);
-                                    _pabxws.Opened += new EventHandler(websocket_Opened);
-                                    _pabxws.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs>(websocket_Error);
-                                    _pabxws.Closed += new EventHandler(websocket_Closed);
-                                    _pabxws.MessageReceived += new EventHandler<MessageReceivedEventArgs>(websocket_MessageReceived);
-                                    _pabxStatus = ePabxStatus.epsDesconectado;
-
-                                    LogInfo<PabxItfService>(Name + ": Servicio Reinicializado por cambio de configuracion.");
+                                    gdata.STDG.stdPabx.Estado = std.NoInfo;
                                 });
 
-                                switch (_pabxStatus)
+                                if (_pabxStatus != EPabxStatus.epsDesconectado)
                                 {
-                                    case ePabxStatus.epsDesconectado:
-                                        if (Ping(PbxIp, _pabxStatus))
-                                        {
-                                            _pabxws.Open();
-                                            _pabxStatus = ePabxStatus.epsConectando;
-                                        }
-                                        break;
-
-                                    case ePabxStatus.epsConectando:
-                                        /** 20181114. Han pasado 5 segundos sin respuesta. Fuerzo otro ping....*/
-                                        _pabxStatus = ePabxStatus.epsDesconectado;
+                                    try
+                                    {
                                         _pabxws.Close();
-                                        break;
+                                    }
+                                    finally
+                                    {
+                                    }
+                                }
 
-                                    case ePabxStatus.epsConectado:
-                                        if (!Ping(PbxIp, _pabxStatus))
+                                PbxIp = U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString();
+                                PabxUrl = "ws://" + PbxIp + ":" + Properties.u5kManServer.Default.PabxWsPort +
+                                    "/pbx/ws?login_user=sa&login_password=" + Properties.u5kManServer.Default.PabxSaPwd + "&user=*&registered=True&status=True&line=*";
+                                HayPbx = U5kManService.PbxEndpoint != null;
+                                _pabxws = new WebSocket(PabxUrl);
+                                _pabxws.Opened += new EventHandler(Websocket_Opened);
+                                _pabxws.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs>(Websocket_Error);
+                                _pabxws.Closed += new EventHandler(Websocket_Closed);
+                                _pabxws.MessageReceived += new EventHandler<MessageReceivedEventArgs>(Websocket_MessageReceived);
+                                _pabxStatus = EPabxStatus.epsDesconectado;
+
+                                LogInfo<PabxItfService>(Name + ": Servicio Reinicializado por cambio de configuracion.");
+                            });
+
+                            switch (_pabxStatus)
+                            {
+                                case EPabxStatus.epsDesconectado:
+                                    if (Ping(PbxIp, _pabxStatus))
+                                    {
+                                        _pabxws.Open();
+                                        _pabxStatus = EPabxStatus.epsConectando;
+                                    }
+                                    break;
+
+                                case EPabxStatus.epsConectando:
+                                    /** 20181114. Han pasado 5 segundos sin respuesta. Fuerzo otro ping....*/
+                                    _pabxStatus = EPabxStatus.epsDesconectado;
+                                    _pabxws.Close();
+                                    break;
+
+                                case EPabxStatus.epsConectado:
+                                    if (!Ping(PbxIp, _pabxStatus))
+                                    {
+                                        LogWarn<PabxItfService>("Fallo de Ping....Cierro WS");
+                                        _pabxStatus = EPabxStatus.epsDesconectado;
+                                        _pabxws.Close();
+
+                                        GlobalServices.GetWriteAccess((gdata) =>
                                         {
-                                            LogWarn<PabxItfService>("Fallo de Ping....Cierro WS");
-
-                                            _pabxStatus = ePabxStatus.epsDesconectado;
-
-                                            U5KStdGeneral stdg = U5kManService._std.STDG;
-                                            if (stdg.stdPabx.Estado != std.NoInfo)
+                                            if (gdata.STDG.stdPabx.Estado != std.NoInfo)
                                                 RecordEvent<PabxItfService>(DateTime.Now, U5kBaseDatos.eIncidencias.IGRL_U5KI_SERVICE_ERROR, U5kBaseDatos.eTiposInci.TEH_SISTEMA, "SPV",
                                                     Params(idiomas.strings.PBX_Desconectada/*"PBX Desconectada"*/, "", "", ""));
-                                            stdg.stdPabx.Estado = std.NoInfo;
-                                            // stdg.stdPabx.name = idiomas.strings.PBX_Desconocida/*"Desconocido"*/;
+
+                                            gdata.STDG.stdPabx.Estado = std.NoInfo;
+
                                             /* Desregistrar. */
-                                            List<Uv5kManDestinosPabx.DestinoPabx> stdpbxs = U5kManService._std.STDPBXS;
-                                            stdpbxs.ForEach(d => d.Estado = std.NoInfo);
+                                            gdata.STDPBXS.ForEach(d => d.Estado = std.NoInfo);
+                                        });
+                                    }
+                                    break;
 
-                                            /** Actualizar Estados */
-                                            U5kManService._std.STDPBXS = stdpbxs;
-                                            U5kManService._std.STDG = stdg;
-
-                                            _pabxws.Close();
-                                        }
-                                        break;
-
-                                    default:
-                                        break;
-                                }
+                                default:
+                                    break;
                             }
                         }
                     }
-                    catch (Exception x)
-                    {
-                        LogException<PabxItfService>("", x);
-                    }
-                    finally
-                    {
-                        U5kManService._std.wrAccRelease();
-                    }
                 }
+                catch (Exception x)
+                {
+                    LogException<PabxItfService>("", x);
+                }
+
                 _TimerPbax.Enabled = true;
             });
 
@@ -506,65 +420,68 @@ namespace U5kManServer
                 IamAlive.Message(String.Format("PbxItfService-Timer ({0}). Is Alive.", InfoString));
             });
         }
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        pabxParamInfo infoSimul = new pabxParamInfo()
+        PabxParamInfo infoSimul = new PabxParamInfo()
         {
-            user = Properties.u5kManServer.Default.PabxSimuladaRegisterSubcriber,
-            registered = "false",
-            status = "0"
+            User = Properties.u5kManServer.Default.PabxSimuladaRegisterSubcriber,
+            Registered = "false",
+            Status = "0"
         };
-        pabxParamInfo infoSimulNoRegistrado = new pabxParamInfo()
+        PabxParamInfo infoSimulNoRegistrado = new PabxParamInfo()
         {
-            user = Properties.u5kManServer.Default.PabxSimuladaUnregisterSubcriber,
-            registered = "false",
-            status = "0"
+            User = Properties.u5kManServer.Default.PabxSimuladaUnregisterSubcriber,
+            Registered = "false",
+            Status = "0"
         };
-        enum epabxSimulState { eStd1, eStd2, eStd3, eStd4 };
-        epabxSimulState _simulState = epabxSimulState.eStd1;
+        enum EpabxSimulState { eStd1, eStd2, eStd3, eStd4 };
+        EpabxSimulState _simulState = EpabxSimulState.eStd1;
         private void OnTimePabxSimuladaElapsed(object sender, ElapsedEventArgs e)
         {
             U5kGenericos.TraceCurrentThread(this.GetType().Name + " TimePbxSim");
             if (IsOperative)
             {
-                _WorkingThread.Enqueue("OnTimePabxSimuladaElapsed", delegate()
+                _WorkingThread.Enqueue("OnTimePabxSimuladaElapsed", delegate ()
                 {
-                    U5kGenericos.TraceCurrentThread(this.GetType().Name + " TimePbxSim enqueue");
-                    switch (_simulState)
+                    GlobalServices.GetWriteAccess((gdata) =>
                     {
-                        case epabxSimulState.eStd1:
-                            infoSimulNoRegistrado.registered = "true";
-                            ProcessUserRegistered(infoSimulNoRegistrado);
 
-                            infoSimul.registered = "true";
-                            ProcessUserRegistered(infoSimul);
-                            _simulState = epabxSimulState.eStd2;
-                            break;
+                        U5kGenericos.TraceCurrentThread(this.GetType().Name + " TimePbxSim enqueue");
+                        switch (_simulState)
+                        {
+                            case EpabxSimulState.eStd1:
+                                infoSimulNoRegistrado.Registered = "true";
+                                ProcessUserRegistered(gdata, infoSimulNoRegistrado);
 
-                        case epabxSimulState.eStd2:
-                            infoSimul.status = "1";
-                            ProcessUserStatus(infoSimul);
-                            _simulState = epabxSimulState.eStd3;
-                            break;
-                        case epabxSimulState.eStd3:
-                            infoSimul.status = "14";
-                            ProcessUserStatus(infoSimul);
-                            _simulState = epabxSimulState.eStd4;
-                            break;
-                        case epabxSimulState.eStd4:
-                            infoSimul.status = "-1";
-                            ProcessUserStatus(infoSimul);
+                                infoSimul.Registered = "true";
+                                ProcessUserRegistered(gdata, infoSimul);
+                                _simulState = EpabxSimulState.eStd2;
+                                break;
 
-                            infoSimulNoRegistrado.registered = "false";
-                            ProcessUserRegistered(infoSimulNoRegistrado);
+                            case EpabxSimulState.eStd2:
+                                infoSimul.Status = "1";
+                                ProcessUserStatus(infoSimul);
+                                _simulState = EpabxSimulState.eStd3;
+                                break;
+                            case EpabxSimulState.eStd3:
+                                infoSimul.Status = "14";
+                                ProcessUserStatus(infoSimul);
+                                _simulState = EpabxSimulState.eStd4;
+                                break;
+                            case EpabxSimulState.eStd4:
+                                infoSimul.Status = "-1";
+                                ProcessUserStatus(infoSimul);
 
-                            _simulState = epabxSimulState.eStd1;
-                            break;
-                    }
+                                infoSimulNoRegistrado.Registered = "false";
+                                ProcessUserRegistered(gdata, infoSimulNoRegistrado);
+
+                                _simulState = EpabxSimulState.eStd1;
+                                break;
+                        }
+                    });
 
                     _TimerPabxSimulada.Enabled = true;
                 });
@@ -574,8 +491,6 @@ namespace U5kManServer
                 _TimerPabxSimulada.Enabled = true;
             }
         }
-
-
         #endregion
 
         #region Private Functions.
@@ -587,10 +502,10 @@ namespace U5kManServer
             LogInfo<PabxItfService>("INIT");
 
             if (Properties.u5kManServer.Default.PabxSimulada)
-                _pabxStatus = ePabxStatus.epsConectado;
+                _pabxStatus = EPabxStatus.epsConectado;
             else
             {
-                _pabxStatus = ePabxStatus.epsConectando;
+                _pabxStatus = EPabxStatus.epsConectando;
                 _pabxws.Open();
             }
 
@@ -600,127 +515,117 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        private void Dispose()
+        private new void Dispose()
         {
             _TimerPbax.Enabled = false;
 
             if (Properties.u5kManServer.Default.PabxSimulada)
             {
                 _TimerPabxSimulada.Enabled = false;
-                _pabxStatus = ePabxStatus.epsDesconectado;
+                _pabxStatus = EPabxStatus.epsDesconectado;
             }
             else
             {
-                if (_pabxStatus == ePabxStatus.epsConectado)
+                if (_pabxStatus == EPabxStatus.epsConectado)
                 {
                     _pabxws.Close();
-                    _pabxStatus = ePabxStatus.epsDesconectado;
+                    _pabxStatus = EPabxStatus.epsDesconectado;
                 }
             }
             // AGL. Al ser llamada desde 'fuera', no utilizare el control de acceso para evitar Lazos no deseados...
-            U5KStdGeneral stdg = U5kManService._std.STDG;
-            stdg.stdPabx.Estado = std.NoInfo;
-            // stdg.stdPabx.name = idiomas.strings.PBX_Desconocida/*"Desconocido"*/;
-            U5kManService._std.STDG = stdg;
+            GlobalServices.GetWriteAccess((data) =>
+            {
+                data.STDG.stdPabx.Estado = std.NoInfo;
+            }, false);
         }
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="_event"></param>
-        private void ProcessEvent(pabxEvent _event)
+        private void ProcessEvent(U5kManStdData gdata, PabxEvent _event)
         {
-            switch (_event.method)
+            switch (_event.Method)
             {
                 case "notify_serverstatus":
-                    ProcessServerStatus(_event.parametros);
+                    ProcessServerStatus(gdata, _event.Parametros);
                     break;
                 case "notify_status":
-                    ProcessUserStatus(_event.parametros);
+                    ProcessUserStatus(_event.Parametros);
                     break;
                 case "notify_registered":
-                    ProcessUserRegistered(_event.parametros);
+                    ProcessUserRegistered(gdata, _event.Parametros);
                     break;
                 default:
-                    LogInfo<PabxItfService>("Evento No Procesado: " + _event.method);
+                    LogInfo<PabxItfService>("Evento No Procesado: " + _event.Method);
                     break;
             }
         }
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="info"></param>
-        private void ProcessServerStatus(pabxParamInfo info)
+        private void ProcessServerStatus(U5kManStdData gdata, PabxParamInfo info)
         {
-            switch (info.status)
+            switch (info.Status)
             {
                 case "active":
-                   _pabxStatus = ePabxStatus.epsConectado;
-                   U5KStdGeneral stdg = U5kManService._std.STDG;
-                   if (stdg.stdPabx.Estado != std.Ok)
-                   {
-                       RecordEvent<PabxItfService>(DateTime.Now, U5kBaseDatos.eIncidencias.IGRL_U5KI_SERVICE_INFO, U5kBaseDatos.eTiposInci.TEH_SISTEMA, "SPV", 
-                           Params(idiomas.strings.PBX_Conectada/*"PBX Conectada"*/, "", "", ""));
-                   }
-                   stdg.stdPabx.Estado = std.Ok;                   
-                   stdg.stdPabx.name = String.Format("{0}:{1}", PbxIp, Properties.u5kManServer.Default.PabxWsPort);                   
-                   U5kManService._std.STDG = stdg;
-                   break;
+                    _pabxStatus = EPabxStatus.epsConectado;
+                    U5KStdGeneral stdg = gdata.STDG;
+                    if (stdg.stdPabx.Estado != std.Ok)
+                    {
+                        RecordEvent<PabxItfService>(DateTime.Now, U5kBaseDatos.eIncidencias.IGRL_U5KI_SERVICE_INFO, U5kBaseDatos.eTiposInci.TEH_SISTEMA, "SPV",
+                            Params(idiomas.strings.PBX_Conectada/*"PBX Conectada"*/, "", "", ""));
+                    }
+                    stdg.stdPabx.Estado = std.Ok;
+                    stdg.stdPabx.name = String.Format("{0}:{1}", PbxIp, Properties.u5kManServer.Default.PabxWsPort);
+                    break;
                 default:
                     _pabxws.Close();
-                    _pabxStatus = ePabxStatus.epsDesconectado;
+                    _pabxStatus = EPabxStatus.epsDesconectado;
                     break;
             }
-            LogInfo<PabxItfService>("Server Status=>" + info.status);
+            LogInfo<PabxItfService>("Server Status=>" + info.Status);
         }
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="info"></param>
-        private void ProcessUserRegistered(pabxParamInfo info)
+        private void ProcessUserRegistered(U5kManStdData gdata, PabxParamInfo info)
         {
-            bool registrado = info.registered == "true";
-            // U5kManService._std.wrAccAcquire(); Viene de la rutina general del evento que ya ha tomado el Semaforo...
-            List<Uv5kManDestinosPabx.DestinoPabx> pbxdes = U5kManService._std.STDPBXS;
-
-            pbxdes.Where(d => d.Id == info.user).ToList().ForEach(d =>
+            bool registrado = info.Registered == "true";
+            List<Uv5kManDestinosPabx.DestinoPabx> pbxdes = gdata.STDPBXS;
+            pbxdes.Where(d => d.Id == info.User).ToList().ForEach(d =>
             {
                 std EstadoNotificado = registrado ? std.Ok : std.NoInfo;
                 if (d.Estado != EstadoNotificado)
                 {
                     d.Estado = EstadoNotificado;
                     // Generar Historico de Conexion / Desconexion...
-                    RecordEvent<PabxItfService>(DateTime.Now, registrado ? U5kBaseDatos.eIncidencias.IPBX_SUBSC_ACTIVE : 
-                        U5kBaseDatos.eIncidencias.IPBX_SUBSC_INACTIVE, U5kBaseDatos.eTiposInci.TEH_EXTERNO_TELEFONIA, info.user, Params());
+                    RecordEvent<PabxItfService>(DateTime.Now, registrado ? U5kBaseDatos.eIncidencias.IPBX_SUBSC_ACTIVE :
+                        U5kBaseDatos.eIncidencias.IPBX_SUBSC_INACTIVE, U5kBaseDatos.eTiposInci.TEH_EXTERNO_TELEFONIA, info.User, Params());
                 }
             });
-
-            U5kManService._std.STDPBXS = pbxdes;
-            LogDebug<PabxItfService>(String.Format("Procesado Registro Usuario {0}, {1}", Name, info.user, info.registered));
+            LogDebug<PabxItfService>(String.Format("Procesado Registro Usuario {0}, {1}", Name, info.User, info.Registered));
         }
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="info"></param>
-        private void ProcessUserStatus(pabxParamInfo info)
+        private void ProcessUserStatus(PabxParamInfo info)
         {
-            LogDebug<PabxItfService>(String.Format("Procesado Estado Usuario {1}, Estado: {2}", Name, info.user, info.status));
+            LogDebug<PabxItfService>(String.Format("Procesado Estado Usuario {1}, Estado: {2}", Name, info.User, info.Status));
         }
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="host"></param>
         /// <returns></returns>
-        private bool Ping(string host, ePabxStatus current)
+        private bool Ping(string host, EPabxStatus current)
         {
-            int maxReint = current == ePabxStatus.epsConectado ? 3 : 1;
+            int maxReint = current == EPabxStatus.epsConectado ? 3 : 1;
             int reint = 0;
             PingReply reply;
-            
+
             do
             {
                 Ping pingSender = new Ping();
@@ -741,7 +646,6 @@ namespace U5kManServer
 
             return reply.Status == IPStatus.Success ? true : false;
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -749,7 +653,6 @@ namespace U5kManServer
         {
             LogError<PabxItfService>("Invocando Rutina Obsoleta...");
         }
-
         /// <summary>
         /// 20181114. No se estaba supervisando los cambios de configuracion....
         /// </summary>
@@ -761,7 +664,7 @@ namespace U5kManServer
 
             if (actualHayPbx != HayPbx || actualPbxIp != PbxIp)
             {
-                processChange();             
+                processChange();
             }
         }
 

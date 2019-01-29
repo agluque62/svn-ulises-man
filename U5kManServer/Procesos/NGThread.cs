@@ -187,7 +187,7 @@ namespace NucleoGeneric
                 }
             }
         }
-        public void StopAsync(Action<Task> cb)
+        public virtual void StopAsync(Action<Task> cb)
         {
             if (cancel != null)
             {

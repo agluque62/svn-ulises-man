@@ -18,6 +18,9 @@ using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Media;
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 using U5kBaseDatos;
 using NucleoGeneric;
 
@@ -282,7 +285,6 @@ namespace U5kManServer
                 return cfgName + " (" + cfgVersion + ")";
             }
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -415,6 +417,191 @@ namespace U5kManServer
             return retorno;
         }
 
+        #region SNMP-MIB-SERVICE
+        /** 20190121. Para la nueva arquitectura MIB */
+        public string ProgramVersion { get { return U5kGenericos.Version; } }
+        public string BdtConfVersion { get { return cfgVersion + "( " + cfgName + " )"; } }
+        public string RadioServiceIp
+        {
+            get
+            {
+                string ip = "Error";
+                Services.CentralServicesMonitor.Monitor.DataGetForSnmpAgent((idRadio, stdRadio, idPhone, stdPhone) =>
+                {
+                    ip = idRadio;
+                });
+                return ip;
+            }
+        }
+        public int RadioServiceStd
+        {
+            get
+            {
+                int std = 0;
+                Services.CentralServicesMonitor.Monitor.DataGetForSnmpAgent((idRadio, stdRadio, idPhone, stdPhone) =>
+                {
+                    std = (int)(stdRadio == "Ok" ? 1 : stdRadio == "Warning" ? 4 : 5);
+                });
+                return std;
+            }
+        }
+        public string PhoneServiceIp
+        {
+            get
+            {
+                string ip = "Error";
+                Services.CentralServicesMonitor.Monitor.DataGetForSnmpAgent((idRadio, stdRadio, idPhone, stdPhone) =>
+                {
+                    ip = idPhone;
+                });
+                return ip;
+            }
+        }
+        public int PhoneServiceStd
+        {
+            get
+            {
+                int std = 0;
+                Services.CentralServicesMonitor.Monitor.DataGetForSnmpAgent((idRadio, stdRadio, idPhone, stdPhone) =>
+                {
+                    std = (int)(stdPhone == "Ok" ? 1 : stdPhone == "Warning" ? 4 : 5);
+                });
+                return std;
+            }
+        }
+        public int Server1Std
+        {
+            get
+            {
+                return GlobalServices.Seleccionado2stdext(stdServ1.Seleccionado);
+            }
+        }
+        public string Server1Lans
+        {
+            get
+            {
+                return GlobalServices.stdlans2snmp(stdServ1.lanes.Values.ToArray());
+            }
+        }
+        public string Server2Lans
+        {
+            get
+            {
+                return GlobalServices.stdlans2snmp(stdServ2.lanes.Values.ToArray());
+            }
+        }
+        public int Server2Std
+        {
+            get
+            {
+                return GlobalServices.Seleccionado2stdext(stdServ2.Seleccionado);
+            }
+        }
+        public string PosLans(int lan1, int lan2)
+        {
+            return GlobalServices.stdlans2snmp(new std[] { (std)lan1, (std)lan2 });
+        }
+        public string GwHwStd(stdGw gw)
+        {
+            return GlobalServices.stdcards(gw);
+        }
+        public List<stdRec> TotalGwRadResources
+        {
+            get
+            {
+                var recs = U5kManService.GlobalData.STDGWS.Select(gw => gw.cpu_activa).
+                    SelectMany(pgw => pgw.slots).
+                    SelectMany(slot => slot.rec).
+                    Where(rc => rc.tipo == itf.rcRadio);
+                return recs.ToList();
+            }
+        }
+        public List<stdRec> TotalGwPhoResources
+        {
+            get
+            {
+                var recs = U5kManService.GlobalData.STDGWS.Select(gw => gw.cpu_activa).
+                    SelectMany(pgw => pgw.slots).
+                    SelectMany(slot => slot.rec).
+                    Where(rc => rc.tipo != itf.rcNotipo && rc.tipo != itf.rcRadio);
+                return recs.ToList();
+            }
+        }
+        public List<EquipoEurocae> TotalExRadResources
+        {
+            get
+            {
+                var recs = U5kManService.GlobalData.STDEQS.Where(e => e.Tipo == 2).ToList();
+                return recs;
+            }
+        }
+        public List<EquipoEurocae> TotalExPhoResources
+        {
+            get
+            {
+                var recs = U5kManService.GlobalData.STDEQS.Where(e => e.Tipo == 3).ToList();
+                return recs;
+            }
+        }
+        public List<EquipoEurocae> TotalExRecResources
+        {
+            get
+            {
+                var recs = U5kManService.GlobalData.STDEQS.Where(e => e.Tipo == 5).ToList();
+                return recs;
+            }
+        }
+        public List<U5kManService.radioSessionData> RdSessions
+        {
+            get
+            {
+                var data = JsonConvert.DeserializeObject<List<U5kManService.radioSessionData>>(Services.CentralServicesMonitor.Monitor.RadioSessionsString);
+                return data;
+            }
+        }
+        public List<U5kManService.equipoMNData> RdMNData
+        {
+            get
+            {
+                var data = JsonConvert.DeserializeObject<List<U5kManService.equipoMNData>>(Services.CentralServicesMonitor.Monitor.RadioMNDataString);
+                return data;
+            }
+        }
+        public object QualityItems
+        {
+            get
+            {
+                return new
+                {
+                    gral = (new Func<int>( () => {
+                        var ok = stdServ1.Estado == std.Ok && stdServ2.Estado == std.Ok && stdClock.Estado == std.Ok &&
+                        stdGlobalPos == std.Ok && stdScv1.Estado == std.Ok && RadioServiceStd == 1 && PhoneServiceStd == 1 &&
+                        stdPabx.Estado == std.Ok && stdGlobalExt == std.Ok;
+                        var alarma = stdGlobalPos == std.Alarma || stdScv1.Estado == std.Alarma || RadioServiceStd == 5 || PhoneServiceStd == 5;
+                        return ok ? 90 : alarma ? 10 : 45;
+                    }))(),
+                    tops = (new Func<int>(() => {
+                        return stdGlobalPos == std.Ok ? 90 : stdGlobalPos == std.Alarma || stdGlobalPos==std.NoInfo ? 10 : 45;
+                    }))(),
+                    gws  = (new Func<int>(() => {
+                        return stdScv1.Estado == std.Ok ? 90 : stdScv1.Estado == std.Alarma || stdScv1.Estado == std.NoInfo ? 10 : 45 ;
+                    }))(),
+                    exts = (new Func<int>(() => {
+                        return stdGlobalExt == std.Ok ? 90 : stdGlobalExt == std.Error ? 10 : 45; ;
+                    }))(),
+                    phone = (new Func<int>(() => {
+                        var rs = Services.CentralServicesMonitor.Monitor.GlobalPhoneStatus;
+                        return rs == std.Ok ? 90 : rs == std.Aviso ? 45 : 10;
+                    }))(),
+                    radio = (new Func<int>(() => {
+                        var rs = Services.CentralServicesMonitor.Monitor.GlobalRadioStatus;
+                        return rs == std.Ok ? 90 : rs == std.Aviso ? 45 : 10;
+                    }))()
+                };
+            }
+        }
+        /**-------------------------*/
+        #endregion SNMP-MIB-SERVICE
     }
 
     [DataContract]
@@ -515,6 +702,10 @@ namespace U5kManServer
         {
             if (last != null)
             {
+                name = last.name;
+                ip = last.ip;
+                snmpport = last.snmpport;
+
                 lan1 = last.lan1;
                 lan2 = last.lan2;
                 panel = last.panel;
@@ -652,6 +843,9 @@ namespace U5kManServer
         public uint Stpo { get; set; }              // Subtipo en Radio. 0: AudioRx, 1: AudioTx, 2: AudioRxTx, 3: AudioTxHF, 4: MNRx, 5: MNTx
         public int snmp_port = 161;
         public int snmp_trap_port = 162;
+
+        /** 20190121. Nueva tabla MTTO. */
+        public string VirtualIp { get; set; }
 
         /// <summary>
         /// 
@@ -1202,6 +1396,101 @@ namespace U5kManServer
     
     }
 
+    [DataContract]
+    public class EquipoEurocae : IEquatable<EquipoEurocae>
+    {
+        [DataMember]
+        public string Id { get; set; }
+        [DataMember]
+        public string Ip1 { get; set; }
+        [DataMember]
+        public string Ip2 { get; set; }
+        [DataMember]
+        public int Tipo { get; set; }
+        [DataMember]
+        public int Modelo { get; set; }
+        [DataMember]
+        public int RxTx { get; set; }
+        [DataMember]
+        public string fid { get; set; }
+        [DataMember]
+        public string sip_user { get; set; }
+        [DataMember]
+        public int sip_port { get; set; }
+        [DataMember]
+        public std EstadoRed1 { get; set; }
+        [DataMember]
+        public std EstadoRed2 { get; set; }
+        [DataMember]
+        public std EstadoSip { get; set; }
+
+        public string LastOptionsResponse { get; set; }
+
+        public EquipoEurocae(EquipoEurocae last)
+        {
+            if (last == null)
+            {
+                EstadoRed1 = EstadoRed2 = EstadoSip = std.NoInfo;
+            }
+            else
+            {
+                //EstadoRed1 = last.EstadoRed1;
+                //EstadoRed2 = last.EstadoRed2;
+                //EstadoSip = last.EstadoSip;
+                CopyFrom(last);
+            }
+        }
+
+        public std EstadoGeneral
+        {
+            get
+            {
+                if (EstadoRed1 == std.Ok || EstadoRed2 == std.Ok)
+                {
+                    if (Tipo != 5)
+                    {
+                        return EstadoSip;
+                    }
+                    return std.Ok;
+                }
+                else if (EstadoRed1 == std.NoInfo && EstadoRed2 == std.NoInfo)
+                {
+                    return (int)std.NoInfo;
+                }
+                return std.Aviso;
+            }
+        }
+
+        public bool Equals(EquipoEurocae other)
+        {
+            bool retorno = other == null ? false : (Id == other.Id && Ip1 == other.Ip1 && Tipo == other.Tipo && Modelo == other.Modelo && RxTx == other.RxTx && fid == other.fid && sip_port == other.sip_port && sip_user == other.sip_user);
+#if DEBUG
+                if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en EquipoEurocae");
+#endif
+            return retorno;
+        }
+
+        public void CopyFrom(EquipoEurocae from)
+        {
+            Id = from.Id;
+            Ip1 = from.Ip1;
+            Ip2 = from.Ip2;
+            Tipo = from.Tipo;
+            Modelo = from.Modelo;
+            RxTx = from.RxTx;
+            fid = from.fid;
+            sip_port = from.sip_port;
+            sip_user = from.sip_user;
+
+            EstadoRed1 = from.EstadoRed1;
+            EstadoRed2 = from.EstadoRed2;
+            EstadoSip = from.EstadoSip;
+        }
+
+        /** */
+        public string Key { get => sip_user ?? Id; }
+    }
+
     /// <summary>
     /// 
     /// </summary>
@@ -1230,14 +1519,26 @@ namespace U5kManServer
 #else
         [DataMember]
         private U5KStdGeneral _gen = new U5KStdGeneral();
+
+#if _NO_DICTIONARY_OF_ITEMS
         [DataMember]
         private List<stdPos> stdpos = new List<stdPos>();
         [DataMember]
         private List<stdGw> stdgws = new List<stdGw>();
         [DataMember]
-        private U5kManStdEquiposEurocae stdeqeu = new U5kManStdEquiposEurocae();
+        private List<EquipoEurocae> stdeqeu = new List<EquipoEurocae>();
         [DataMember]
         public U5kManStdEquiposEurocae atsDestStd = new U5kManStdEquiposEurocae();
+#else
+        [DataMember]
+        private Dictionary<string, stdPos> stdpos = new Dictionary<string, stdPos>();
+        [DataMember]
+        private Dictionary<string, stdGw> stdgws = new Dictionary<string, stdGw>();
+        [DataMember]
+        private Dictionary<string, EquipoEurocae> stdequ = new Dictionary<string, EquipoEurocae>();
+        [DataMember]
+        public List<EquipoEurocae> atsDestStd = new List<EquipoEurocae>();
+#endif
         [DataMember]
         private Uv5kManDestinosPabx pabxdest = new Uv5kManDestinosPabx();
         [DataMember]
@@ -1251,9 +1552,15 @@ namespace U5kManServer
         public void Init_()
         {
             _gen = new U5KStdGeneral();
+#if _NO_DICTIONARY_OF_ITEMS
             stdpos = new List<stdPos>();
             stdgws = new List<stdGw>();
-            stdeqeu = new U5kManStdEquiposEurocae();
+            stdequ = new List<EquipoEurocae>();
+#else
+            stdpos = new Dictionary<string, stdPos>();
+            stdgws = new Dictionary<string, stdGw>();
+            stdequ = new Dictionary<string, EquipoEurocae>();
+#endif
             pabxdest = new Uv5kManDestinosPabx();
         }
 
@@ -1291,7 +1598,7 @@ namespace U5kManServer
         Semaphore writeAccess = new Semaphore(1, 1);        
         String ocupadopor = "";
         System.Diagnostics.Stopwatch tm = new System.Diagnostics.Stopwatch();
-        public bool wrAccAcquire(int waitingMilliseconds = 10000,
+        public bool wrAccAcquire_1(int waitingMilliseconds = 10000,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, 
             [System.Runtime.CompilerServices.CallerMemberName] string caller = null,
             [System.Runtime.CompilerServices.CallerFilePath] string file = null)
@@ -1308,7 +1615,7 @@ namespace U5kManServer
             tm.Restart();
             return true;
         }
-        public void wrAccRelease([System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null) 
+        public void wrAccRelease_1([System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null) 
         {
             try
             {
@@ -1329,6 +1636,7 @@ namespace U5kManServer
 #endif
             }    
         }
+
         /// <summary>
         /// 
         /// </summary>
@@ -1359,47 +1667,51 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        public List<stdPos> STDTOPS
-        {
-            get
-            {
-                lock (lockConcurrent)
+#if _NO_DICTIONARY_OF_ITEMS
+        public List<stdPos> STDTOPS { get => stdpos.Values.ToList(); }
                 {
-#if _NO_TABLE_CLONE_
-                    return stdpos;
-#else
-                    List<stdPos> newpos = stdpos.Select(pos => new stdPos(pos) { name = pos.name, ip = pos.ip, snmpport = pos.snmpport }).ToList();
-                    return newpos;
-#endif
-                }
-            }
-            set
-            {
-                lock (lockConcurrent)
-                {
-#if _NO_TABLE_CLONE_
-#else
-                    foreach (stdPos pos in value)
+                    get
                     {
-                        stdPos local = stdpos.Where(p => p.Equals(pos)).FirstOrDefault();
-                        if (local != null)
+                        lock (lockConcurrent)
                         {
-                            local.CopyFrom(pos);
-                        }
-                        else
-                        {
-                            stdpos.Add(pos);
+#if _NO_TABLE_CLONE_
+                            return stdpos;
+#else
+                            List<stdPos> newpos = stdpos.Select(pos => new stdPos(pos) { name = pos.name, ip = pos.ip, snmpport = pos.snmpport }).ToList();
+                            return newpos;
+#endif
                         }
                     }
+                    set
+                    {
+                        lock (lockConcurrent)
+                        {
+#if _NO_TABLE_CLONE_
+#else
+                            foreach (stdPos pos in value)
+                            {
+                                stdPos local = stdpos.Where(p => p.Equals(pos)).FirstOrDefault();
+                                if (local != null)
+                                {
+                                    local.CopyFrom(pos);
+                                }
+                                else
+                                {
+                                    stdpos.Add(pos);
+                                }
+                            }
 #endif
+                        }
+                    }
                 }
-            }
-        }
+#else
+        public List<stdPos> STDTOPS { get => stdpos.Values.ToList(); }
+#endif
         public List<stdPos> CFGTOPS
         {
             set
             {
-                List<stdPos> paraBorrar = stdpos.Select(pos => new stdPos(pos) { name = pos.name, ip = pos.ip, snmpport = pos.snmpport }).ToList();
+                List<stdPos> paraBorrar = STDTOPS.Select(pos => new stdPos(pos) { name = pos.name, ip = pos.ip, snmpport = pos.snmpport }).ToList();
                 lock (lockConcurrent)
                 {
                     foreach (stdPos pos in value)
@@ -1411,21 +1723,24 @@ namespace U5kManServer
                         }
                         else
                         {
-                            stdpos.Add(pos);
+                            stdpos[pos.name]=pos;
                         }
                     }
                     // Borrar los restos...
                     foreach (stdPos pos in paraBorrar)
                     {
-                        stdpos.Remove(stdpos.Find(x => x.Equals(pos)));
+                        stdpos.Remove(pos.name);
                     }
 
                 }
             }
         }
+        public Dictionary<string, stdPos> POSDIC { get => stdpos; }
+
         /// <summary>
         /// 
         /// </summary>
+#if _NO_DICTIONARY_OF_ITEMS
         public List<stdGw> STDGWS
         {
             get
@@ -1489,17 +1804,50 @@ namespace U5kManServer
                 }
             }
         }
+#else
+        public List<stdGw> STDGWS { get => stdgws.Values.ToList(); }
+        public Dictionary<string, stdGw> GWSDIC { get => stdgws; }
+        public List<stdGw> CFGGWS
+        {
+            set
+            {
+                List<stdGw> paraBorrar = STDGWS.Select(g => new stdGw(g)).ToList();
+                lock (lockConcurrent)
+                {
+                    foreach (stdGw gw in value)
+                    {
+                        stdGw local = paraBorrar.Where(p => p.Equals(gw)).FirstOrDefault();
+                        if (local != null)
+                        {
+                            paraBorrar.Remove(local);
+                        }
+                        else
+                        {
+                            stdgws[gw.name] = gw;
+                        }
+                    }
+                    // Borrar los restos...
+                    foreach (stdGw gw in paraBorrar)
+                    {
+                        stdgws.Remove(gw.name);
+                    }
+                }
+            }
+        }
+#endif
+
         /// <summary>
         /// 
         /// </summary>
-        public List<U5kManStdEquiposEurocae.EquipoEurocae> STDEQS
+#if _NO_DICTIONARY_OF_ITEMS
+        public List<EquipoEurocae> STDEQS
         {
             get
             {
                 lock (lockConcurrent)
                 {
 #if _NO_TABLE_CLONE_
-                    return stdeqeu.Equipos;
+                    return stdequ;
 #else
                     return stdeqeu.Equipos.Select(e => new U5kManStdEquiposEurocae.EquipoEurocae(e) { }).ToList();
 #endif
@@ -1527,34 +1875,65 @@ namespace U5kManServer
                 }
             }
         }
-        public List<U5kManStdEquiposEurocae.EquipoEurocae> CFGEQS
+        public List<EquipoEurocae> CFGEQS
         {
             set
             {
-                List<U5kManStdEquiposEurocae.EquipoEurocae> paraBorrar = stdeqeu.Equipos.Select(e => new U5kManStdEquiposEurocae.EquipoEurocae(e) { }).ToList();
+                List<EquipoEurocae> paraBorrar = stdequ.Select(e => new EquipoEurocae(e) { }).ToList();
                 lock (lockConcurrent)
                 {
-                    foreach (U5kManStdEquiposEurocae.EquipoEurocae equ in value)
+                    foreach (var equ in value)
                     {
-                        U5kManStdEquiposEurocae.EquipoEurocae local = paraBorrar.Where(p => p.Equals(equ)).FirstOrDefault();
+                        var local = paraBorrar.Where(p => p.Equals(equ)).FirstOrDefault();
                         if (local != null)
                         {
                             paraBorrar.Remove(local);
                         }
                         else
                         {
-                            stdeqeu.Equipos.Add(equ);
+                            stdequ.Add(equ);
                         }
                     }
                     // Borrar los restos...
-                    foreach (U5kManStdEquiposEurocae.EquipoEurocae equ in paraBorrar)
+                    foreach (var equ in paraBorrar)
                     {
-                        stdeqeu.Equipos.Remove(stdeqeu.Equipos.Find(x => x.Equals(equ)));
+                        stdequ.Remove(stdequ.Find(x => x.Equals(equ)));
                     }
 
                 }
             }
         }
+#else
+        public List<EquipoEurocae> STDEQS { get => stdequ.Values.ToList(); }
+        public List<EquipoEurocae> CFGEQS
+        {
+            set
+            {
+                List<EquipoEurocae> paraBorrar = STDEQS.Select(e => new EquipoEurocae(e) { }).ToList();
+                lock (lockConcurrent)
+                {
+                    foreach (var equ in value)
+                    {
+                        var local = paraBorrar.Where(p => p.Equals(equ)).FirstOrDefault();
+                        if (local != null)
+                        {
+                            paraBorrar.Remove(local);
+                        }
+                        else
+                        {
+                            stdequ[equ.Key]= equ;
+                        }
+                    }
+                    // Borrar los restos...
+                    foreach (var equ in paraBorrar)
+                    {
+                        stdequ.Remove(equ.Key);
+                    }
+                }
+            }
+        }
+        public Dictionary<string, EquipoEurocae> EQUDIC { get => stdequ; }
+#endif
         /// <summary>
         /// 
         /// </summary>
@@ -1617,7 +1996,6 @@ namespace U5kManServer
                     {
                         pabxdest.Destinos.Remove(pabxdest.Destinos.Find(x => x.Equals(dst)));
                     }
-
                 }
             }
         }
@@ -1626,14 +2004,13 @@ namespace U5kManServer
         {
             bool retorno = _gen.Equals(other._gen);
 
-            stdpos.ForEach(pos => retorno = retorno && pos.Equals(other.stdpos.Where(pos1 => pos1.name == pos.name).FirstOrDefault()));
-            stdgws.ForEach(gw1 => retorno = retorno && gw1.Equals(other.stdgws.Where(gw2 => gw2.name == gw1.name).FirstOrDefault()));
-            stdeqeu.Equipos.ForEach(eq1 => retorno = retorno && eq1.Equals(other.stdeqeu.Equipos.Where(eq2 => eq2.sip_user == eq1.sip_user).FirstOrDefault()));
-            pabxdest.Destinos.ForEach(ds1 => retorno = retorno && ds1.Equals(other.pabxdest.Destinos.Where(ds2 => ds1.Id == ds2.Id).FirstOrDefault()));
+            STDTOPS.ForEach(pos => retorno = retorno && pos.Equals(other.STDTOPS.Where(pos1 => pos1.name == pos.name).FirstOrDefault()));
+            STDGWS.ForEach(gw1 => retorno = retorno && gw1.Equals(other.STDGWS.Where(gw2 => gw2.name == gw1.name).FirstOrDefault()));
+            STDEQS.ForEach(eq1 => retorno = retorno && eq1.Equals(other.STDEQS.Where(eq2 => eq2.sip_user == eq1.sip_user).FirstOrDefault()));
 
+            pabxdest.Destinos.ForEach(ds1 => retorno = retorno && ds1.Equals(other.pabxdest.Destinos.Where(ds2 => ds1.Id == ds2.Id).FirstOrDefault()));
             return retorno;
         }
-
 #endif
     }
 
@@ -1653,122 +2030,6 @@ namespace U5kManServer
 
         [DataMember]
         public List<eListaInci> _lista = new List<eListaInci>();
-    }
-
-    [DataContract]
-    public class U5kManStdEquiposEurocae
-    {
-        [DataContract]
-        public class EquipoEurocae : IEquatable<EquipoEurocae>
-        {
-            [DataMember]
-            public string Id { get; set; }
-            [DataMember]
-            public string Ip1 { get; set; }
-            [DataMember]
-            public string Ip2 { get; set; }
-            [DataMember]
-            public int Tipo { get; set; }
-            [DataMember]
-            public int Modelo { get; set; }
-            [DataMember]
-            public int RxTx { get; set; }
-            [DataMember]
-            public string fid { get; set; }
-            [DataMember]
-            public string sip_user { get; set; }
-            [DataMember]
-            public int sip_port { get; set; }
-            [DataMember]
-            public std EstadoRed1 { get; set; }
-            [DataMember]
-            public std EstadoRed2 { get; set; }
-            [DataMember]
-            public std EstadoSip { get; set; }
-
-            public string LastOptionsResponse { get; set; }
-
-            public EquipoEurocae(EquipoEurocae last)
-            {
-                if (last == null)
-                {
-                    EstadoRed1 = EstadoRed2 = EstadoSip = std.NoInfo;
-                }
-                else
-                {
-                    //EstadoRed1 = last.EstadoRed1;
-                    //EstadoRed2 = last.EstadoRed2;
-                    //EstadoSip = last.EstadoSip;
-                    CopyFrom(last);
-                }
-            }
-
-            public std EstadoGeneral
-            {
-                get
-                {
-                    if (EstadoRed1 == std.Ok || EstadoRed2 == std.Ok)
-                    {
-                        if (Tipo != 5) 
-                        {                            
-                            return EstadoSip;
-                        }
-                        return std.Ok;
-                    }
-                    else if (EstadoRed1 == std.NoInfo && EstadoRed2 == std.NoInfo)
-                    {
-                        return (int)std.NoInfo;
-                    }
-                    return std.Aviso;
-                }
-            }
-
-            public bool Equals(EquipoEurocae other)
-            {
-                bool retorno = other==null ? false : (Id == other.Id && Ip1 == other.Ip1 && Tipo == other.Tipo && Modelo == other.Modelo && RxTx == other.RxTx && fid == other.fid && sip_port == other.sip_port && sip_user == other.sip_user);
-#if DEBUG
-                if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en EquipoEurocae");
-#endif
-                return retorno;
-            }
-
-            public void CopyFrom(EquipoEurocae from)
-            {
-                Id = from.Id;
-                Ip1 = from.Ip1;
-                Ip2 = from.Ip2;
-                Tipo = from.Tipo;
-                Modelo = from.Modelo;
-                RxTx = from.RxTx;
-                fid = from.fid;
-                sip_port = from.sip_port;
-                sip_user = from.sip_user;
-
-                EstadoRed1 = from.EstadoRed1;
-                EstadoRed2 = from.EstadoRed2;
-                EstadoSip = from.EstadoSip;
-            }
-        }
-
-        [DataMember]
-        public List<EquipoEurocae> Equipos = new List<EquipoEurocae>();
-
-#if STD_ACCESS_V0
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public EquipoEurocae EEGet(string name)
-        {
-            foreach (EquipoEurocae eq in Equipos)
-            {
-                if (eq.Id == name)
-                    return eq;
-            }
-            return null;
-        }
-#endif
     }
 
     [DataContract]
@@ -1838,7 +2099,7 @@ namespace U5kManServer
         [OperationContract]
         U5kManLastInciList ReconocerAlarmas(string user, U5kManLastInciList lista);
         [OperationContract]
-        List<U5kManStdEquiposEurocae.EquipoEurocae> ObtenerEstadoEquiposEurocae();        
+        List<EquipoEurocae> ObtenerEstadoEquiposEurocae();        
         [OperationContract]
         List<Uv5kManDestinosPabx.DestinoPabx> ObtenerDestinosPabx();
         [OperationContract]
@@ -1857,7 +2118,7 @@ namespace U5kManServer
     /// 
     /// </summary>
     [ServiceBehavior (IncludeExceptionDetailInFaults =true)]
-    class U5kManService : BaseCode, IU5kManService
+    public class U5kManService : BaseCode, IU5kManService
     {
 #region Atributos Estaticos
         /// <summary>
@@ -1888,7 +2149,8 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        static public U5kManStdData _std;   // = new U5kManStdData();
+        static private U5kManStdData _std;   // = new U5kManStdData();
+        static public U5kManStdData GlobalData { get => _std; set { _std = value; } }
         /// <summary>
         /// 
         /// </summary>
@@ -2433,7 +2695,7 @@ namespace U5kManServer
         /// 
         /// </summary>
         /// <returns></returns>
-        public List<U5kManStdEquiposEurocae.EquipoEurocae> ObtenerEstadoEquiposEurocae()
+        public List<EquipoEurocae> ObtenerEstadoEquiposEurocae()
         {
 #if STD_ACCESS_V0
             return _std.stdeqeu.Equipos;
@@ -2719,5 +2981,124 @@ namespace U5kManServer
         Properties.u5kManServer onlocal = Properties.u5kManServer.Default;
         U5kiLocalConfigInDb onbdt = null;
     }
-#endif
+
+    /** Servicios Globales */
+    public class GlobalServices
+    {
+        public enum mib2OperStatus { down = 2, up = 1, testing = 3 }
+        public enum mib2AdminStatus { down = 2, up = 1, testing = 3 }
+        /** */
+        private static readonly Semaphore smp = new Semaphore(1, 1);
+        public static void GetWriteAccess(Action<U5kManStdData> setData, bool wait = true,
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string file = null)
+        {
+            if (wait == false)
+            {
+                try
+                {
+                    setData(U5kManService.GlobalData);
+                }
+                catch (Exception x)
+                {
+                    throw x;
+                }
+            }
+            else if (smp.WaitOne(TimeSpan.FromMilliseconds(5000)))
+            {
+                DateTime EntryTime = DateTime.Now;
+                OccupiedBy = FromString(file, caller, lineNumber);
+                try
+                {
+                    setData(U5kManService.GlobalData);
+                }
+                catch(Exception x)
+                {
+                    throw x;
+                }
+                finally
+                {
+                    NLog.LogManager.GetLogger("sem-hist").
+                        Trace("Global Semaphore ocuppied {1:000000} ms by {0}.",
+                        FromString(file, caller, lineNumber),
+                        (DateTime.Now - EntryTime).TotalMilliseconds);
+                    smp.Release();
+                }
+            }
+            else
+            {
+                NLog.LogManager.GetLogger("sem-hist").
+                    Fatal("Global Semaphore timeout for {0}. Occupied By {1}",
+                    FromString(file, caller, lineNumber),
+                    OccupiedBy);
+            }
+        }
+
+        static public mib2OperStatus std2mib2OperStatus(std estado)
+        {
+            switch (estado)
+            {
+                case std.Error:
+                case std.NoInfo:
+                    return mib2OperStatus.down;
+            }
+            return mib2OperStatus.up;
+        }
+        static public int Seleccionado2stdext(sel Seleccionado)
+        {
+            return Seleccionado == sel.NoInfo ? (int)std.NoInfo :
+                Seleccionado == sel.NoSeleccionado ? 8 : 7;
+        }
+        static public string stdlans2snmp(std[] par)
+        {
+            byte[] ret = new byte[] {
+                (byte)((int)std.NoExiste+'0'),
+                (byte)((int)std.NoExiste+'0'),
+                (byte)((int)std.NoExiste+'0'),
+                (byte)((int)std.NoExiste+'0'),
+                (byte)((int)std.NoExiste+'0'),
+                (byte)((int)std.NoExiste+'0'),
+                (byte)((int)std.NoExiste+'0'),
+                (byte)((int)std.NoExiste+'0')
+            };
+            int iret = 0;
+            foreach (std estado in par)
+            {
+                if (iret < ret.Length)
+                {
+                    ret[iret++] = (byte)((int)estado + '0');
+                }
+            }
+            return Encoding.ASCII.GetString(ret).ToLower();
+        }
+        static public string stdcards(stdGw cpua)
+        {
+            byte[] ret = new byte[6];
+
+            ret[0] = (byte)((int)cpua.gwA.std + '0');
+            for (int card = 0; card < 4; card++)
+            {
+                if (cpua.cpu_activa.slots[card].std_online == std.Ok)
+                {
+                    ret[card + 1] = (byte)((int)std.Ok + '0');
+                }
+                else
+                {
+                    ret[card + 1] = (byte)('0');
+                }
+            }
+            ret[5] = (byte)((int)cpua.gwB.std + '0');
+
+            return Encoding.ASCII.GetString(ret).ToLower();
+        }
+        protected static string FromString(String file, String routine, int line)
+        {
+            var filename = System.IO.Path.GetFileName(file);
+            return $"[{filename}--{routine}--{line}]";
+        }
+        protected static string OccupiedBy { get; set; }
     }
+
+#endif
+}

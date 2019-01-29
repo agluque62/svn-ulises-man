@@ -65,13 +65,8 @@
       <HintPath>..\packages\NLog.4.2.3\lib\net45\NLog.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="SharpSnmpLib.Full, Version=8.5.10222.9, Culture=neutral, PublicKeyToken=4c00852d3788e005, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lextm.SharpSnmpLib.8.5.0.0\lib\net40\SharpSnmpLib.Full.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="SharpSnmpLib.Portable, Version=8.5.10222.9, Culture=neutral, PublicKeyToken=4c00852d3788e005, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lextm.SharpSnmpLib.8.5.0.0\lib\net40\SharpSnmpLib.Portable.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="SharpSnmpLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=4c00852d3788e005, processorArchitecture=MSIL">
+      <HintPath>..\packages\Lextm.SharpSnmpLib.10.0.11\lib\net452\SharpSnmpLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -125,7 +120,6 @@
     <Compile Include="Service References\ServicioInterfazSacta.cs" />
     <Compile Include="Snmp\SnmpAgent.cs" />
     <Compile Include="Snmp\SnmpClient.cs" />
-    <Compile Include="Snmp\U5kScvMib.cs" />
     <Compile Include="U5kGenericos.cs" />
     <Compile Include="U5kManMain.cs">
       <SubType>Component</SubType>
@@ -306,6 +300,10 @@
     <ProjectReference Include="..\U5kBaseDatos\U5kBaseDatos.csproj">
       <Project>{bf223179-f940-4433-bbd8-da34d6115124}</Project>
       <Name>U5kBaseDatos</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\U5kManMibRevC\U5kManMibRevC.csproj">
+      <Project>{10a878d1-1c89-4e8f-8b84-d7f05908bf64}</Project>
+      <Name>U5kManMibRevC</Name>
     </ProjectReference>
     <ProjectReference Include="..\U5kUtilities\Utilities.csproj">
       <Project>{822f500d-adb8-4bb1-8a1c-e9feaff369b0}</Project>

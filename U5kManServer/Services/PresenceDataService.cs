@@ -50,7 +50,7 @@ namespace U5kManServer
             {
                 if (Testing == true)
                 {
-                    U5kManService._std = new U5kManStdData();
+                    U5kManService.GlobalData = new U5kManStdData();
                 }
 
                 _timer.Interval = 1000;
@@ -124,18 +124,17 @@ namespace U5kManServer
         /// </summary>
         void RefreshDataOnService()
         {
-            if (U5kManService._std.wrAccAcquire())
+            GlobalServices.GetWriteAccess((data) =>
             {
-                List<Uv5kManDestinosPabx.DestinoPabx> pbxdes = U5kManService._std.STDPBXS; 
+                List<Uv5kManDestinosPabx.DestinoPabx> pbxdes = data.STDPBXS;
                 try
                 {
                 }
                 catch (Exception x)
                 {
                 }
-                U5kManService._std.STDPBXS = pbxdes;
-                U5kManService._std.wrAccRelease();
-            }
+            });
+
         }
     }
 }

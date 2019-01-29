@@ -1,16 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Diagnostics;
 
 using System.Net;
-using System.Threading;
 
 using Lextm.SharpSnmpLib;
 
 using U5kBaseDatos;
 using Utilities;
+
+#if _ED137_REVB_
+#else
+using U5kManMibRevC;
+#endif
 
 namespace U5kManServer
 {
@@ -18,7 +20,6 @@ namespace U5kManServer
     /// 
     /// </summary>
     delegate void Supervisor();
-
     /// <summary>
     /// 
     /// </summary>
@@ -26,11 +27,11 @@ namespace U5kManServer
     {
         enum SystemAgentState { NotInit, NotStarted, Operative }
         string ipServ = Properties.u5kManServer.Default.MiDireccionIP;  //  U5kGenericos.MiDireccionIP;
-        /// <summary>
-        /// 
-        /// </summary>
+#if _ED137_REVB_
         U5kScvMib _mib;
-
+#else
+        Ed137RevCMib _mib;
+#endif
         /// <summary>
         /// Para gestionar los eventos de las Pasarelas...
         /// </summary>
@@ -42,7 +43,6 @@ namespace U5kManServer
 
         SystemAgentState State { get; set; }
         public bool ReloadRequest { get; set; }
-
         /// <summary>
         /// 
         /// </summary>
@@ -52,7 +52,6 @@ namespace U5kManServer
             State = SystemAgentState.NotInit;
             ReloadRequest = false;
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -108,36 +107,35 @@ namespace U5kManServer
                             }
                             else
                             {
+#if _ED137_REVB_
                                 functions.ForEach(f =>
                                 {
-                                    if (U5kManService._std.wrAccAcquire())
+                                    try
                                     {
-                                        try
+                                        GlobalServices.GetWriteAccess((data) =>
                                         {
                                             if (U5kManService._Master == true)
                                                 f();
-                                        }
-                                        catch (Exception x)
-                                        {
-                                            LogException<U5kSnmpSystemAgent>("", x);
-                                        }
-                                        finally
-                                        {
-                                            U5kManService._std.wrAccRelease();
-                                        }
+                                        });
+                                    }
+                                    catch (Exception x)
+                                    {
+                                        LogException<U5kSnmpSystemAgent>("", x);
                                     }
                                 });
+#else
+                                // Por si hay algo que supervisar...
+#endif
                             }
                             break;
                     }
                     GoToSleepInTimer();
                 }
-            }            
+            }
             SnmpAgentStop();
             Dispose();
             LogInfo<U5kSnmpSystemAgent>("U5kSnmpSystemAgent stopped...");
         }
-
         /// <summary>
         /// Carga la base de OID's del Agente.
         /// </summary>
@@ -145,22 +143,36 @@ namespace U5kManServer
         {
             try
             {
+#if _ED137_REVB_
                 _mib = new U5kScvMib();
-
+#else
+                //_mib = new Ed137RevCMib(
+                //    new AgentDataGet((toma) =>
+                //    {
+                //        toma(rMONData);
+                //    }),
+                //    new AgentDataGet(
+                //    (toma) =>
+                //    {
+                //        GlobalServices.GetWriteAccess((data) =>
+                //        {
+                //            toma(data);
+                //        });
+                //    }), AgentData.OidBase);
+#endif
                 snmpAgent.Init(ipServ);            // Poner la IP del Servidor....
                 snmpAgent.TrapReceived += new Action<string, string, ISnmpData, IPEndPoint, IPEndPoint>(RecibidoTrap);
 
                 LogInfo<U5kSnmpSystemAgent>("Agente SNMP. configurado");
                 return true;
             }
-            catch(Exception x)
+            catch (Exception x)
             {
                 LogError<U5kSnmpSystemAgent>("Error Inicializando Agente SNMP: " + x.Message);
                 SnmpAgentStop();
                 return false;
             }
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -168,7 +180,24 @@ namespace U5kManServer
         {
             try
             {
+#if _ED137_REVB_
                 _mib.Load();
+#else
+                _mib = new Ed137RevCMib(
+                    new AgentDataGet((toma) =>
+                    {
+                        toma(rMONData);
+                    }),
+                    new AgentDataGet(
+                    (toma) =>
+                    {
+                        GlobalServices.GetWriteAccess((data) =>
+                        {
+                            toma(data);
+                        });
+                    }), AgentData.OidBase);
+                _mib.StoreTo(SnmpAgent.Store);
+#endif
                 snmpAgent.Start();
                 LogInfo<U5kSnmpSystemAgent>("Agente SNMP. Arrancado");
                 return true;
@@ -179,7 +208,6 @@ namespace U5kManServer
                 return false;
             }
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -192,27 +220,31 @@ namespace U5kManServer
                 _mib = null;
                 LogInfo<U5kSnmpSystemAgent>("Agente SNMP. Detenido...");
             }
-            catch(Exception x)
+            catch (Exception x)
             {
                 LogError<U5kSnmpSystemAgent>("Error Arrancando Agente SNMP: " + x.Message);
             }
         }
-
         /// <summary>
         /// 
         /// </summary>        
         void SupervisarParametrosGenerales()
         {
             /** Supervisa la Configurcion */
+#if _ED137_REVB_
             _mib.SupervisaCfgSettings();
+#else
+#endif
         }
-
         /// <summary>
         /// 
         /// </summary>
         void Supervisa_sysUpTime()
         {
+#if _ED137_REVB_
             _mib.sysUpTime();
+#else
+#endif
         }
 
         /// <summary>
@@ -220,37 +252,40 @@ namespace U5kManServer
         /// </summary>
         void Supervisa_tablas_v2()
         {
+#if _ED137_REVB_
             _mib.sysUpTime();
-            // 
             _mib.MttoV2Tick();
+#else
+#endif
         }
-
         /// <summary>
         /// 
         /// </summary>
         void Supervisa_Mib2()
         {
         }
-
         /// <summary>
         /// 
         /// </summary>
         void SupervisarPuestos()
         {
+#if _ED137_REVB_
             List<stdPos> Posiciones = U5kManService._std.STDTOPS.OrderBy(e => e.name).ToList();
             for (int npos = 0; npos < Posiciones.Count; npos++)
             {
                 stdPos pos = Posiciones[npos];
                 _mib.itfPosicion(npos, pos.stdpos, pos.name);
             }
+#else
+#endif
         }
-
         /// <summary>
         /// 
         /// </summary>
         void SupervisarLineas()
         {
             /** */
+#if _ED137_REVB_
             mib2OperStatus globalStatusTlf = mib2OperStatus.down;
             mib2OperStatus globalStatusRad = mib2OperStatus.down;
             mib2OperStatus globalStatusRec = mib2OperStatus.down;
@@ -298,8 +333,9 @@ namespace U5kManServer
             _mib.itfTelefonia = globalStatusTlf;
             _mib.itfRadio = globalStatusRad;
             _mib.itfRecorder = globalStatusRec;
+#else
+#endif
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -308,19 +344,22 @@ namespace U5kManServer
         /// <param name="ipfrom"></param>
         void RecibidoTrap(string oidtrap, string oidvar, ISnmpData data, IPEndPoint ipfrom, IPEndPoint ipto)
         {
-            if (U5kManService._std.wrAccAcquire())
+            /** Ajusto el oidvar para que comienze por <.>*/
+            oidvar = oidvar.StartsWith(".") ? oidvar : "." + oidvar;
+
+            GlobalServices.GetWriteAccess((gdata) =>
             {
                 try
                 {
                     if (U5kManService._Master == true)
                     {
-                        List<stdPos> stdpos = U5kManService._std.STDTOPS;
+                        List<stdPos> stdpos = gdata.STDTOPS;
 #if DEBUG1
                 ipfrom.Address = IPAddress.Parse("10.12.60.129");
 #endif
                         stdPos pos = stdpos.Find(r => r.ip == ipfrom.Address.ToString());                                                                   // Busco si es una posicion.
-                        List<stdGw> stdgws = U5kManService._std.STDGWS;
-                        stdGw gw = stdgws.Find(r => r.ip==ipfrom.Address.ToString() || r.gwA.ip == ipfrom.Address.ToString() || r.gwB.ip == ipfrom.Address.ToString());      // Busco si es una Pasarela.
+                        List<stdGw> stdgws = gdata.STDGWS;
+                        stdGw gw = stdgws.Find(r => r.ip == ipfrom.Address.ToString() || r.gwA.ip == ipfrom.Address.ToString() || r.gwB.ip == ipfrom.Address.ToString());      // Busco si es una Pasarela.
                         if (oidvar.StartsWith(Properties.u5kManServer.Default.HfEventOids) ||
                             oidvar.StartsWith(Properties.u5kManServer.Default.CfgEventOid))
                         {
@@ -328,72 +367,76 @@ namespace U5kManServer
                         }
                         else
                         {
-                            //            if (gw != null && gw.stdgw != std.NoInfo)                                                                              // Proviene de una Pasarela.
                             if (gw != null)
                             {
                                 stdPhGw pgw = gw.gwA.ip == ipfrom.Address.ToString() ? gw.gwA : gw.gwB;
-                                eGwPar par = GwExplorer._GwOids.FirstOrDefault(x => x.Value == oidvar).Key;
-
-                                /** Pasarelas no Unificadas */
-                                if (par != eGwPar.None)
+                                var BdtItem = GwExplorer._GwOids.Where(p => p.Value.EndsWith(oidvar)).ToList();
+                                if (BdtItem.Count > 0)
                                 {
-                                    //GwSnmpExplorer.RecibidoTrapGw(ipto.Port, gw, pgw, par, data);
-                                }
-                                else if (EventosRecursos.IsEventRadio(oidvar) == true)
-                                {
-                                    if (_evradio.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
+                                    eGwPar par = BdtItem[0].Key;
+                                    /** Pasarelas no Unificadas */
+                                    if (par != eGwPar.None)
                                     {
-                                        RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evradio.lastInci, eTiposInci.TEH_TIFX, gw.name, _evradio.lastParameters);
+                                        LogWarn<U5kSnmpSystemAgent>(String.Format("GW-ANT OID [{0}] No encontrado para {1}", oidvar, ipfrom));
                                     }
-                                }
-                                else if (EventosRecursos.IsEventLcen(oidvar) == true)
-                                {
-                                    if (_evLcen.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
+                                    else if (EventosRecursos.IsEventRadio(oidvar) == true)
                                     {
-                                        RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evLcen.lastInci, eTiposInci.TEH_TIFX, gw.name, _evLcen.lastParameters);
+                                        if (_evradio.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
+                                        {
+                                            RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evradio.lastInci, eTiposInci.TEH_TIFX, gw.name, _evradio.lastParameters);
+                                        }
                                     }
-                                }
-                                else if (EventosRecursos.IsEventTlf(oidvar) == true)
-                                {
-                                    if (_evTlf.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
+                                    else if (EventosRecursos.IsEventLcen(oidvar) == true)
                                     {
-                                        RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evTlf.lastInci, eTiposInci.TEH_TIFX, gw.name, _evTlf.lastParameters);
+                                        if (_evLcen.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
+                                        {
+                                            RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evLcen.lastInci, eTiposInci.TEH_TIFX, gw.name, _evLcen.lastParameters);
+                                        }
                                     }
-                                }
-                                else if (EventosRecursos.IsEventAts(oidvar) == true)
-                                {
-                                    if (_evAts.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
+                                    else if (EventosRecursos.IsEventTlf(oidvar) == true)
                                     {
-                                        RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evAts.lastInci, eTiposInci.TEH_TIFX, gw.name, _evAts.lastParameters);
+                                        if (_evTlf.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
+                                        {
+                                            RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evTlf.lastInci, eTiposInci.TEH_TIFX, gw.name, _evTlf.lastParameters);
+                                        }
                                     }
-                                }
-                                else if (oidtrap.Contains(".1.3.6.1.4.1.7916.8.3.2.1") == true)
-                                {
-                                    /** Pasarelas Unificadas */
-                                    GwExplorer.RecibidoTrapGw_unificada(gw, pgw, oidtrap, oidvar, data);
-                                    U5kManService._std.STDGWS = stdgws;
+                                    else if (EventosRecursos.IsEventAts(oidvar) == true)
+                                    {
+                                        if (_evAts.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
+                                        {
+                                            RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evAts.lastInci, eTiposInci.TEH_TIFX, gw.name, _evAts.lastParameters);
+                                        }
+                                    }
+                                    else if (oidtrap.Contains(".1.3.6.1.4.1.7916.8.3.2.1") == true)
+                                    {
+                                        /** Pasarelas Unificadas */
+                                        GwExplorer.RecibidoTrapGw_unificada(gw, pgw, oidtrap, oidvar, data);
+                                    }
+                                    else
+                                    {
+                                        LogWarn<U5kSnmpSystemAgent>(String.Format("Recibido TrapGW {0}:{1} oid={2}. Comando No esperado", ipfrom.Address.ToString(), ipto.Port, oidvar));
+                                    }
                                 }
                                 else
                                 {
-                                    LogWarn<U5kSnmpSystemAgent>(String.Format("Recibido TrapGW {0}:{1} oid={2}. Comando No esperado", ipfrom.Address.ToString(), ipto.Port, oidvar));
+                                    LogError<U5kSnmpSystemAgent>(String.Format("GW OID [{0}] No encontrado para {1}", oidvar, ipfrom));
                                 }
                             }
                             else if (pos != null /*&& pos.stdpos != std.NoInfo*/)          // Proviene de un Puesto.
                             {
-                                eTopPar par = TopSnmpExplorer._OidPos.FirstOrDefault(x => x.Value == oidvar).Key;
-                                if (par != eTopPar.None)
+                                var BdtItem = TopSnmpExplorer._OidPos.Where(p => p.Value.EndsWith(oidvar)).ToList();
+                                if (BdtItem.Count > 0)
                                 {
-                                    RecibidoTrapPosicion(pos, par, data);
-                                    U5kManService._std.STDTOPS = stdpos;
+                                    RecibidoTrapPosicion(pos, BdtItem[0].Key, data);
                                 }
                                 else
                                 {
-                                    LogWarn<U5kSnmpSystemAgent>(String.Format("Recibido TrapPOS {0}:{1} oid={2}. Comando No esperado", ipfrom.Address.ToString(), ipfrom.Port, oidvar));
+                                    LogError<U5kSnmpSystemAgent>(String.Format("TOP OID [{0}] No encontrado para {1}", oidvar, ipfrom));
                                 }
                             }
                             else
                             {
-                                LogWarn<U5kSnmpSystemAgent>(String.Format("Recibido TRAP No Esperado de {0}.{1}={2}", ipfrom, oidvar, 0));
+                                LogError<U5kSnmpSystemAgent>(String.Format("OID [{0}] No encontrado para {1}", oidvar, ipfrom));
                             }
                         }
                     }
@@ -402,11 +445,7 @@ namespace U5kManServer
                 {
                     LogException<U5kSnmpSystemAgent>("", x);
                 }
-                finally
-                {
-                    U5kManService._std.wrAccRelease();
-                }
-            }
+            });
         }
 
         /// <summary>
@@ -554,5 +593,269 @@ namespace U5kManServer
                 new IPEndPoint(IPAddress.Parse("127.0.0.1"), 621));
         }
 #endif
+        public class AgentData
+        {
+            public class RMONEventTableItem
+            {
+                public int index { get; set; }
+                public string description { get; set; }
+                public int type { get; set; }
+                public string community { get; set; }
+                public string owner { get; set; }
+                public int last { get; set; }
+
+            }
+            public class RMONAlarmTableItem
+            {
+                public int index { get; set; }
+                public int interval { get; set; }
+                public string variable { get; set; }
+                public int stype { get; set; }
+                public int lastv { get; set; }
+                public int when { get; set; }
+                public int rTh { get; set; }
+                public int fTh { get; set; }
+                public int reindex { get; set; }
+                public int feindex { get; set; }
+                public string owner { get; set; }
+                public int st { get; set; }
+                public DateTime lastp { get; set; }
+            }
+            public static string OidBase
+            {
+                get
+                {
+                    return Properties.u5kManServer.Default.SnmpEnterpriseBaseOidType==0 ? ".1.3.6.1.4.1.7916" : ".1.3.6.1.4.1.2363.6";      // Eurocontrol
+                }
+            }
+            public object SnmpStatistics
+            {
+                get
+                {
+                    return SnmpAgent.Statictics;
+                }
+            }
+            private readonly Object _rMonEventTable = new List<Object>()
+            {
+                new RMONEventTableItem(){index=1, description="Normal",  type=4, community="public", owner="NucleoCC", last=(int)(Environment.TickCount / 10) },
+                new RMONEventTableItem(){index=2, description="Warning", type=4, community="public", owner="NucleoCC", last=(int)(Environment.TickCount / 10) },
+                new RMONEventTableItem(){index=3, description="Alarm",   type=4, community="public", owner="NucleoCC", last=(int)(Environment.TickCount / 10) },
+            };
+            public object RMONEventTable
+            {
+                get
+                {
+                    return _rMonEventTable;
+                }
+            }
+            private readonly Object _rMonAlarmTable = new List<Object>()
+            {
+#if !DEBUG1
+                /** Calidad de Estado GRAL */
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.1.0",
+                    stype =1, lastv=100, when=1, rTh=30, fTh=0, reindex=2, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.1.0",
+                    stype =1, lastv=100, when=1, rTh=60, fTh=0, reindex=1, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.1.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=60, reindex=0, feindex=2,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.1.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=30, reindex=0, feindex=3,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                /** Calidad de Estado TOPS */
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.2.0",
+                    stype =1, lastv=100, when=1, rTh=30, fTh=0, reindex=2, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.2.0",
+                    stype =1, lastv=100, when=1, rTh=60, fTh=0, reindex=1, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.2.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=60, reindex=0, feindex=2,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.2.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=30, reindex=0, feindex=3,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                /** Calidad de Estado GWS */
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.3.0",
+                    stype =1, lastv=100, when=1, rTh=30, fTh=0, reindex=2, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.3.0",
+                    stype =1, lastv=100, when=1, rTh=60, fTh=0, reindex=1, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.3.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=60, reindex=0, feindex=2,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.3.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=30, reindex=0, feindex=3,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                /** Calidad de Estado EXTS */
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.4.0",
+                    stype =1, lastv=100, when=1, rTh=30, fTh=0, reindex=2, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.4.0",
+                    stype =1, lastv=100, when=1, rTh=60, fTh=0, reindex=1, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.4.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=60, reindex=0, feindex=2,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.4.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=30, reindex=0, feindex=3,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                /** Calidad de Estado TELEFONIA */
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.5.0",
+                    stype =1, lastv=100, when=1, rTh=30, fTh=0, reindex=2, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.5.0",
+                    stype =1, lastv=100, when=1, rTh=60, fTh=0, reindex=1, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.5.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=60, reindex=0, feindex=2,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.5.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=30, reindex=0, feindex=3,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                /** Calidad de Estado RADIO */
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.6.0",
+                    stype =1, lastv=100, when=1, rTh=30, fTh=0, reindex=2, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.6.0",
+                    stype =1, lastv=100, when=1, rTh=60, fTh=0, reindex=1, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.6.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=60, reindex=0, feindex=2,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.6.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=30, reindex=0, feindex=3,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+#endif
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.7.0",
+                    stype =1, lastv=100, when=1, rTh=30, fTh=0, reindex=2, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.7.0",
+                    stype =1, lastv=100, when=1, rTh=60, fTh=0, reindex=1, feindex=0,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =1, interval=30, variable=OidBase + ".8.1.5.8.7.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=60, reindex=0, feindex=2,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },
+                new RMONAlarmTableItem()
+                {
+                    index =3, interval=30, variable=OidBase + ".8.1.5.8.7.0",
+                    stype =1, lastv=100, when=2, rTh=0, fTh=30, reindex=0, feindex=3,
+                    owner ="NucleoCC", st=1, lastp=DateTime.Now
+                },                
+            };
+            public object RMONAlarmTable
+            {
+                get
+                {
+                    return _rMonAlarmTable;
+                }
+            }
+            public Action<ObjectIdentifier, IList<Variable>> RMonEventTrap = new Action<ObjectIdentifier, IList<Variable>>((trap, lvars) =>
+            {
+                SnmpRmonTrapReceiver((server) =>
+                {
+                    SnmpAgent.Trap(trap, lvars, server);
+                });
+            });
+            static void SnmpRmonTrapReceiver(Action<IPEndPoint> action)
+            {
+                string endpstr = Properties.u5kManServer.Default.SnmpRMONTrapReceiver;
+                UriBuilder uri = new UriBuilder("snmp://" + endpstr);
+                try
+                {
+                    IPEndPoint endp = new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port==-1 ? 162 : uri.Port);
+                    action(endp);
+                }
+                catch
+                {
+                    LogError<U5kSnmpSystemAgent>($"No puedo obtener el servidor RMON: {endpstr}");
+                }
+            }
+        }
+        public static AgentData rMONData = new AgentData();
     }
 }

@@ -12,6 +12,8 @@ using Lextm.SharpSnmpLib.Messaging;
 using Lextm.SharpSnmpLib.Security;
 using Lextm.SharpSnmpLib.Objects;
 
+using U5kManMibRevC;
+
 using NucleoGeneric;
 namespace U5kManServer
 {
@@ -22,7 +24,6 @@ namespace U5kManServer
     {
         string _oid = "";
         public override ISnmpData Data { get; set; }
-
         /// <summary>
         /// 
         /// </summary>
@@ -48,7 +49,6 @@ namespace U5kManServer
         public String Oid { get { return _oid; } }
         
     }
-
     /// <summary>
     /// 
     /// </summary>
@@ -68,7 +68,7 @@ namespace U5kManServer
 
                     if ((_trapsEps != null) && (_trapsEps.Length > 0))
                     {
-                        SnmpAgent.Trap(Variable.Id, _data, _trapsEps);
+                        SnmpAgent.Trap(Variable.Id.ToString(), Variable.Id.ToString(), _data, _trapsEps);
                     }
                 }
             }
@@ -123,7 +123,6 @@ namespace U5kManServer
 
         #endregion
     }
-
     /// <summary>
     /// 
     /// </summary>
@@ -146,7 +145,7 @@ namespace U5kManServer
                     _data = new OctetString(value);
                     if ((_trapsEps != null) && (_trapsEps.Length > 0))
                     {
-                        SnmpAgent.Trap(Variable.Id, _data, _trapsEps);
+                        SnmpAgent.Trap(Variable.Id.ToString(), Variable.Id.ToString(), _data, _trapsEps);
                     }
                 }
             }
@@ -161,7 +160,7 @@ namespace U5kManServer
             OctetString data = new OctetString(value);
 
             if ((_trapsEps != null) && (_trapsEps.Length > 0))
-                SnmpAgent.Trap(Variable.Id, data, _trapsEps);
+                SnmpAgent.Trap(Variable.Id.ToString(), Variable.Id.ToString(), data, _trapsEps);
         }
 
         /// <summary>
@@ -218,41 +217,6 @@ namespace U5kManServer
     /// <summary>
     /// 
     /// </summary>
-    sealed class SnmpObjectIdObject : MibObject
-    {
-        public SnmpObjectIdObject(ObjectIdentifier oid)
-            : base(".1.3.6.1.2.1.1.2.0")
-        {
-            _data = oid;
-        }
-        public override ISnmpData Data
-        {
-            get { return _data; }
-        }
-        private ObjectIdentifier _data;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    sealed class SnmpSysUpTimeObject : MibObject
-    {
-        public SnmpSysUpTimeObject()
-            : base(".1.3.6.1.2.1.1.3.0")
-        {
-            _data = new TimeTicks((uint)Environment.TickCount / 10);
-        }
-        public override ISnmpData Data
-        {
-            get { return _data; }
-            set { _data = new TimeTicks((uint)Environment.TickCount / 10); }
-        }
-        private TimeTicks _data;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
     class SnmpLogger : BaseCode, Lextm.SharpSnmpLib.Pipeline.ILogger
     {
         private const string Empty = "-";
@@ -270,10 +234,7 @@ namespace U5kManServer
         /// <param name="context"></param>
         public void Log(ISnmpContext context)
         {
-            //if (_logger.IsTraceEnabled) 
-            //{                
-            //    _logger.Trace(GetLogEntry(context));
-            //}
+            SnmpAgent.Statictics.ActualizeFromAgent(context.Request, context.Response as ResponseMessage);
             LogTrace<SnmpLogger>( GetLogEntry(context));
         }
 
@@ -341,20 +302,16 @@ namespace U5kManServer
             return result.ToString();
         }
     }
-
-
     /// <summary>
     /// 
     /// </summary>
 	/*static*/ class SnmpAgent : BaseCode
-	{
+    {
         /// <summary>
         /// 
         /// </summary>
         // public /*static*/ event Action<string, ISnmpData, IPEndPoint, IPEndPoint> TrapReceived = delegate { };
         public /*static*/ event Action<string, string, ISnmpData, IPEndPoint, IPEndPoint> TrapReceived = delegate { };
-       
-
         /// <summary>
         /// 
         /// </summary>
@@ -363,16 +320,11 @@ namespace U5kManServer
 			get { return _context; }
 			set { _context = value; }
 		}
-
         /// <summary>
         /// 
         /// </summary>
         private static ObjectStore _store;
-        public  static ObjectStore Store
-		{
-			get { return /*SnmpAgent.*/_store; }
-		}
-
+        public  static ObjectStore Store { get => _store; }
         /// <summary>
         /// 
         /// </summary>
@@ -382,9 +334,6 @@ namespace U5kManServer
 			// Init(ip, null, 161, 162);
             CreateAgent(ip);
 		}
-
-
-
         /// <summary>
         /// 
         /// </summary>
@@ -408,16 +357,15 @@ namespace U5kManServer
 			SnmpLogger logger = new SnmpLogger();
 			ObjectStore objectStore = new ObjectStore();
 
-			OctetString getCommunityPublic = new OctetString("public");                         // 
+			OctetString getCommunityPublic = new OctetString("public");
 			OctetString setCommunityPublic = new OctetString("public");
-            OctetString getCommunityPrivate = new OctetString("private");                       
+            OctetString getCommunityPrivate = new OctetString("private");
             OctetString setCommunityPrivate = new OctetString("private");
-
-            /** */
+            /***/
             trapv1 = new TrapV1MessageHandler();
             trapv2 = new TrapV2MessageHandler();
             inform = new InformRequestMessageHandler();
-
+            /**/
 			IMembershipProvider[] membershipProviders = new IMembershipProvider[]
 			{
 				// new Version1MembershipProvider(getCommunity, setCommunity),
@@ -427,7 +375,6 @@ namespace U5kManServer
 			};
 			IMembershipProvider composedMembershipProvider = new ComposedMembershipProvider(membershipProviders);
             /**/
-
 			HandlerMapping[] handlerMappings = new HandlerMapping[]
 			{
 				new HandlerMapping("v1", "GET", new GetV1MessageHandler())
@@ -491,7 +438,6 @@ namespace U5kManServer
 
 			// OJO.. (new IPEndPoint(IPAddress.Parse(ip), 0)).SetAsDefault();
 		}
-
         /// <summary>
         /// 
         /// </summary>
@@ -568,7 +514,7 @@ namespace U5kManServer
                 listener = new Listener() { Users = userRegistry };
                 handlerMappings = new HandlerMapping[]
 			        {
-                         new HandlerMapping(snmpVersion, "GET",     new GetMessageHandler())
+                         new HandlerMapping(snmpVersion, "GET",     new GetMessageHandler(){})
                         ,new HandlerMapping(snmpVersion, "SET",     new SetMessageHandler())
                         ,new HandlerMapping(snmpVersion, "GETNEXT", new GetNextMessageHandler())
                         ,new HandlerMapping(snmpVersion, "GETBULK", new GetBulkMessageHandler())
@@ -595,15 +541,12 @@ namespace U5kManServer
             //trapv2.MessageReceived += TrapV2Received;
             //inform.MessageReceived += InformRequestReceived;
         }
-
         /// <summary>
         /// 
         /// </summary>
-		public /*static*/ void Start()
-		{
+		public /*static*/ void Start()		{
 			_engine.Start();
 		}
-
         /// <summary>
         /// 
         /// </summary>
@@ -629,7 +572,6 @@ namespace U5kManServer
                 _closed = true;
             }
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -640,7 +582,6 @@ namespace U5kManServer
 		{
 			GetValueAsync(ep,oid,handler,2000);
 		}
-
         /// <summary>
         /// 
         /// </summary>
@@ -676,7 +617,6 @@ namespace U5kManServer
                 }
 			});
 		}
-
         /// <summary>
         /// 
         /// </summary>
@@ -688,7 +628,6 @@ namespace U5kManServer
 		{
 			SetValueAsync(ep, oid, data, handler, 4000);
 		}
-
         /// <summary>
         /// 
         /// </summary>
@@ -725,7 +664,6 @@ namespace U5kManServer
                 }
 			});
 		}
-
         /// <summary>
         /// 
         /// </summary>
@@ -736,7 +674,6 @@ namespace U5kManServer
 		{
 			GetAsync(ep, vList, handler, 4000);
 		}
-
         /// <summary>
         /// 
         /// </summary>
@@ -766,36 +703,33 @@ namespace U5kManServer
                 }
 			});
 		}
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="oid"></param>
         /// <param name="data"></param>
         /// <param name="eps"></param>
-		public static void Trap(string oid, ISnmpData data, params IPEndPoint[] eps)
+		public static void Trap(string oidtrap, string oidvar, ISnmpData data, params IPEndPoint[] eps)
 		{
-			Trap(new ObjectIdentifier(oid), data, eps);
+            var vList = new List<Variable> { new Variable(new ObjectIdentifier(oidvar), data) };
+            Trap(new ObjectIdentifier(oidtrap), vList, eps);
 		}
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="oid"></param>
         /// <param name="data"></param>
         /// <param name="eps"></param>
-		public static void Trap(ObjectIdentifier oid, ISnmpData data, params IPEndPoint[] eps)
+		public static void Trap(ObjectIdentifier oidtrap, IList<Variable> vList, params IPEndPoint[] eps)
 		{
 			ThreadPool.QueueUserWorkItem(delegate
 			{
                 U5kGenericos.TraceCurrentThread("SnmpAgent Trap");
                 try
 				{
-					List<Variable> vList = new List<Variable> { new Variable(oid, data) };
-
 					foreach (IPEndPoint ep in eps)
 					{
-						Messenger.SendTrapV2(0, VersionCode.V2, ep, new OctetString("private"), new ObjectIdentifier("TODO"), 0, vList);
+						Messenger.SendTrapV2(0, VersionCode.V2, ep, new OctetString("private"), oidtrap, 0, vList);
 					}
 				}
 				catch (Exception x)
@@ -839,7 +773,6 @@ namespace U5kManServer
 				}
 			}, "SnmpAgent.TrapV1Received");
 		}
-
         /// <summary>
         /// 
         /// </summary>
@@ -863,7 +796,6 @@ namespace U5kManServer
 				}
 			}, "SnmpAgent.TrapV2Received");
 		}
-
         /// <summary>
         /// 
         /// </summary>
@@ -888,6 +820,245 @@ namespace U5kManServer
 			}, "SnmpAgent.InformReceived");
 		}
 
-		#endregion
-	}
+        #endregion
+
+        #region Estadisticas.
+        public class SnmpStatictics
+        {
+            public Int32 SnmpInPkts { get; set; }                   // Contadores de Agente y Cliente...
+            public Int32 SnmpOutPkts { get; set; }
+
+            public Int32 SnmpInBadVersions { get; set; }            // Contadores de Cliente Pendientes....
+            public Int32 SnmpInBadCommunityNames { get; set; }
+            public Int32 SnmpInBadCommunityUses { get; set; }
+            public Int32 SnmpInASNParseErrs { get; set; }
+
+            public Int32 SnmpInTooBigs { get; set; }                // Contadores de Cliente
+            public Int32 SnmpInNoSuchNames { get; set; }
+            public Int32 SnmpInBadValues { get; set; }
+            public Int32 SnmpInReadOnlys { get; set; }
+            public Int32 SnmpInGenErrs { get; set; }
+
+            public Int32 SnmpInTotalReqVars { get; set; }           // Contadores de Agente
+            public Int32 SnmpInTotalSetVars { get; set; }
+            public Int32 SnmpInGetRequests { get; set; }
+            public Int32 SnmpInGetNexts { get; set; }
+            public Int32 SnmpInSetRequests { get; set; }
+
+            public Int32 SnmpInGetResponses { get; set; }           // Contador de Cliente
+
+            public Int32 SnmpInTraps { get; set; }                  // Contadores de Agente.
+            public Int32 SnmpOutTooBigs { get; set; }
+            public Int32 SnmpOutNoSuchNames { get; set; }
+            public Int32 SnmpOutBadValues { get; set; }
+            public Int32 SnmpOutGenErrs { get; set; }
+
+            public Int32 SnmpOutGetRequests { get; set; }           // Contadores de Cliente
+            public Int32 SnmpOutGetNexts { get; set; }
+            public Int32 SnmpOutSetRequests { get; set; }
+
+            public Int32 SnmpOutGetResponses { get; set; }          // Contador de Agente
+
+            public Int32 SnmpOutTraps { get; set; }                 // Contadore de Cliente
+
+            public Int32 SnmpEnableAuthenTraps { get; set; }
+
+            public SnmpStatictics()
+            {
+                SnmpInPkts = SnmpOutPkts = SnmpInBadVersions = SnmpInBadCommunityNames = SnmpInBadCommunityUses = 0;
+                SnmpInASNParseErrs = SnmpInTooBigs = SnmpInNoSuchNames = SnmpInBadValues = SnmpInReadOnlys = 0;
+                SnmpInGenErrs = SnmpInTotalReqVars = SnmpInTotalSetVars = SnmpInGetRequests = SnmpInGetNexts = 0;
+                SnmpInSetRequests = SnmpInGetResponses = SnmpInTraps = SnmpOutTooBigs = SnmpOutNoSuchNames = 0;
+                SnmpOutBadValues = SnmpOutGenErrs = SnmpOutGetRequests = SnmpOutGetNexts = SnmpOutSetRequests = 0;
+                SnmpOutGetResponses = SnmpOutTraps = 0;
+                SnmpEnableAuthenTraps = 2;
+            }
+            public void ActualizeFromAgent(ISnmpMessage request, ResponseMessage response = null)
+            {
+                if (request != null)
+                {
+                    if (response != null)
+                    {
+                        // Actualizo Estadisticas de Respuestas... (Out)
+                        SnmpOutPkts++;
+                        SnmpOutGetResponses++;
+                        
+                        // Actualizo Estadisticas de Errores... (In)
+                        switch (response.ErrorStatus)
+                        {
+                            case ErrorCode.TooBig:
+                                SnmpOutTooBigs++;
+                                break;
+                            case ErrorCode.NoSuchName:      // Solo en SNMP V1
+                                SnmpOutNoSuchNames++;
+                                break;
+                            case ErrorCode.BadValue:        // Solo en SNMP V1
+                                SnmpOutBadValues++;
+                                break;
+                            case ErrorCode.NoAccess:        // Captura estos errores en V2-V3
+                            case ErrorCode.GenError:
+                                SnmpOutGenErrs++;
+                                break;
+                            case ErrorCode.NoError:         // En V2-V3 NoSuchName Es una respuesta normal.
+                                if ((ISnmpData)(response.Scope.Pdu.Variables[0].Data) is NoSuchInstance)
+                                    SnmpOutNoSuchNames++;
+                                break;
+                        }
+                    }
+
+                    // Actualizo Estadisticas de Requests..(In)
+                    SnmpInPkts++;
+                    switch (request.TypeCode())
+                    {
+                        case SnmpType.GetRequestPdu:
+                            SnmpInGetRequests++;
+                            SnmpInTotalReqVars += request.Scope.Pdu.Variables.Count;
+                            break;
+                        case SnmpType.GetNextRequestPdu:
+                            SnmpInGetNexts++;
+                            SnmpInTotalReqVars += request.Scope.Pdu.Variables.Count;
+                            break;
+                        case SnmpType.SetRequestPdu:
+                            SnmpInSetRequests++;
+                            SnmpInTotalSetVars += request.Scope.Pdu.Variables.Count;
+                            break;
+                        case SnmpType.TrapV1Pdu:
+                        case SnmpType.TrapV2Pdu:
+                        case SnmpType.InformRequestPdu:
+                            SnmpInTraps++;
+                            break;
+
+                        case SnmpType.GetBulkRequestPdu:
+                            break;
+                    }
+                }
+            }
+            public void ActualizeFromClient(ISnmpMessage request, ResponseMessage response=null)
+            {
+                if (response != null)
+                {
+                    SnmpInPkts++;
+                    SnmpInGetResponses++;
+                    switch (response.ErrorStatus)
+                    {
+                        case ErrorCode.TooBig:
+                            SnmpInTooBigs++;
+                            break;
+                        case ErrorCode.NoSuchName:
+                            SnmpInNoSuchNames++;
+                            break;
+                        case ErrorCode.BadValue:
+                            SnmpInBadValues++;
+                            break;
+                        case ErrorCode.ReadOnly:
+                            SnmpInReadOnlys++;
+                            break;
+                        case ErrorCode.GenError:
+                            SnmpInGenErrs++;
+                            break;
+                    }
+                }
+                SnmpOutPkts++;
+                switch (request.TypeCode())
+                {
+                    case SnmpType.GetRequestPdu:
+                        SnmpOutGetRequests++;
+                        break;
+                    case SnmpType.GetNextRequestPdu:
+                        SnmpOutGetNexts++;
+                        break;
+                    case SnmpType.SetRequestPdu:
+                        SnmpOutSetRequests++;
+                        break;
+                    case SnmpType.TrapV1Pdu:
+                    case SnmpType.TrapV2Pdu:
+                    case SnmpType.InformRequestPdu:
+                        SnmpOutTraps++;
+                        break;
+
+                    case SnmpType.GetBulkRequestPdu:
+                        break;
+                }
+            }
+        };
+        static private readonly SnmpStatictics snmpStatictics = new SnmpStatictics();
+        static public SnmpStatictics Statictics { get => snmpStatictics; }
+        #endregion Estadisticas
+
+        #region Client Interface
+
+        /** Para la Creacion de contadores de respuesta */
+        public static bool UseFullRange { get; set; } = true;
+        private static readonly Lazy<NumberGenerator> RequestCounterFullRange = new Lazy<NumberGenerator>(() => new NumberGenerator(int.MinValue, int.MaxValue));
+        private static readonly Lazy<NumberGenerator> RequestCounterPositive = new Lazy<NumberGenerator>(() => new NumberGenerator(0, int.MaxValue));
+        private static NumberGenerator RequestCounter
+        {
+            get { return UseFullRange ? RequestCounterFullRange.Value : RequestCounterPositive.Value; }
+        }
+        public static IList<Variable> ClientRequest(
+            SnmpType request,
+            VersionCode version, 
+            IPEndPoint endpoint, 
+            OctetString community, 
+            IList<Variable> variables, int timeout,
+            ObjectIdentifier oidTrap=null)
+        {
+            if (endpoint == null)
+            {
+                throw new ArgumentNullException(nameof(endpoint));
+            }
+            if (community == null)
+            {
+                throw new ArgumentNullException(nameof(community));
+            }
+            if (variables == null)
+            {
+                throw new ArgumentNullException(nameof(variables));
+            }
+            if (version == VersionCode.V3)
+            {
+                throw new NotSupportedException("SNMP v3 is not supported");
+            }
+            ISnmpMessage message;
+            switch (request)
+            {
+                case SnmpType.GetRequestPdu:
+                    message = new GetRequestMessage(RequestCounter.NextId, version, community, variables);
+                    break;
+                case SnmpType.SetRequestPdu:
+                    message = new SetRequestMessage(RequestCounter.NextId, version, community, variables);
+                    break;
+
+                case SnmpType.TrapV1Pdu:
+                case SnmpType.TrapV2Pdu:
+                    message = new TrapV2Message(0, version, community, oidTrap, 0, variables);
+                    message.Send(endpoint);
+                    Statictics.ActualizeFromClient(message);
+                    return null;
+                default:
+                    throw new NotSupportedException("SNMP v3 is not supported");
+            }
+
+            ResponseMessage response = null;
+            Exception exception = null;
+            try
+            {
+                response = message.GetResponse(timeout, endpoint) as ResponseMessage;
+            }
+            catch (SnmpException x)
+            {
+                exception = x;
+            }
+            Statictics.ActualizeFromClient(message, response);
+            if (exception == null )
+            {
+                if (response.ErrorStatus == ErrorCode.NoError)
+                    return response.Pdu().Variables;
+                exception = ErrorException.Create("Error in response", endpoint.Address, response);
+            }
+            throw exception;
+        }
+
+        #endregion Client Interface.
+    }
 }

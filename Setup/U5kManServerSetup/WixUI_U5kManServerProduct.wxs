@@ -30,6 +30,12 @@
                      Key='SOFTWARE\Wix\UV5KI_MTTO'
                      Name='SNMPAGPORT_Property' Type='raw' />
     </Property>
+    <!-- Endpoint de los traps RMON -->
+    <Property Id="SNMPRMONSERVER" Value="127.0.0.1">
+      <RegistrySearch Id='UV5KI_MTTO_SNMPRMONSERVER' Root='HKLM'
+                     Key='SOFTWARE\Wix\UV5KI_MTTO'
+                     Name='SNMPRMONSERVER_Property' Type='raw' />
+    </Property>
 
     <Property Id="CONFLOCAL" Value="http://localhost:8090/index.html#/?user=init"></Property>
     
@@ -50,17 +56,17 @@
     <UI>
       <Dialog Id="OptionsDlg" Width="370" Height="270" Title="[ProductName] Setup" NoMinimize="yes" >
 
-        <Control Id="IPLabel" Type="Text" X="45" Y="50" Width="100" Height="15" TabSkip="no" Text="!(loc.OptionsDlgIpLabel)" />
-        <Control Id="IPEdit" Type="Edit" X="45" Y="62" Width="220" Height="18" Property="DIRIP" Text="{80}" />
+        <Control Id="IPLabel" Type="Text" X="45"  Y="72" Width="100" Height="15" TabSkip="no" Text="!(loc.OptionsDlgIpLabel)" />
+        <Control Id="IPEdit"  Type="Edit" X="150" Y="70" Width="100" Height="18" Property="DIRIP" Text="{80}" />
 
         <!--<Control Id="PabxIPLabel" Type="Text" X="45" Y="80" Width="100" Height="15" TabSkip="no" Text="!(loc.OptionsDlgPabxIPLabel)" />
         <Control Id="PabxIPEdit" Type="Edit" X="45" Y="92" Width="220" Height="18" Property="PABXIP" Text="{80}" />-->
 
-        <Control Id="MySQLIPLabel" Type="Text" X="45" Y="80" Width="100" Height="15" TabSkip="no" Text="!(loc.OptionsDlgMySQLIPLabel)" />
-        <Control Id="MySQLIPEdit" Type="Edit" X="45" Y="92" Width="220" Height="18" Property="MYSQLIP" Text="{80}" />
+        <Control Id="MySQLIPLabel" Type="Text" X="45"  Y="92" Width="100" Height="15" TabSkip="no" Text="!(loc.OptionsDlgMySQLIPLabel)" />
+        <Control Id="MySQLIPEdit"  Type="Edit" X="150" Y="90" Width="100" Height="18" Property="MYSQLIP" Text="{80}" />
 
-        <Control Id="LangLabel" Type="Text" X="45" Y="110" Width="100" Height="15" TabSkip="no" Text="Idioma" />
-        <Control Id="LangCheck" Type="ComboBox" X="45" Y="122" Width="160" Height="18" Property="LANG" ComboList="yes" >
+        <Control Id="LangLabel" Type="Text"     X="45"  Y="112" Width="100" Height="15" TabSkip="no" Text="Idioma" />
+        <Control Id="LangCheck" Type="ComboBox" X="150" Y="110" Width="100" Height="18" Property="LANG" ComboList="yes" >
           <ComboBox Property="LANG">
             <ListItem Value="es" Text="Castellano" />
             <ListItem Value="en" Text="Inglés" />
@@ -68,11 +74,14 @@
           </ComboBox>
         </Control>
         <!-- Puerto SNMP del Agente -->
-        <Control Id="SNMPAGPORT_Label" Type="Text" X="45" Y="140" Width="100" Height="15" TabSkip="no" Text="Puerto SNMP del Agente" />
-        <Control Id="SNMPAGPORT_Edit"  Type="Edit" X="45" Y="152" Width="220" Height="18" Property="SNMPAGPORT" Text="{80}" />
-
-        <Control Id="GdtLabel" Type="Text" X="45" Y="170" Width="100" Height="15" TabSkip="no" Text="Tipo GW DUAL" />
-        <Control Id="GdtOptions" Type="ComboBox" X="45" Y="182" Width="160" Height="18" Property="GDT" ComboList="yes" >
+        <Control Id="SNMPAGPORT_Label" Type="Text" X="45"  Y="132" Width="100" Height="15" TabSkip="no" Text="Puerto SNMP del Agente" />
+        <Control Id="SNMPAGPORT_Edit"  Type="Edit" X="150" Y="130" Width="100" Height="18" Property="SNMPAGPORT" Text="{80}" />
+        <!-- Servidor RMON -->
+        <Control Id="SNMPRMONSERVER_Label" Type="Text" X="45" Y="152" Width="100" Height="15" TabSkip="no" Text="Servidor RMON (ip:puerto)" />
+        <Control Id="SNMPRMONSERVER_Edit"  Type="Edit" X="150" Y="150" Width="100" Height="18" Property="SNMPRMONSERVER" Text="{80}" />
+        <!-- Tipo de Pasarelas duales -->
+        <Control Id="GdtLabel" Type="Text" X="45" Y="172" Width="100" Height="15" TabSkip="no" Text="Tipo GW DUAL" />
+        <Control Id="GdtOptions" Type="ComboBox" X="150" Y="170" Width="100" Height="18" Property="GDT" ComboList="yes" >
           <ComboBox Property="GDT">
             <ListItem Value="0" Text="Doble CPU" />
             <ListItem Value="1" Text="Doble Pasarela" />

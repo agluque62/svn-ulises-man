@@ -638,7 +638,7 @@ namespace NucleoGeneric
         {
             U5kGenericos.CurrentCultureSet((idioma) =>
             {
-                LogInfo<BaseCode>("ConfigCultureSet => " + idioma);
+                LogTrace<BaseCode>("ConfigCultureSet => " + idioma);
             });
         }
     }

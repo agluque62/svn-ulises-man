@@ -799,14 +799,31 @@ namespace U5kManServer.Properties {
                 this["OpcOpCableGrabacion"] = value;
             }
         }
+        
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int GatewaysDualityType
-        {
-            get
-            {
+        public int GatewaysDualityType {
+            get {
                 return ((int)(this["GatewaysDualityType"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("127.0.0.1")]
+        public string SnmpRMONTrapReceiver {
+            get {
+                return ((string)(this["SnmpRMONTrapReceiver"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int SnmpEnterpriseBaseOidType {
+            get {
+                return ((int)(this["SnmpEnterpriseBaseOidType"]));
             }
         }
     }

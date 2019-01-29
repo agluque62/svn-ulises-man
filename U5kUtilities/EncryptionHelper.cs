@@ -71,7 +71,7 @@ namespace Utilities
         }
 
         /// <summary>
-        /// TODO
+        /// 
         /// </summary>
         /// <param name="texto"></param>
         /// <param name="xmlKeys"></param>
@@ -88,7 +88,7 @@ namespace Utilities
         }
 
         /// <summary>
-        /// TODO
+        /// 
         /// </summary>
         /// <param name="datosEnc"></param>
         /// <param name="xmlKeys"></param>

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UnitTesting</RootNamespace>
     <AssemblyName>UnitTesting</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -18,6 +18,7 @@
     <TestProjectType>UnitTest</TestProjectType>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -42,6 +43,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <Choose>
@@ -64,16 +66,7 @@
     <Compile Include="LocalConfigInDbUnitTest.cs" />
     <Compile Include="JSonParsingTest.cs" />
     <Compile Include="CentralServicesMonitorTest.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\U5kBaseDatos\U5kBaseDatos.csproj">
-      <Project>{bf223179-f940-4433-bbd8-da34d6115124}</Project>
-      <Name>U5kBaseDatos</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\U5kUtilities\Utilities.csproj">
-      <Project>{822f500d-adb8-4bb1-8a1c-e9feaff369b0}</Project>
-      <Name>Utilities</Name>
-    </ProjectReference>
+    <Compile Include="NetworkInformationTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -84,6 +77,20 @@
     <None Include="tifxinfo.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\U5kBaseDatos\U5kBaseDatos.csproj">
+      <Project>{bf223179-f940-4433-bbd8-da34d6115124}</Project>
+      <Name>U5kBaseDatos</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\U5kManMibRevC\U5kManMibRevC.csproj">
+      <Project>{10a878d1-1c89-4e8f-8b84-d7f05908bf64}</Project>
+      <Name>U5kManMibRevC</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\U5kUtilities\Utilities.csproj">
+      <Project>{822f500d-adb8-4bb1-8a1c-e9feaff369b0}</Project>
+      <Name>Utilities</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

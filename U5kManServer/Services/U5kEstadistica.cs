@@ -497,30 +497,28 @@ namespace U5kManServer
         {
             if (--cntForGenerateActivityEvents <= 0)
             {
-                if (U5kManService._std.wrAccAcquire())
+                GlobalServices.GetWriteAccess((data =>
                 {
-                    lock (_locker)
+                    /** Los Puestos */
+                    data.STDTOPS.ForEach(p =>
                     {
-                        /** Los Puestos */
-                        U5kManService._std.STDTOPS.ForEach(p =>
-                        {
-                            EventoOperador(p.name, p.stdg == std.NoInfo ? false : true);
-                        });
+                        EventoOperador(p.name, p.stdg == std.NoInfo ? false : true);
+                    });
 
-                        /** Las Pasarelas */
-                        U5kManService._std.STDGWS.ForEach(g =>
-                        {
-                            EventoPasarela(g.name, g.std == std.NoInfo ? false : true);
-                        });
+                    /** Las Pasarelas */
+                    data.STDGWS.ForEach(g =>
+                    {
+                        EventoPasarela(g.name, g.std == std.NoInfo ? false : true);
+                    });
 
-                        /** Los Equipos Externos */
-                        U5kManService._std.STDEQS.ForEach(e =>
-                        {
-                            EventoExterno(e.sip_user ?? e.Id, e.EstadoGeneral != std.NoInfo);
-                        });
-                    }
-                    U5kManService._std.wrAccRelease();
-                }
+                    /** Los Equipos Externos */
+                    data.STDEQS.ForEach(e =>
+                    {
+                        EventoExterno(e.sip_user ?? e.Id, e.EstadoGeneral != std.NoInfo);
+                    });
+
+                }));
+
                 cntForGenerateActivityEvents = Properties.u5kManServer.Default.StatisticsActivityMonitoringTime;
             }
         }

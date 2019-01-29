@@ -36,7 +36,7 @@ namespace U5kManServer
     /// <summary>
     /// 
     /// </summary>
-    class MainThread : NucleoGeneric.NGThread
+    public class MainThread : NucleoGeneric.NGThread
     {
 
         /// <summary>
@@ -163,7 +163,7 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        protected bool LoadConfig()
+        protected bool LoadConfig(U5kManStdData gdata)
         {
             bool retorno = true;
             try
@@ -174,7 +174,7 @@ namespace U5kManServer
                     //U5kGenericos.SetCurrentCulture();
 
                     _strVersion = string.Empty;
-                    U5KStdGeneral stdg = U5kManService._std.STDG;
+                    U5KStdGeneral stdg = gdata.STDG;
 
                  
                     stdg.bDualScv = false;
@@ -187,9 +187,7 @@ namespace U5kManServer
                         U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString(),
                         Properties.u5kManServer.Default.PabxWsPort);
 
-                    U5kManService._std.STDG = stdg;
-
-                    Dictionary<string, Action> LoadTables = new Dictionary<string, Action>()
+                    Dictionary<string, Action<U5kManStdData>> LoadTables = new Dictionary<string, Action<U5kManStdData>>()
                     {
                         {"LoadTops", LoadTops },
                         {"LoadGw", LoadGw },
@@ -200,7 +198,7 @@ namespace U5kManServer
                     {
                         try
                         {
-                            action.Value();
+                            action.Value(gdata);
                         }
                         catch (Exception x)
                         {
@@ -211,7 +209,7 @@ namespace U5kManServer
                     if (retorno == true)
                     {
                         // 20170802. Carga de Usuarios....
-                        U5kManService._std.usuarios = U5kManService.Database.SystemUsers();
+                        gdata.usuarios = U5kManService.Database.SystemUsers();
 
                         /** 20171130. Supervisa el gestor Agente SNMP que debe resetearse con la configuracion */
                         //if (_snmpagent.IsRunning())
@@ -241,7 +239,7 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        void LoadTops()
+        void LoadTops(U5kManStdData gdata)
         {
             string[] permitidos = null;
 
@@ -273,12 +271,12 @@ namespace U5kManServer
                 }
             }
 
-            U5kManService._std.CFGTOPS = stdpos;
+            gdata.CFGTOPS = stdpos;
         }
         /// <summary>
         /// 
         /// </summary>
-        void LoadGw()
+        void LoadGw(U5kManStdData gdata)
         {
             string[] permitidos = null;
             if (Properties.u5kManServer.Default.FiltroGW.Equals("None") == false)
@@ -334,6 +332,10 @@ namespace U5kManServer
                             gw.gwB.slots[res.Slot].rec[res.Pos].std_online = std.NoInfo;
                             gw.gwA.slots[res.Slot].rec[res.Pos].tipo_online = trc.rcNotipo;
                             gw.gwB.slots[res.Slot].rec[res.Pos].tipo_online = trc.rcNotipo;
+
+                            /** Referencia a su IP Virtual */
+                            gw.gwA.slots[res.Slot].rec[res.Pos].VirtualIp = gw.ip;
+                            gw.gwB.slots[res.Slot].rec[res.Pos].VirtualIp = gw.ip;
                         }
                     }
 
@@ -342,12 +344,12 @@ namespace U5kManServer
                     U5kEstadisticaProc.Estadisticas.AddPasarela(bgw.Id);
                 }
             }
-            U5kManService._std.CFGGWS = stdgws;
+            gdata.CFGGWS = stdgws;
         }
         /// <summary>
         /// 
         /// </summary>
-        void LoadEquiposEurocae()
+        void LoadEquiposEurocae(U5kManStdData gdata)
         {
 #if DEBUG1
             List<BdtEuEq> equipos = new List<BdtEuEq>()
@@ -384,8 +386,8 @@ namespace U5kManServer
             };
 
             /** Configuro la lista de equipos */
-            U5kManService._std.CFGEQS = equipos.Where(equipo => filtro(equipo)).
-                Select(equipo => new U5kManStdEquiposEurocae.EquipoEurocae(null)
+            var lequipos = equipos.Where(equipo => filtro(equipo)).
+                Select(equipo => new EquipoEurocae(null)
                     {
                         Id = equipo.Id,
                         Ip1 = equipo.Ip,
@@ -398,13 +400,14 @@ namespace U5kManServer
                         sip_port = equipo.SipPort
                     }).ToList();
 
+            gdata.CFGEQS = lequipos;
             /** Activo la lista de equipos en la Estadisticas*/
-            U5kManService._std.STDEQS.ForEach(equipo => U5kEstadisticaProc.Estadisticas.AddExternal(equipo.sip_user ?? equipo.Id, equipo.Tipo));
+            gdata.STDEQS.ForEach(equipo => U5kEstadisticaProc.Estadisticas.AddExternal(equipo.sip_user ?? equipo.Id, equipo.Tipo));
         }
         /// <summary>
         /// 
         /// </summary>
-        void LoadDestinosPabx()
+        void LoadDestinosPabx(U5kManStdData gdata)
         {
 #if DEBUG1
             List<BdtPabxDest> destinos = new List<BdtPabxDest>()
@@ -423,19 +426,19 @@ namespace U5kManServer
             List<BdtPabxDest> destinos = U5kManService.Database.ListaDestinosPABX(PbxIp);
 #endif
 
-            U5kManService._std.CFGPBXS = destinos.Select(d => new Uv5kManDestinosPabx.DestinoPabx() { Id = d.Id }).ToList();
+            gdata.CFGPBXS = destinos.Select(d => new Uv5kManDestinosPabx.DestinoPabx() { Id = d.Id }).ToList();
         }
         /// <summary>
         /// 
         /// </summary>
-        void LoadDestinosAtsExternos()
+        void LoadDestinosAtsExternos(U5kManStdData gdata)
         {
             List<BdtEuEq> atsDestinations = U5kManService.Database.ListaDestinosAtsExternos("departamento");
             foreach (BdtEuEq atsDest in atsDestinations)
             {
-                U5kManStdEquiposEurocae.EquipoEurocae last = null;
-                U5kManService._std.atsDestStd.Equipos.Add(
-                    new U5kManStdEquiposEurocae.EquipoEurocae(last)
+                EquipoEurocae last = null;
+                gdata.atsDestStd.Add(
+                    new EquipoEurocae(last)
                     {
                         Id = atsDest.Id,
                         Ip1 = atsDest.Ip,
@@ -454,12 +457,12 @@ namespace U5kManServer
         /// 
         /// </summary>
         int spv_ntp_reint = 0;
-        void SupervisaNtp()
+        void SupervisaNtp(U5kManStdData gdata)
         {
             // Es una Action. en Version 1, viene con el Semaforo de Escritura cogido...
             if (U5kManService.cfgSettings/*vProperties.u5kManServer.Default*/.HayReloj == true)
             {
-                U5KStdGeneral stdg = U5kManService._std.STDG;
+                U5KStdGeneral stdg = gdata.STDG;
                 LogDebug<MainThread>("SupervisaNTP");
 
                 try
@@ -524,19 +527,18 @@ namespace U5kManServer
                         spv_ntp_reint = 0;
                     }
                 }
-                U5kManService._std.STDG = stdg;
             }
         }
         /// <summary>
         /// 
         /// </summary>
-        void SupervisaScv()
+        void SupervisaScv(U5kManStdData gdata)
         {
             // Es una Action. en Version 1, viene con el Semaforo de Escritura cogido...
 
-            U5KStdGeneral stdg = U5kManService._std.STDG;
-            List<stdGw> stdgws = U5kManService._std.STDGWS;
-            if (U5kManService._std != null && stdgws.Count > 0)
+            U5KStdGeneral stdg = gdata.STDG;
+            List<stdGw> stdgws = gdata.STDGWS;
+            if (gdata != null && stdgws.Count > 0)
             {
                 // Marcadores.
                 int no_presentes = 0, en_alarma = 0;
@@ -574,16 +576,15 @@ namespace U5kManServer
             stdg.stdScv2.Estado = std.NoInfo;
             stdg.stdScv2.Seleccionado = sel.NoSeleccionado;
             LogDebug<MainThread>("SupervisaSCV");
-            U5kManService._std.STDG = stdg;
         }
         /// <summary>
         /// 
         /// </summary>
-        void SupervisaPosiciones()
+        void SupervisaPosiciones(U5kManStdData gdata)
         {
             // Es una Action. en Version 1, viene con el Semaforo de Escritura cogido...
-            U5KStdGeneral stdg = U5kManService._std.STDG;
-            List<stdPos> stdpos = U5kManService._std.STDTOPS;
+            U5KStdGeneral stdg = gdata.STDG;
+            List<stdPos> stdpos = gdata.STDTOPS;
             if (stdpos.Count > 0)
             {
                 // Marcadores.
@@ -616,7 +617,6 @@ namespace U5kManServer
             {
                 stdg.stdGlobalPos = std.NoInfo;
             }
-            U5kManService._std.STDG = stdg;
             LogDebug<MainThread>("SupervisaPosiciones");
         }
         /// <summary>
@@ -662,7 +662,7 @@ namespace U5kManServer
 
             //U5kGenericos.SetCurrentCulture();
             /** Lista de Tareas */
-            List<Action> actions = new List<Action>()
+            List<Action<U5kManStdData>> actions = new List<Action<U5kManStdData>>()
             {
                 SupervisaScv,SupervisaPosiciones,/*SupervisaSacta,*/SupervisaNtp,SpAlarmas
             };
@@ -694,11 +694,10 @@ namespace U5kManServer
                         /** Supervisa la configuracion */
                         if (cfg_loaded == false)
                         {
-                            if (U5kManService._std.wrAccAcquire())
+                            GlobalServices.GetWriteAccess((data) =>
                             {
-                                cfg_loaded = LoadConfig();
-                                U5kManService._std.wrAccRelease();
-                            }
+                                cfg_loaded = LoadConfig(data);
+                            });
                         }
                         else
                         {
@@ -723,18 +722,18 @@ namespace U5kManServer
                                 {
                                     Task.Factory.StartNew(() =>
                                     {
-                                        if (U5kManService._std.wrAccAcquire())
+                                        GlobalServices.GetWriteAccess((gdata) =>
                                         {
                                             try
                                             {
-                                                action();
+                                                action(gdata);
                                             }
                                             catch (Exception x)
                                             {
                                                 LogException<Action>("", x);
                                             }
-                                            U5kManService._std.wrAccRelease();
-                                        }
+                                        });
+
                                     }, TaskCreationOptions.LongRunning);
                                 });
                             }
@@ -885,7 +884,7 @@ namespace U5kManServer
         //            }
         //        }
         static bool spAlarmas = false;
-        void SpAlarmas()
+        void SpAlarmas(U5kManStdData gdata)
         {
             if (spAlarmas == false)
             {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define _INTEGRATED_SNMP_CLIENT_
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -61,9 +62,13 @@ namespace U5kManServer
             {
                 try
                 {
+#if !_INTEGRATED_SNMP_CLIENT_
                     IList<Variable> results = Messenger.Get(VersionCode.V2, new IPEndPoint(IPAddress.Parse(ip), port),
                                                 new OctetString("public"), _data, timeout);
-
+#else
+                    IList<Variable> results = SnmpAgent.ClientRequest(SnmpType.GetRequestPdu,
+                        VersionCode.V2, new IPEndPoint(IPAddress.Parse(ip), port), new OctetString("public"), _data, timeout);
+#endif
                     if (results.Count != _data.Count)
                         throw new SnmpException(String.Format("SnmpClient.GetSet[{0}]: Invalid result.count", ip));
 
@@ -105,8 +110,12 @@ namespace U5kManServer
             {
                 try
                 {
+#if !_INTEGRATED_SNMP_CLIENT_
                     IList<Variable> results = Messenger.Get(version, endpoint, community, variables, timeout);
-
+#else
+                    IList<Variable> results = SnmpAgent.ClientRequest(SnmpType.GetRequestPdu, 
+                        version, endpoint, community, variables, timeout);
+#endif
                     if (results.Count != variables.Count)
                         throw new SnmpException(string.Format("CienteSnmp.Get: result.count incorrecto [{0}]", endpoint));
 
@@ -155,12 +164,19 @@ namespace U5kManServer
                     ido = new ObjectIdentifier(oid);
 
                     lst.Add(new Variable(ido));
-
+#if !_INTEGRATED_SNMP_CLIENT_
                     result = (List<Variable>)Messenger.Get(
                                 VersionCode.V2,
                                 new IPEndPoint(IPAddress.Parse(ip), port),  // 161),
                                 new OctetString(community),
                                 lst, timeout);
+#else
+                    result = (List<Variable>)SnmpAgent.ClientRequest(SnmpType.GetRequestPdu,
+                                VersionCode.V2,
+                                new IPEndPoint(IPAddress.Parse(ip), port), 
+                                new OctetString(community),
+                                lst, timeout);
+#endif
 
                     if (result.Count <= 0)
                     {
@@ -214,12 +230,19 @@ namespace U5kManServer
                     List<Variable> lst = new List<Variable>();
 
                     lst.Add(new Variable(new ObjectIdentifier(oid), new Integer32(valor)));
-
+#if !_INTEGRATED_SNMP_CLIENT_
                     var result = Messenger.Set(
                             VersionCode.V2,
                             new IPEndPoint(IPAddress.Parse(ip), port),
                             new OctetString(community),
                             lst, timeout);
+#else
+                    var result = SnmpAgent.ClientRequest(SnmpType.SetRequestPdu,
+                            VersionCode.V2,
+                            new IPEndPoint(IPAddress.Parse(ip), port),
+                            new OctetString(community),
+                            lst, timeout);
+#endif
                     return;
                 }
 
@@ -239,7 +262,6 @@ namespace U5kManServer
             } while (--reint > 0);
             throw new SnmpException(string.Format("CienteSnmp.SetInt: Elemento {0}, No responde...", ip, oid));
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -263,14 +285,20 @@ namespace U5kManServer
                     ido = new ObjectIdentifier(oid);
 
                     lst.Add(new Variable(ido));
-
                     /** Cambia la Frecuencia en el agente */
+#if !_INTEGRATED_SNMP_CLIENT_
                     result = (List<Variable>)Messenger.Get(
                                 VersionCode.V2,
                                 new IPEndPoint(IPAddress.Parse(ip), port),
                                 new OctetString(community),
                                 lst, timeout);
-
+#else
+                    result = (List<Variable>)SnmpAgent.ClientRequest(SnmpType.GetRequestPdu,
+                                VersionCode.V2,
+                                new IPEndPoint(IPAddress.Parse(ip), port),
+                                new OctetString(community),
+                                lst, timeout);
+#endif
                     if (result.Count <= 0)
                         throw new SnmpException(string.Format("CienteSnmp.GetString: result.count <= 0: {0}---{1}", ip, oid));
 
@@ -295,7 +323,6 @@ namespace U5kManServer
 
             throw new SnmpException(string.Format("SnmpClient.GetString: Elemento {0}, No responde...", ip, oid));
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -314,12 +341,19 @@ namespace U5kManServer
                     List<Variable> lst = new List<Variable>();
 
                     lst.Add(new Variable(new ObjectIdentifier(oid), new OctetString(valor)));
-
+#if !_INTEGRATED_SNMP_CLIENT_
                     var result = Messenger.Set(
                             VersionCode.V2,
                             new IPEndPoint(IPAddress.Parse(ip), port),
                             new OctetString(community),
                             lst, timeout);
+#else
+                    var result = SnmpAgent.ClientRequest(SnmpType.SetRequestPdu,
+                            VersionCode.V2,
+                            new IPEndPoint(IPAddress.Parse(ip), port),
+                            new OctetString(community),
+                            lst, timeout);
+#endif
                     return;
                 }
 
@@ -338,7 +372,6 @@ namespace U5kManServer
 
             throw new SnmpException(string.Format("SnmpClient.SetString: Elemento {0}, No responde...", ip, oid));
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -350,14 +383,25 @@ namespace U5kManServer
             List<Variable> lst = new List<Variable>();
             Variable var = new Variable(new ObjectIdentifier(oid), new OctetString(val));
             lst.Add(var);
-
+#if !_INTEGRATED_SNMP_CLIENT_
             Messenger.SendTrapV2(0, VersionCode.V2,
                 new IPEndPoint(IPAddress.Parse(ipTo), port),
                 new OctetString(community),
                 new ObjectIdentifier(oid),
                 0, lst);
+#else
+            SnmpAgent.ClientRequest(SnmpType.TrapV2Pdu,
+                VersionCode.V2,
+                new IPEndPoint(IPAddress.Parse(ipTo), port),
+                new OctetString(community),
+                lst, 0, new ObjectIdentifier(oid));
+#endif
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
         public int Integer(ISnmpData data)
         {
             return (data is Integer32) ? ((Integer32)data).ToInt32() : -1;

@@ -18,6 +18,7 @@ using System.Runtime.InteropServices;
 // para los componentes COM. Si es necesario obtener acceso a un tipo en este ensamblado desde 
 // COM, establezca el atributo ComVisible en true en este tipo.
 [assembly: ComVisible(false)]
+[assembly: InternalsVisibleTo("U5kManMibRevC")]
 
 // El siguiente GUID sirve como identificador de typelib si este proyecto se expone a COM
 [assembly: Guid("699a4a81-9363-4af9-8c3c-c32a15c9cf03")]

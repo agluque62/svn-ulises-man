@@ -607,7 +607,7 @@ namespace U5kManServer
                     {
                         U5KStdGeneral sg = U5kManService._std._gen;
 #else
-                        U5KStdGeneral sg = U5kManService._std.STDG;
+                        U5KStdGeneral sg = U5kManService.GlobalData.STDG;
 #endif
                         /** Datos de Servidor-1 */
                         ((SnmpStringObject)(ElementAt(0, 1))).Value = sg.stdServ1.name;
@@ -683,7 +683,7 @@ namespace U5kManServer
 #if STD_ACCESS_V0
             foreach (stdPos pos in U5kManService._std.stdpos)
 #else
-            List<stdPos> stdpos = U5kManService._std.STDTOPS;
+            List<stdPos> stdpos = U5kManService.GlobalData.STDTOPS;
             foreach (stdPos pos in stdpos)
 #endif
             {
@@ -711,7 +711,7 @@ namespace U5kManServer
                 }
             }
 #else
-            List<stdPos> stdpos = U5kManService._std.STDTOPS;
+            List<stdPos> stdpos = U5kManService.GlobalData.STDTOPS;
             foreach (stdPos pos in stdpos)
             {
                 ((SnmpIntObject)(ElementAt(row, 2))).Value = (int)pos.stdpos;
@@ -728,7 +728,7 @@ namespace U5kManServer
                 SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_PuestosStdg).Value = (int)U5kManService._std._gen.stdGlobalPos;
             }
 #else
-            SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_PuestosStdg).Value = (int)U5kManService._std.STDG.stdGlobalPos;
+            SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_PuestosStdg).Value = (int)U5kManService.GlobalData.STDG.stdGlobalPos;
 #endif
         }
     }
@@ -743,7 +743,7 @@ namespace U5kManServer
 #if STD_ACCESS_V0
             List<stdGw> stdgws = U5kManService._std.stdgws;
 #else
-            List<stdGw> stdgws = U5kManService._std.STDGWS;
+            List<stdGw> stdgws = U5kManService.GlobalData.STDGWS;
 #endif
             foreach (stdGw gw in stdgws)
             {
@@ -771,7 +771,7 @@ namespace U5kManServer
                 }
             }
 #else
-            List<stdGw> stdgws = U5kManService._std.STDGWS;
+            List<stdGw> stdgws = U5kManService.GlobalData.STDGWS;
             foreach (stdGw gw in stdgws)
             {
                 ((SnmpIntObject)(ElementAt(row, 2))).Value = (int)gw.std;
@@ -789,7 +789,7 @@ namespace U5kManServer
                 SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_GwsStdg).Value = (int)U5kManService._std._gen.stdScv1.Estado;
             }
 #else
-            SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_GwsStdg).Value = (int)U5kManService._std.STDG.stdScv1.Estado;
+            SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_GwsStdg).Value = (int)U5kManService.GlobalData.STDG.stdScv1.Estado;
 #endif
         }
     }
@@ -807,7 +807,7 @@ namespace U5kManServer
 #if STD_ACCESS_V0
             List<stdGw> stdgws = U5kManService._std.stdgws;
 #else
-            List<stdGw> stdgws = U5kManService._std.STDGWS;
+            List<stdGw> stdgws = U5kManService.GlobalData.STDGWS;
 #endif
             foreach (stdGw gw in stdgws)
             {
@@ -846,7 +846,7 @@ namespace U5kManServer
             List<stdGw> stdgws = U5kManService._std.stdgws;
             lock (U5kManService._std.stdgws)
 #else
-            List<stdGw> stdgws = U5kManService._std.STDGWS;
+            List<stdGw> stdgws = U5kManService.GlobalData.STDGWS;
 #endif
             {
                 SnmpIntObject.Get(_isRadio ? U5kManMibOids.MttoV2Oid_RadioTbNum : U5kManMibOids.MttoV2Oid_TelefTbNum).Value = Size;
@@ -899,9 +899,9 @@ namespace U5kManServer
 #if STD_ACCESS_V0
             List<U5kManStdEquiposEurocae.EquipoEurocae> stdeqeu = U5kManService._std.stdeqeu.Equipos;            
 #else
-            List<U5kManStdEquiposEurocae.EquipoEurocae> stdeqeu = U5kManService._std.STDEQS;
+            List<EquipoEurocae> stdeqeu = U5kManService.GlobalData.STDEQS;
 #endif
-            foreach (U5kManStdEquiposEurocae.EquipoEurocae equipo in stdeqeu)
+            foreach (EquipoEurocae equipo in stdeqeu)
             {
                 if (_tipo == IpItfTypes.Radio)
                 {
@@ -939,7 +939,7 @@ namespace U5kManServer
             List<U5kManStdEquiposEurocae.EquipoEurocae> stdeqeu = U5kManService._std.stdeqeu.Equipos;            
             lock (U5kManService._std.stdeqeu.Equipos)
 #else
-            List<U5kManStdEquiposEurocae.EquipoEurocae> stdeqeu = U5kManService._std.STDEQS;
+            List<EquipoEurocae> stdeqeu = U5kManService.GlobalData.STDEQS;
 #endif
             {
                 int row = 0;
@@ -949,7 +949,7 @@ namespace U5kManServer
 
                 SnmpIntObject.Get(OidNum).Value = Size;
 
-                foreach (U5kManStdEquiposEurocae.EquipoEurocae equipo in stdeqeu)
+                foreach (EquipoEurocae equipo in stdeqeu)
                 {
                     if (_tipo == IpItfTypes.Radio)
                     {
@@ -1000,7 +1000,7 @@ namespace U5kManServer
                 Size = Size + 1;
             }
 #else
-            U5kManService._std.STDPBXS.ForEach(d => 
+            U5kManService.GlobalData.STDPBXS.ForEach(d => 
             { 
                 AddRow(d.Id, "", d.Estado); 
                 Size++; 
@@ -1028,14 +1028,14 @@ namespace U5kManServer
                 SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_PbxAbTbNum).Value = row;
             }
 #else
-            U5kManService._std.STDPBXS.ForEach(d =>
+            U5kManService.GlobalData.STDPBXS.ForEach(d =>
             {
                 ((SnmpIntObject)(ElementAt(row, 2))).Value = (int)d.Estado;
                 row++;
             });
 
             // Estado General...
-            SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_PbxStd).Value = (int)U5kManService._std.STDG.stdPabx.Estado;
+            SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_PbxStd).Value = (int)U5kManService.GlobalData.STDG.stdPabx.Estado;
             SnmpIntObject.Get(U5kManMibOids.MttoV2Oid_PbxAbTbNum).Value = row;
 #endif
         }
@@ -1207,8 +1207,8 @@ namespace U5kManServer
             new SnmpIntObject(U5kManMibOids.MttoV2Oid_PuestosTbNum, U5kManService._std.stdpos.Count),
             new SnmpIntObject(U5kManMibOids.MttoV2Oid_GwsTbNum, U5kManService._std.stdgws.Count),
 #else
-            new SnmpIntObject(U5kManMibOids.MttoV2Oid_PuestosTbNum, U5kManService._std.STDTOPS.Count),
-            new SnmpIntObject(U5kManMibOids.MttoV2Oid_GwsTbNum, U5kManService._std.STDGWS.Count),
+            new SnmpIntObject(U5kManMibOids.MttoV2Oid_PuestosTbNum, U5kManService.GlobalData.STDTOPS.Count),
+            new SnmpIntObject(U5kManMibOids.MttoV2Oid_GwsTbNum, U5kManService.GlobalData.STDGWS.Count),
 #endif
             /** Pasarelas e Interfaces LEGACY */
             new SnmpIntObject(U5kManMibOids.MttoV2Oid_GwsStdg, (int )std.NoInfo),

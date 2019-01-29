@@ -142,7 +142,7 @@ namespace U5kManServer
 
             U5kGenericos.ResetService = false;
             //U5kGenericos.SetCurrentCulture();
-            U5kManService._std = new U5kManStdData();
+            U5kManService.GlobalData = new U5kManStdData();
 
             // Arranca el Servicio WEB
             _started = ActivateService();
@@ -247,26 +247,27 @@ namespace U5kManServer
                                 }
                             }
 #else
-                            if (U5kManService._std.wrAccAcquire())
+                            //if (U5kManService._std.wrAccAcquire())
                             {
                                 try
                                 {
-                                    U5KStdGeneral stdg = U5kManService._std.STDG;
-                                    if (CheckSiMaster(stdg))
+                                    //U5KStdGeneral stdg = U5kManService._std.STDG;
+                                    if (CheckSiMaster(/*stdg*/))
                                     {
-                                        CheckCambioConfig(bMaster, stdg);
+                                        CheckCambioConfig(bMaster/*, stdg*/);
 
                                         if (U5kGenericos.ResetService)
                                         {
                                             U5kGenericos.ResetService = false;
                                             if (bMaster)
                                             {
-                                                U5kManService.Reset();
+                                                GlobalServices.GetWriteAccess((data) =>
+                                                {
+                                                    U5kManService.Reset();
+                                                });
                                             }
                                         }
-                                        CheckSactaService(stdg.SactaServiceEnabled/* true*/, stdg);
-                                        /** 20180327. Se obtinen las versiones al pedirlas no periodicamente */
-                                        // CheckVersionDetails(stdg);
+                                        CheckSactaService(/*stdg.SactaServiceEnabled, stdg*/);
                                     }
                                     /** 20180730. Si se es SLAVE no se chequea el SACTA... */
                                     //else
@@ -274,17 +275,17 @@ namespace U5kManServer
                                     //    CheckSactaService(false, stdg);
                                     //}
                                     CheckWebServer();
-                                    CheckLanesAndNtpSync(stdg);
-                                    U5kManService._std.STDG = stdg;
+                                    CheckLanesAndNtpSync(/*stdg*/);
+                                    //U5kManService._std.STDG = stdg;
                                 }
                                 catch (Exception x)
                                 {
                                     throw x;
                                 }
-                                finally
-                                {
-                                    U5kManService._std.wrAccRelease();
-                                }
+                                //finally
+                                //{
+                                //    U5kManService._std.wrAccRelease();
+                                //}
                             }
 #endif
                         }
@@ -317,7 +318,7 @@ namespace U5kManServer
             if (U5kManService._main.Running)
                 U5kManService._main.Stop(TimeSpan.FromSeconds(20));
 
-            CheckSactaService(false, null);
+            CheckSactaService(true);
             DeactivateService();
             /** */
             RestoreThreadPoolSize();
@@ -428,17 +429,18 @@ namespace U5kManServer
         /// 
         /// </summary>
         /// <returns></returns>
-        protected bool CheckSiMaster(U5KStdGeneral stdg)
+        protected bool CheckSiMaster()
         {
             try
             {
-                stdg.ClusterError = U5KStdGeneral.ClusterErrors.NoError;
+                U5KStdGeneral.ClusterErrors ClusterError = U5KStdGeneral.ClusterErrors.NoError;
+                bool _Master = false;
+
 #if DEBUG1
                 bool ServidorDual = false;
 #else
                 bool ServidorDual = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual;
 #endif
-
                 if (ServidorDual == true)
                 {
 
@@ -480,18 +482,18 @@ namespace U5kManServer
                     if (MyName != cluster.EstadoNode1.Name && MyName != cluster.EstadoNode2.Name)
                     {
                         /** Error: Nombres no coinciden con el de la máquina */
-                        stdg.ClusterError = U5KStdGeneral.ClusterErrors.NoLocalServerNameDetected;
+                        ClusterError = U5KStdGeneral.ClusterErrors.NoLocalServerNameDetected;
                         LogError<U5kServiceMain>(
                             String.Format("Error: El nombre del PC no esta en el CLUSTER. Se asume rol de MASTER..."));
-                        U5kManService._Master = true;
+                        _Master = true;
                     }
                     else if (cluster.EstadoNode1.Name == cluster.EstadoNode2.Name)
                     {
                         /** Error: Nombres Repetidos */
-                        stdg.ClusterError = U5KStdGeneral.ClusterErrors.RepeatedServerNamesDetected;
+                        ClusterError = U5KStdGeneral.ClusterErrors.RepeatedServerNamesDetected;
                         LogError<U5kServiceMain>(
                             String.Format("Error: Los dos nodos del CLUSTER tienen el mismo nombre. Se asume rol de MASTER..."));
-                        U5kManService._Master = true;
+                        _Master = true;
                     }
                     else
                     {
@@ -501,19 +503,19 @@ namespace U5kManServer
                             (cluster.EstadoNode1.Estado == (int)NodeState.NoActive && cluster.EstadoNode2.Estado == (int)NodeState.NoActive))
                         {
                             /** Hay Nodos activos y Ningun nodo MASTER */
-                            stdg.ClusterError = U5KStdGeneral.ClusterErrors.NoMainNodeDetected;
+                            ClusterError = U5KStdGeneral.ClusterErrors.NoMainNodeDetected;
                             LogError<U5kServiceMain>(
                                 String.Format("Error: Hay Nodos activos y Ningun nodo MASTER. Se asume rol de MASTER..."));
-                            U5kManService._Master = true;
+                            _Master = true;
                         }
                         else if (cluster.EstadoNode1.Estado == (int)NodeState.Active && cluster.EstadoNode2.Estado == (int)NodeState.Active)
                         {
                             /** Los dos Nodos estan en MASTER */
-                            stdg.ClusterError = U5KStdGeneral.ClusterErrors.AllNodesAreMain;
+                            ClusterError = U5KStdGeneral.ClusterErrors.AllNodesAreMain;
 #if DEBUG
-                            U5kManService._Master = true;
+                            /*U5kManService.*/_Master = true;
 #else
-                            U5kManService._Master = U5kGenericos.IsLocalIp(Properties.u5kManServer.Default.MySqlServer); 
+                            _Master = U5kGenericos.IsLocalIp(Properties.u5kManServer.Default.MySqlServer); 
 #endif
                             LogError<U5kServiceMain>(
                                 String.Format("Error: Los dos Nodos estan en MASTER. Se asume rol de {0}, por el criterio de localizacion de la IP virtual ({1})...",
@@ -522,98 +524,103 @@ namespace U5kManServer
                         else if (cluster.EstadoNode1.Estado == (int)NodeState.NoValid && cluster.EstadoNode2.Estado == (int)NodeState.NoValid)
                         {
                             /** No hay nodos activos */
-                            stdg.ClusterError = U5KStdGeneral.ClusterErrors.NoActiveNodesDetected;
+                            /*stdg.*/ClusterError = U5KStdGeneral.ClusterErrors.NoActiveNodesDetected;
                             LogError<U5kServiceMain>(
                                 String.Format("Error: No hay nodos activos. Se asume rol de MASTER..."));
-                            U5kManService._Master = true;
+                            /*U5kManService.*/_Master = true;
                         }
                         else
                         {
                             /** Utilizo el criterio de la INFO de CLUSTER para establecer el modo MASTER/STANDBY */
-                            U5kManService._Master = (MyName == cluster.EstadoNode1.Name && cluster.EstadoNode1.Estado == (int)NodeState.Active) ||
+                            /*U5kManService.*/_Master = (MyName == cluster.EstadoNode1.Name && cluster.EstadoNode1.Estado == (int)NodeState.Active) ||
                                 (MyName == cluster.EstadoNode2.Name && cluster.EstadoNode2.Estado == (int)NodeState.Active);
                         }
                     }
 
                     /** Gestion de las conmutaciones de modo */
-                    if (!bMaster && U5kManService._Master)
+                    GlobalServices.GetWriteAccess((data) =>
                     {
-                        LogInfo<U5kServiceMain>("Conmutando a PRINCIPAL...");
-                        // TODO. Inicializar _std con los valores necesarios....
-                        stdg.cfgVersion = stdg.cfgName = string.Empty;
-                        // U5kManService._main = new MainThread();
-                        U5kManService._main.InvalidateConfig();
+                        U5KStdGeneral stdg = data.STDG;
 
-                        //if (U5kManService._main.Running == false)
-                        //{
-                        //    U5kManService._main.Start();
-                        //}
+                        U5kManService._Master = _Master;
+                        stdg.ClusterError = ClusterError;
 
-                        bMaster = true;
-                        LogWarn<U5kServiceMain>("Modo PRINCIPAL.");
-                    }
-                    else if (bMaster && !U5kManService._Master)
-                    {
-                        // Desactivarse.
-                        U5kEstadisticaProc.Estadisticas.FromMasterToSlave();
-
-                        LogInfo<U5kServiceMain>("Conmutando a RESERVA...");
-
-                        // TODO. Inicializar _std con los valores convenientes...
-                        stdg.cfgVersion = stdg.cfgName = string.Empty;
-                        bMaster = false;
-                        LogWarn<U5kServiceMain>("Modo RESERVA...");
-                    }
-                    else if (U5kManService._Master && U5kManService._main.Running == false)
-                    {
-                        /** 20180309. Posiblemente viene de una recuperacion de error de BDT */
-                        LogInfo<U5kServiceMain>("Recuperando a PRINCIPAL...");
-                        stdg.cfgVersion = stdg.cfgName = string.Empty;
-                        U5kManService._main.InvalidateConfig();
-                        U5kManService._main.Start();
-                    }
+                        if (!bMaster && U5kManService._Master)
+                        {
+                            LogInfo<U5kServiceMain>("Conmutando a PRINCIPAL...");
+                            stdg.cfgVersion = stdg.cfgName = string.Empty;
+                            U5kManService._main.InvalidateConfig();
+                            bMaster = true;
+                            LogWarn<U5kServiceMain>("Modo PRINCIPAL.");
+                        }
+                        else if (bMaster && !U5kManService._Master)
+                        {
+                            LogInfo<U5kServiceMain>("Conmutando a RESERVA...");
+                            // Desactivarse.
+                            U5kEstadisticaProc.Estadisticas.FromMasterToSlave();
+                            stdg.cfgVersion = stdg.cfgName = string.Empty;
+                            bMaster = false;
+                            LogWarn<U5kServiceMain>("Modo RESERVA...");
+                        }
+                        else if (U5kManService._Master && U5kManService._main.Running == false)
+                        {
+                            /** 20180309. Posiblemente viene de una recuperacion de error de BDT */
+                            LogInfo<U5kServiceMain>("Recuperando a PRINCIPAL...");
+                            stdg.cfgVersion = stdg.cfgName = string.Empty;
+                            U5kManService._main.InvalidateConfig();
+                            U5kManService._main.Start();
+                        }
+                    });
 
                     /** Actualizar Datos de Servidores */
-                    StdServ serv1_anterior = new StdServ() { name = stdg.stdServ1.name, Estado = stdg.stdServ1.Estado, Seleccionado = stdg.stdServ1.Seleccionado };
-                    StdServ serv2_anterior = new StdServ() { name = stdg.stdServ2.name, Estado = stdg.stdServ2.Estado, Seleccionado = stdg.stdServ2.Seleccionado };
-
-                    /** Servidor 1*/
-                    stdg.stdServ1.name = cluster.EstadoNode1.Name +
-                        (stdg.ClusterError == U5KStdGeneral.ClusterErrors.NoError ? "" :
-                         String.Format("\nCluster Error: {0}", stdg.ClusterError));
-                    stdg.stdServ1.Estado = cluster.EstadoNode1.Presencia == true ? std.Ok : std.NoInfo;
-                    stdg.stdServ1.Seleccionado = cluster.EstadoNode1.Estado == 0 || cluster.EstadoNode1.Estado == 1 ? sel.NoInfo :
-                            cluster.EstadoNode1.Estado == 2 ? sel.Seleccionado : sel.NoSeleccionado;
-                    /** Servidor 2*/
-                    stdg.stdServ2.name = cluster.EstadoNode2.Name +
-                        (stdg.ClusterError == U5KStdGeneral.ClusterErrors.NoError ? "" :
-                         String.Format("\nCluster Error: {0}", stdg.ClusterError)); ;
-                    stdg.stdServ2.Estado = cluster.EstadoNode2.Presencia == true ? std.Ok : std.NoInfo;
-                    stdg.stdServ2.Seleccionado = cluster.EstadoNode2.Estado == 0 || cluster.EstadoNode2.Estado == 1 ? sel.NoInfo :
-                            cluster.EstadoNode2.Estado == 2 ? sel.Seleccionado : sel.NoSeleccionado;
-
-                    /** Generar el Historico de Activacion del Servidores */
-                    if (U5kManService._Master)
+                    GlobalServices.GetWriteAccess((data) =>
                     {
-                        ActivationDeactivationLog("CLUSTER SERVER 1", serv1_anterior, stdg.stdServ1);
-                        ActivationDeactivationLog("CLUSTER SERVER 2", serv2_anterior, stdg.stdServ2);
-                    }
+                        U5KStdGeneral stdg = data.STDG;
+
+                        StdServ serv1_anterior = new StdServ() { name = stdg.stdServ1.name, Estado = stdg.stdServ1.Estado, Seleccionado = stdg.stdServ1.Seleccionado };
+                        StdServ serv2_anterior = new StdServ() { name = stdg.stdServ2.name, Estado = stdg.stdServ2.Estado, Seleccionado = stdg.stdServ2.Seleccionado };
+
+                        /** Servidor 1*/
+                        stdg.stdServ1.name = cluster.EstadoNode1.Name +
+                            (stdg.ClusterError == U5KStdGeneral.ClusterErrors.NoError ? "" :
+                             String.Format("\nCluster Error: {0}", stdg.ClusterError));
+                        stdg.stdServ1.Estado = cluster.EstadoNode1.Presencia == true ? std.Ok : std.NoInfo;
+                        stdg.stdServ1.Seleccionado = cluster.EstadoNode1.Estado == 0 || cluster.EstadoNode1.Estado == 1 ? sel.NoInfo :
+                                cluster.EstadoNode1.Estado == 2 ? sel.Seleccionado : sel.NoSeleccionado;
+                        /** Servidor 2*/
+                        stdg.stdServ2.name = cluster.EstadoNode2.Name +
+                            (stdg.ClusterError == U5KStdGeneral.ClusterErrors.NoError ? "" :
+                             String.Format("\nCluster Error: {0}", stdg.ClusterError)); ;
+                        stdg.stdServ2.Estado = cluster.EstadoNode2.Presencia == true ? std.Ok : std.NoInfo;
+                        stdg.stdServ2.Seleccionado = cluster.EstadoNode2.Estado == 0 || cluster.EstadoNode2.Estado == 1 ? sel.NoInfo :
+                                cluster.EstadoNode2.Estado == 2 ? sel.Seleccionado : sel.NoSeleccionado;
+
+                        /** Generar el Historico de Activacion del Servidores */
+                        if (U5kManService._Master)
+                        {
+                            ActivationDeactivationLog("CLUSTER SERVER 1", serv1_anterior, stdg.stdServ1);
+                            ActivationDeactivationLog("CLUSTER SERVER 2", serv2_anterior, stdg.stdServ2);
+                        }
+                    });
                 }
                 else
                 {
                     // Servidor no dual...                    
-                    stdg.stdServ1.name = System.Environment.MachineName;
-                    stdg.stdServ1.Estado = std.Ok;
-                    stdg.stdServ1.Seleccionado = sel.Seleccionado;
-                    U5kManService._Master = true;
-                    if (!bMaster && U5kManService._Master)
+                    GlobalServices.GetWriteAccess((data) =>
                     {
-                        //U5kManService._main = new MainThread();
-                        //U5kManService._main.Start();
-                        bMaster = true;
-                        LogInfo<U5kServiceMain>("Modo No-DUAL");
-                    }
-                    /** Generar el Historico de Activacion del Servidor */
+                        U5KStdGeneral stdg = data.STDG;
+
+                        stdg.stdServ1.name = System.Environment.MachineName;
+                        stdg.stdServ1.Estado = std.Ok;
+                        stdg.stdServ1.Seleccionado = sel.Seleccionado;
+                        U5kManService._Master = true;
+                        if (!bMaster && U5kManService._Master)
+                        {
+                            bMaster = true;
+                            LogInfo<U5kServiceMain>("Modo No-DUAL");
+                        }
+                        /** Generar el Historico de Activacion del Servidor */
+                    });
                 }
             }
             catch (Exception x)
@@ -685,7 +692,7 @@ namespace U5kManServer
         /// </summary>
         /// <param name="soyMaster"></param>
         /// <returns></returns>
-        protected bool CheckCambioConfig(bool soyMaster, U5KStdGeneral stdg)
+        protected bool CheckCambioConfig(bool soyMaster/*, U5KStdGeneral stdg*/)
         {
             if (soyMaster == true)
             {
@@ -694,10 +701,12 @@ namespace U5kManServer
                     /** Si utilizo base de datos local, no puede haber cambios de configuracion */
                     if (Properties.u5kManServer.Default.TipoBdt == 1)
                     {
+                        GlobalServices.GetWriteAccess((data) =>
                         {
+                            U5KStdGeneral stdg = data.STDG;
                             stdg.cfgName = "local";
                             stdg.cfgVersion = "bdt-local";
-                        }
+                        });
                     }
                     else
                     {
@@ -712,22 +721,23 @@ namespace U5kManServer
                         U5kManService.st_config.mcast_conf_grp = mcast_ip;
                         U5kManService.st_config.mcast_conf_port_base = mcast_port;
 #endif
-
-                        LogDebug<U5kServiceMain>("SpConfiguracion. Version: " + strVersion);
-                        if (/*U5kManService._std._gen.cfgVersion != string.Empty && */stdg.cfgVersion != strVersion)
+                        GlobalServices.GetWriteAccess((data) =>
                         {
-                            if (stdg.cfgVersion != string.Empty)
-                            {
-                                LogInfo<U5kServiceMain>(
-                                    String.Format("SpConfiguracion. Nueva Config {0} --> {1}", stdg.cfgVersion, strVersion));
-                                // TODO. Inicializar _std con lo que corresponda...
-                                // U5kManService.Reset();
-                                U5kManService._main.InvalidateConfig();
-                            }
+                            U5KStdGeneral stdg = data.STDG;
 
-                            stdg.cfgVersion = strVersion;
-                            stdg.cfgName = strCfgName;
-                        }
+                            LogDebug<U5kServiceMain>("SpConfiguracion. Version: " + strVersion);
+                            if (/*U5kManService._std._gen.cfgVersion != string.Empty && */stdg.cfgVersion != strVersion)
+                            {
+                                if (stdg.cfgVersion != string.Empty)
+                                {
+                                    LogInfo<U5kServiceMain>(
+                                        String.Format("SpConfiguracion. Nueva Config {0} --> {1}", stdg.cfgVersion, strVersion));
+                                    U5kManService._main.InvalidateConfig();
+                                }
+                                stdg.cfgVersion = strVersion;
+                                stdg.cfgName = strCfgName;
+                            }
+                        });
                     }
                 }
                 catch (Exception x)
@@ -740,6 +750,7 @@ namespace U5kManServer
             }
             return false;
         }
+
         /// <summary>
         /// Para el Backup de Base de Datos...
         /// </summary>
@@ -829,12 +840,13 @@ namespace U5kManServer
                     if (main_running)
                     {
                         U5kManService._main.Stop(TimeSpan.FromSeconds(20));
-                        // TODO. Inicializar _std con los valores convenientes.
-
-                        U5KStdGeneral stdg = U5kManService._std.STDG;
-                        stdg.cfgVersion = string.Empty;
-                        stdg.cfgName = string.Empty;
-                        U5kManService._std.STDG = stdg;
+                        GlobalServices.GetWriteAccess((gdata) =>
+                        {                        
+                            // TODO. Inicializar _std con los valores convenientes.
+                            U5KStdGeneral stdg = gdata.STDG;
+                            stdg.cfgVersion = string.Empty;
+                            stdg.cfgName = string.Empty;
+                        });
                     }
                 }
                 if (U5kManService.Database != null)
@@ -855,60 +867,71 @@ namespace U5kManServer
         /// 
         /// </summary>
         Task CheckingSactaServiceTask = null;
-        void CheckSactaService(bool MustStart, U5KStdGeneral stdg)
+        void CheckSactaService(bool MustEnd = false/*Start, U5KStdGeneral stdg*/)
         {
 #if !CheckingSactaServiceInline
-            /** 20180706. Evita parar al sistema si el servicio WEB no funciona bien... */
-            if (CheckingSactaServiceTask == null )
+            if (MustEnd)
             {
+                ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
+                try
+                {
+                    sacta_srv.EndSacta();
+                }
+                catch (Exception x)
+                {
+                    LogException<U5kServiceMain>("Cerrando Servicio SACTA", x);
+                }
+            }
+            else if (CheckingSactaServiceTask == null)
+            {
+                /** 20180706. Evita parar al sistema si el servicio WEB no funciona bien... */
+                bool MustStart = false;
+                GlobalServices.GetWriteAccess((data) =>
+                {
+                    U5KStdGeneral stdg = data.STDG;
+                    MustStart = stdg.SactaServiceEnabled;
+                });
+
                 CheckingSactaServiceTask = Task.Run(() =>
                 {
-                    int sacta_status=0;
+                    int sacta_status = 0;
                     ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-
                     Sleep(100);
-
                     try
                     {
                         sacta_status = sacta_srv.GetEstadoSacta();
                     }
-                    catch(Exception x)
+                    catch (Exception x)
                     {
                         LogException<U5kServiceMain>("Obteniendo estado SACTA", x);
                     }
-
-                    if (U5kManService._std.wrAccAcquire())
+                    try
                     {
-                        try
+                        if (U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.HaySacta == false || !bMaster)
                         {
-                            if (U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.HaySacta == false || !bMaster)
-                            {
-                                if ((sacta_status & 0x00f0) != 0)
-                                    sacta_srv.EndSacta();
-
-                                if (stdg != null)
-                                    U5kManService._main.EstadoSacta(0, stdg);
-                            }
-                            else
-                            {
-                                if ((sacta_status & 0x00f0) == 0 && MustStart)
-                                    sacta_srv.StartSacta();
-                                else if ((sacta_status & 0x00f0) != 0 && !MustStart)
-                                    sacta_srv.EndSacta();
-
-                                if (stdg != null)
-                                    U5kManService._main.EstadoSacta(sacta_status, stdg);
-                            }
+                            if ((sacta_status & 0x00f0) != 0)
+                                sacta_srv.EndSacta();
+                            sacta_status = 0;
                         }
-                        catch (Exception x)
+                        else
                         {
-                            LogException<U5kServiceMain>("Actualizando estado SACTA", x);
-                        }
-                        finally
-                        {
-                            U5kManService._std.wrAccRelease();
+                            if ((sacta_status & 0x00f0) == 0 && MustStart)
+                                sacta_srv.StartSacta();
+                            else if ((sacta_status & 0x00f0) != 0 && !MustStart)
+                                sacta_srv.EndSacta();
                         }
                     }
+                    catch (Exception x)
+                    {
+                        LogException<U5kServiceMain>("Actualizando estado SACTA", x);
+                    }
+
+                    GlobalServices.GetWriteAccess((data) =>
+                    {
+                        U5KStdGeneral stdg = data.STDG;
+                        U5kManService._main.EstadoSacta(sacta_status, stdg);
+                    });
+
                     CheckingSactaServiceTask = null;
                 });
             }
@@ -950,64 +973,81 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        void CheckLanesAndNtpSync(U5KStdGeneral stdg)
+        void CheckLanesAndNtpSync(/*U5KStdGeneral stdg*/)
         {
             try
             {
-                StdServ MyStdServer = stdg.LocalServer;
 
-                if (MyStdServer == null)
+                StdServ TestingServer = new StdServ();
+                /** Chequear el TEAMING */
+                NICEventMonitor.NicEventMonitorConfig cfg = new NICEventMonitor.NicEventMonitorConfig(Properties.u5kManServer.Default.TeamingConfig);
+                using (NICEventMonitor monitor = new NICEventMonitor(cfg))
                 {
-                    LogError<U5kServiceMain>(
-                        String.Format("No se determina si soy Servidor-1 o Servidor-2: {0} ?? ({1})-({2})",
-                        System.Environment.MachineName, stdg.stdServ1.name, stdg.stdServ2.name));
-                }
-                else
-                {
-                    /** Chequear el TEAMING */
-                    NICEventMonitor.NicEventMonitorConfig cfg = new NICEventMonitor.NicEventMonitorConfig(Properties.u5kManServer.Default.TeamingConfig);
-                    using (NICEventMonitor monitor = new NICEventMonitor(cfg))
+                    if (monitor.NICList.Count > 0)
                     {
-                        if (monitor.NICList.Count > 0)
+                        // Hay Eventos de TEAMING. Asumo que la red es dual...
+                        foreach (NICEventMonitor.NICItem item in monitor.NICList)
                         {
-                            // Hay Eventos de TEAMING. Asumo que la red es dual...
-                            foreach (NICEventMonitor.NICItem item in monitor.NICList)
-                            {
-                                MyStdServer.lanes[item.DeviceId] = item.Status == NICEventMonitor.LanStatus.Up ? std.Ok : std.Error;
-                            }
+                            TestingServer.lanes[item.DeviceId] = item.Status == NICEventMonitor.LanStatus.Up ? std.Ok : std.Error;
+                        }
+                    }
+                    else
+                    {
+                        // No hay eventos de Teaming. Asumo que la red no es dual...
+                        /** Chequear el estado de la LAN que da servicio a la IP-FISICA del Servidor */
+                        string MyIp = Properties.u5kManServer.Default.MiDireccionIP;
+                        string eth_name = "";
+                        bool eth_up = false;
+                        if (Utilities.NICS.GetEthInterface(MyIp, ref eth_name, ref eth_up) == true)
+                        {
+                            TestingServer.lanes[eth_name] = eth_up ? std.Ok : std.Error;
                         }
                         else
                         {
-                            // No hay eventos de Teaming. Asumo que la red no es dual...
-                            /** Chequear el estado de la LAN que da servicio a la IP-FISICA del Servidor */
-                            string MyIp = Properties.u5kManServer.Default.MiDireccionIP;
-                            string eth_name = "";
-                            bool eth_up = false;
-                            if (Utilities.NICS.GetEthInterface(MyIp, ref eth_name, ref eth_up) == true)
-                            {
-                                MyStdServer.lanes[eth_name] = eth_up ? std.Ok : std.Error;
-                            }
-                            else
-                            {
-                                LogError<U5kServiceMain>(
-                                    String.Format("No se encuentra Interfaz ETH para la ip {0}", MyIp));
-                                return;
-                            }
+                            LogError<U5kServiceMain>(
+                                String.Format("No se encuentra Interfaz ETH para la ip {0}", MyIp));
+                            return;
                         }
+                    }
+                }
+                /** Chequear el Estado de Sincronismo */
+                using (NtpClientStatus ntpc = new NtpClientStatus(Properties.u5kManServer.Default.NtpClient))
+                {
+                    TestingServer.ntp_sync = String.Join("##", ntpc.Status.ToArray());
+                }
+
+                /** Actualizo los datos en la tabla... */
+                GlobalServices.GetWriteAccess((data) =>
+                {
+                    U5KStdGeneral stdg = data.STDG;
+                    StdServ MyStdServer = stdg.LocalServer;
+
+                    if (MyStdServer == null)
+                    {
+                        LogError<U5kServiceMain>(
+                            String.Format("No se determina si soy Servidor-1 o Servidor-2: {0} ?? ({1})-({2})",
+                            System.Environment.MachineName, stdg.stdServ1.name, stdg.stdServ2.name));
+                    }
+                    else
+                    {
+                        /** Copio los datos obtenidos **/
+                        MyStdServer.lanes.Clear();
+                        foreach(var lan in TestingServer.lanes)
+                        {
+                            MyStdServer.lanes[lan.Key] = lan.Value;
+                        }
+                        MyStdServer.ntp_sync = TestingServer.ntp_sync;
                         /** Si soy esclavo, notifico los datos al master */
                         if (!bMaster)
                             WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoLanes, MyStdServer.lanes2string);
-                    }
 
-                    /** Chequear el Estado de Sincronismo */
-                    using (NtpClientStatus ntpc = new NtpClientStatus(Properties.u5kManServer.Default.NtpClient))
-                    {
-                        MyStdServer.ntp_sync = String.Join("##", ntpc.Status.ToArray());
                         /** Si soy esclavo, notifico los datos al master */
                         if (!bMaster)
                             WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoNtpClient, MyStdServer.ntp_sync);
                     }
-                }
+                });
+
+
             }
             catch (Exception x)
             {

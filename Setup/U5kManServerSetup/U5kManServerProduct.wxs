@@ -101,6 +101,9 @@
       <Component Id ="U5kBaseDatos" Guid="{50C5C7B9-26B5-4259-922B-BA4102C81DAE}">
         <File Id="U5kBaseDatos" Name="U5kBaseDatos.dll"></File>
       </Component>
+      <Component Id ="U5kManMibRevC" Guid="*">
+        <File Id="U5kManMibRevC" Name="U5kManMibRevC.dll"></File>
+      </Component>
       <Component Id ="Utilities" Guid="{3DDB3D4E-4996-463C-BA03-6A8E4A89173A}">
         <File Id="Utilities" Name="Utilities.dll"></File>
       </Component>      
@@ -114,11 +117,15 @@
         <File Id="NLog" Name="NLog.dll"></File>
         <util:RemoveFolderEx Id="RemoveLogFolder" On="uninstall" Property="LogFolder" />
       </Component>
-      <Component Id ="SharpSnmpLib.Full" Guid="{1785C811-8C51-4EE7-89DA-33CA6F8C077E}">
+      <!--<Component Id ="SharpSnmpLib.Full" Guid="{1785C811-8C51-4EE7-89DA-33CA6F8C077E}">
         <File Id="SharpSnmpLib.Full" Name="SharpSnmpLib.Full.dll"></File>
       </Component>
       <Component Id ="SharpSnmpLib.Portable" Guid="{BE115EE5-E235-4505-9636-26DBD3809AB7}">
         <File Id="SharpSnmpLib.Portable" Name="SharpSnmpLib.Portable.dll"></File>
+      </Component>
+      -->
+      <Component Id ="SharpSnmpLib" Guid="*">
+        <File Id="SharpSnmpLib" Name="SharpSnmpLib.dll"></File>
       </Component>
       <Component Id ="MySql.Data" Guid="{6CF6C0C7-F4C9-41D4-B534-D2AE7CF658AE}">
         <File Id="MySql.Data" Name="MySql.Data.dll"></File>
@@ -224,6 +231,10 @@
                         File = "[#U5kManServer.config]"
                         ElementPath="/configuration/applicationSettings/U5kManServer.Properties.u5kManServer/setting[\[]@name='GatewaysDualityType'[\]]/value"
                         Value="[GDT]"/>
+        <util:XmlFile Id="SnmpRmonServer" Action="setValue"
+                        File = "[#U5kManServer.config]"
+                        ElementPath="/configuration/applicationSettings/U5kManServer.Properties.u5kManServer/setting[\[]@name='SnmpRMONTrapReceiver'[\]]/value"
+                        Value="[SNMPRMONSERVER]"/>
       </Component>
       <Component Id="nlog_config" Guid="{6B208E0B-DADA-4740-9C73-190B2FC69AB5}">
         <File Id="NLog.config" Name="NLog.config"></File>
@@ -237,6 +248,7 @@
 
           <RegistryValue Name='LANG_Property' Value='[LANG]' Type='string' />
           <RegistryValue Name='SNMPAGPORT_Property' Value='[SNMPAGPORT]' Type='string' />
+          <RegistryValue Name='SNMPRMONSERVER_Property' Value='[SNMPRMONSERVER]' Type='string' />
           
           <RegistryValue Name='GDT_Property' Value='[GDT]' Type='string' />
         </RegistryKey>

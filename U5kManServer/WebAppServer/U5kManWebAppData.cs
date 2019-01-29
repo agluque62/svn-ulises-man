@@ -197,7 +197,7 @@ namespace U5kManServer.WebAppServer
         /// <summary>
         /// 
         /// </summary>
-        public U5kManWADStd(string user ="false", bool bGenerate = false)
+        public U5kManWADStd(U5kManStdData gdt, string user ="false", bool bGenerate = false)
         {
             if (bGenerate)
             {
@@ -205,7 +205,7 @@ namespace U5kManServer.WebAppServer
                 U5KStdGeneral stdg = U5kManService._std._gen;
                 lock (U5kManService._std._gen)
 #else
-                U5KStdGeneral stdg = U5kManService._std.STDG;
+                U5KStdGeneral stdg = gdt.STDG;
 #endif
                 {
                     version = U5kGenericos.Version;
@@ -360,7 +360,7 @@ namespace U5kManServer.WebAppServer
                         sel = 0,
                         url = ""
                     };
-                    var operador = U5kManService._std.usuarios.Find(x => ((U5kBdtService.SystemUserInfo)x).id == user);
+                    var operador = gdt.usuarios.Find(x => ((U5kBdtService.SystemUserInfo)x).id == user);
                     perfil = operador == null ? 0 : ((U5kBdtService.SystemUserInfo)operador).prf;
                     lang = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.Idioma;
 
@@ -375,22 +375,27 @@ namespace U5kManServer.WebAppServer
                     tf_status = U5kManService.tlf_mode;
 
 #else
-                    var sessions_data = JsonConvert.DeserializeObject<List<U5kManService.radioSessionData>>(Services.CentralServicesMonitor.Monitor.RadioSessionsString);
-                    var fr = sessions_data.Count();                              // Frecuencias Configuradas.
-                    var fa = sessions_data.Where(f => f.fstd == 0).Count();      // Frecuencias No disponibles
-                    var fd = sessions_data.Where(f => f.fstd == 2).Count();      // Frecuencias Degradadas.
-                    rd_status = fr == 0 ? -1 /** No INFO */ : fa > 0 ? 2 /** Alarma */ : fd > 0 ? 1 /** Warning */: 0; /** OK */
+                    //var sessions_data = JsonConvert.DeserializeObject<List<U5kManService.radioSessionData>>(Services.CentralServicesMonitor.Monitor.RadioSessionsString);
+                    //var fr = sessions_data.Count();                              // Frecuencias Configuradas.
+                    //var fa = sessions_data.Where(f => f.fstd == 0).Count();      // Frecuencias No disponibles
+                    //var fd = sessions_data.Where(f => f.fstd == 2).Count();      // Frecuencias Degradadas.
+                    //rd_status = fr == 0 ? -1 /** No INFO */ : fa > 0 ? 2 /** Alarma */ : fd > 0 ? 1 /** Warning */: 0; /** OK */
+                    var rs = Services.CentralServicesMonitor.Monitor.GlobalRadioStatus;
+                    rd_status = rs == std.NoInfo ? -1 : rs == std.Alarma ? 2 : rs == std.Aviso ? 1 : 0;
 
-                    /** 20181010. De los datos obtenemos el estado de emergencia */
-                    JArray grps = JsonHelper.SafeJArrayParse(Services.CentralServicesMonitor.Monitor.PresenceDataString);
-                    JObject prx_grp = grps == null ? null :
-                        grps.Where(u => u.Value<int>("tp") == 4).FirstOrDefault() as JObject;
-                    JProperty prx_prop = prx_grp == null ? null : prx_grp.Property("res");
-                    JArray proxies = prx_prop == null ? null : prx_prop.Value as JArray;
-                    int ppal = proxies == null ? 0 : proxies.Where(u => u.Value<int>("tp") == 5 && u.Value<int>("std") == 0).Count();
-                    int alt = proxies == null ? 0 : proxies.Where(u => u.Value<int>("tp") == 6 && u.Value<int>("std") == 0).Count();
+                    ///** 20181010. De los datos obtenemos el estado de emergencia */
+                    //JArray grps = JsonHelper.SafeJArrayParse(Services.CentralServicesMonitor.Monitor.PresenceDataString);
+                    //JObject prx_grp = grps == null ? null :
+                    //    grps.Where(u => u.Value<int>("tp") == 4).FirstOrDefault() as JObject;
+                    //JProperty prx_prop = prx_grp == null ? null : prx_grp.Property("res");
+                    //JArray proxies = prx_prop == null ? null : prx_prop.Value as JArray;
+                    //int ppal = proxies == null ? 0 : proxies.Where(u => u.Value<int>("tp") == 5 && u.Value<int>("std") == 0).Count();
+                    //int alt = proxies == null ? 0 : proxies.Where(u => u.Value<int>("tp") == 6 && u.Value<int>("std") == 0).Count();
+                    //tf_status = ppal > 0 ? 0 /** OK */ : alt > 0 ? 1 /** DEG */ : 2 /** EMG */;
 
-                    tf_status = ppal > 0 ? 0 /** OK */ : alt > 0 ? 1 /** DEG */ : 2 /** EMG */;
+                    var tfs = Services.CentralServicesMonitor.Monitor.GlobalPhoneStatus;
+                    tf_status = tfs == std.Ok ? 0 /** OK */ : tfs==std.Aviso ? 1 /** DEG */ : 2 /** EMG */;
+
 #endif
                 }
             }
@@ -426,7 +431,7 @@ namespace U5kManServer.WebAppServer
         /// <summary>
         /// 
         /// </summary>
-        public U5kManWADCwps(bool bGenerate)
+        public U5kManWADCwps(U5kManStdData gdt, bool bGenerate)
         {
             if (bGenerate)
             {
@@ -453,7 +458,7 @@ namespace U5kManServer.WebAppServer
                     }
                 }
 #else
-                List<stdPos> stdpos = U5kManService._std.STDTOPS;
+                List<stdPos> stdpos = gdt.STDTOPS;
                 foreach (stdPos pos in stdpos)
                 {
                     lista.Add(new CWPData()
@@ -506,7 +511,7 @@ namespace U5kManServer.WebAppServer
 
         public int gdt { get; set; }
 
-        public U5kManWADGws(bool bGenerate = false)
+        public U5kManWADGws(U5kManStdData gdata, bool bGenerate = false)
         {
             if (bGenerate)
             {
@@ -528,7 +533,7 @@ namespace U5kManServer.WebAppServer
                     }
                 }
 #else
-                List<stdGw> stdgws = U5kManService._std.STDGWS;
+                List<stdGw> stdgws = gdata.STDGWS;
                 lista = stdgws.Select(gw => new GWData()
                 {
                     name = gw.name,
@@ -614,7 +619,7 @@ namespace U5kManServer.WebAppServer
         /// 
         /// </summary>
         /// <param name="name"></param>
-        public U5kManWADGwData(string Name, bool bGenerate = false)
+        public U5kManWADGwData(U5kManStdData gdata, string Name, bool bGenerate = false)
         {
             if (bGenerate)
             {
@@ -655,7 +660,7 @@ namespace U5kManServer.WebAppServer
                     }
                 }
 #else
-                List<stdGw> stdgws = U5kManService._std.STDGWS;
+                List<stdGw> stdgws = gdata.STDGWS;
                 stdGw gw = stdgws.Where(i => i.name == Name).FirstOrDefault();
                 if (gw != null)
                 {
@@ -804,7 +809,7 @@ namespace U5kManServer.WebAppServer
         /// <summary>
         /// 
         /// </summary>
-        public U5kManWADExtEqu(bool bGenerate = false)
+        public U5kManWADExtEqu(U5kManStdData gdata, bool bGenerate = false)
         {
             if (bGenerate)
             {
@@ -827,7 +832,7 @@ namespace U5kManServer.WebAppServer
                     });
                 }
 #else
-                lista = U5kManService._std.STDEQS.Select(equipo => new itemEqu()
+                lista = gdata.STDEQS.Select(equipo => new itemEqu()
                     {
                         name = equipo.sip_user ?? equipo.Id,
                         ip1 = equipo.Ip1,
@@ -880,11 +885,11 @@ namespace U5kManServer.WebAppServer
             public int std_sip { get; set; }
         }
         public List<itemDst> lista = new List<itemDst>();
-        public U5kManWADExtAtsDst(bool bGenerate = false)
+        public U5kManWADExtAtsDst(U5kManStdData gdata, bool bGenerate = false)
         {
             if (bGenerate)
             {
-                foreach (U5kManStdEquiposEurocae.EquipoEurocae equipo in U5kManService._std.atsDestStd.Equipos)
+                foreach (EquipoEurocae equipo in gdata.STDEQS)
                 {
                     lista.Add(new itemDst()
                     {
@@ -924,7 +929,7 @@ namespace U5kManServer.WebAppServer
         /// <summary>
         /// 
         /// </summary>
-        public U5kManWADPbx(bool bGenerate = false)
+        public U5kManWADPbx(U5kManStdData gdata, bool bGenerate = false)
         {
             if (bGenerate)
             {
@@ -938,7 +943,7 @@ namespace U5kManServer.WebAppServer
                     });
                 }
 #else
-                lista = U5kManService._std.STDPBXS.Select(d => new itemPabx() { name = d.Id, std = (int)d.Estado }).ToList();
+                lista = gdata.STDPBXS.Select(d => new itemPabx() { name = d.Id, std = (int)d.Estado }).ToList();
 #endif
             }
         }
@@ -963,7 +968,7 @@ namespace U5kManServer.WebAppServer
         /// <summary>
         /// 
         /// </summary>
-        public U5kManWADDbCwps(bool bGenerate = false)
+        public U5kManWADDbCwps(U5kManStdData gdata, bool bGenerate = false)
         {
             if (bGenerate)
             {
@@ -979,7 +984,7 @@ namespace U5kManServer.WebAppServer
                     }
                 }
 #else
-                List<stdPos> stdpos = U5kManService._std.STDTOPS;
+                List<stdPos> stdpos = gdata.STDTOPS;
                 foreach (stdPos pos in stdpos)
                 {
                     lista.Add(new itemDbCWP()
@@ -1011,7 +1016,7 @@ namespace U5kManServer.WebAppServer
         /// <summary>
         /// 
         /// </summary>
-        public U5kManWADDbGws(bool bGenerate)
+        public U5kManWADDbGws(U5kManStdData gdata, bool bGenerate)
         {
             if (bGenerate)
             {
@@ -1027,7 +1032,7 @@ namespace U5kManServer.WebAppServer
                     }
                 }
 #else
-                List<stdGw> stdgws = U5kManService._std.STDGWS;
+                List<stdGw> stdgws = gdata.STDGWS;
                 lista = stdgws.Select(gw => new itemDbGW() { id = gw.name }).ToList();
 #endif
             }
@@ -1042,7 +1047,7 @@ namespace U5kManServer.WebAppServer
             public int tipo { get; set; }
         }
         public List<itemHard> items { get; set; }
-        public U5kManAllhard()
+        public U5kManAllhard(U5kManStdData gdata )
         {
             items = new List<itemHard>();
 #if STD_ACCESS_V0
@@ -1082,13 +1087,13 @@ namespace U5kManServer.WebAppServer
             }
 #else
             /** Añado los Operadores */
-            items.AddRange(U5kManService._std.STDTOPS.Select(item => new itemHard() {Id = item.name, tipo = 0 }).ToList()); 
+            items.AddRange(gdata.STDTOPS.Select(item => new itemHard() {Id = item.name, tipo = 0 }).ToList()); 
 
             /** Añado las Pasarelas */
-            items.AddRange(U5kManService._std.STDGWS.Select(gw => new itemHard() { Id = gw.name, tipo = 1 }).ToList());
+            items.AddRange(gdata.STDGWS.Select(gw => new itemHard() { Id = gw.name, tipo = 1 }).ToList());
 
             /** Añado los equipos*/
-            items.AddRange(U5kManService._std.STDEQS.Select(eq => new itemHard() { Id = eq.sip_user ?? eq.Id, tipo = eq.Tipo }).ToList());
+            items.AddRange(gdata.STDEQS.Select(eq => new itemHard() { Id = eq.sip_user ?? eq.Id, tipo = eq.Tipo }).ToList());
 
 #endif
         }
@@ -1837,7 +1842,7 @@ namespace U5kManServer.WebAppServer
         /// <summary>
         /// 
         /// </summary>
-        public U5kManWADOptions(bool bGenerate = false)
+        public U5kManWADOptions(U5kManStdData gdata, bool bGenerate = false)
         {
             if (bGenerate)
             {
@@ -1849,7 +1854,7 @@ namespace U5kManServer.WebAppServer
                 }
 #else
                 version = U5kGenericos.Version;
-                bdt = U5kManService._std.STDG.CfgId;        // .cfgVersion;
+                bdt = gdata.STDG.CfgId;        // .cfgVersion;
 #endif
                 foreach (KeyValuePair<string, itemProperty> p in prop)
                 {

@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using Utilities;
 
@@ -40,11 +41,11 @@ namespace U5kManServer.Services
             public DateTime TimeStamp { get; set; }
         };
 
-        static TimeSpan smpTimeout = TimeSpan.FromSeconds(5);
+        static TimeSpan smpTimeout = TimeSpan.FromSeconds(10);  // 5
 
         static TimeSpan mainTick = TimeSpan.FromSeconds(1);
         static TimeSpan notResponingTick = TimeSpan.FromSeconds(5);
-        static TimeSpan notResponingTimeout = TimeSpan.FromSeconds(10);
+        static TimeSpan notResponingTimeout = TimeSpan.FromSeconds(15); // 10
         static TimeSpan globalStateTick = TimeSpan.FromSeconds(5);
         static TimeSpan globalStateAlarmTimeout = TimeSpan.FromSeconds(30);
         static TimeSpan operationalDataTick = TimeSpan.FromSeconds(10);
@@ -123,6 +124,44 @@ namespace U5kManServer.Services
             set => _hFRadioDataString = value;
         }
 
+        /** Estados globales */
+        public std GlobalRadioStatus
+        {
+            get
+            {
+                std ret = std.NoInfo;
+                //if (GetDataAccess()) 
+                {
+                    var sessions_data = JsonConvert.DeserializeObject<List<U5kManService.radioSessionData>>(RadioSessionsString);
+                    var fr = sessions_data.Count();                              // Frecuencias Configuradas.
+                    var fa = sessions_data.Where(f => f.fstd == 0).Count();      // Frecuencias No disponibles
+                    var fd = sessions_data.Where(f => f.fstd == 2).Count();      // Frecuencias Degradadas.
+                    ret = fr == 0 ? std.NoInfo : fa > 0 ? std.Alarma : fd > 0 ? std.Aviso : std.Ok;
+                }
+                //rd_status = fr == 0 ? -1 /** No INFO */ : fa > 0 ? 2 /** Alarma */ : fd > 0 ? 1 /** Warning */: 0; /** OK */
+                return ret;
+            }
+        }
+        public std GlobalPhoneStatus
+        {
+            get
+            {
+                std ret = std.NoInfo;
+                //if (GetDataAccess())
+                {
+                    JArray grps = JsonHelper.SafeJArrayParse(Services.CentralServicesMonitor.Monitor.PresenceDataString);
+                    JObject prx_grp = grps == null ? null :
+                        grps.Where(u => u.Value<int>("tp") == 4).FirstOrDefault() as JObject;
+                    JProperty prx_prop = prx_grp == null ? null : prx_grp.Property("res");
+                    JArray proxies = prx_prop == null ? null : prx_prop.Value as JArray;
+                    int ppal = proxies == null ? 0 : proxies.Where(u => u.Value<int>("tp") == 5 && u.Value<int>("std") == 0).Count();
+                    int alt = proxies == null ? 0 : proxies.Where(u => u.Value<int>("tp") == 6 && u.Value<int>("std") == 0).Count();
+                    ret = ppal > 0 ? std.Ok /** OK */ : alt > 0 ? std.Aviso /** DEG */ : std.Alarma /** EMG */;
+                    //tf_status = ppal > 0 ? 0 /** OK */ : alt > 0 ? 1 /** DEG */ : 2 /** EMG */;
+                }
+                return ret;
+            }
+        }
         #endregion
 
         #region Constructores

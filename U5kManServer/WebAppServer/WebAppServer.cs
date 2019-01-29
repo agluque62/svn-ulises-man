@@ -19,7 +19,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public delegate void wasRestCallBack(HttpListenerContext context, StringBuilder sb);
+        public delegate void wasRestCallBack(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt);
 
         #region Public
 
@@ -125,7 +125,11 @@ namespace U5kManServer.WebAppServer
                             if (cb != null)
                             {
                                 StringBuilder sb = new System.Text.StringBuilder();
-                                cb(context, sb);
+                                // TODO. De momento no cojo el semaforo....
+                                GlobalServices.GetWriteAccess((gdt) =>
+                                {
+                                    cb(context, sb, gdt);
+                                }, false);
                                 context.Response.ContentType = FileContentType(".json");
                                 Render(Encode(sb.ToString()), context.Response);
                             }

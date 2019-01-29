@@ -235,48 +235,62 @@ namespace U5kManServer
                 // Procesos.
                 while (IsRunning())
                 {
-                    if (U5kManService._std.wrAccAcquire())
+                    try
                     {
-                        try
+                        if (U5kManService._Master == true)
                         {
+                            TimeMeasurement tm = new TimeMeasurement("Top Explorer");
 
-                            List<stdPos> localpos = U5kManService._std.STDTOPS;
-
-                            if (U5kManService._Master == true)
+                            List<stdPos> localpos = new List<stdPos>();
+                            GlobalServices.GetWriteAccess((gdata) =>
                             {
-                                TimeMeasurement tm = new TimeMeasurement("Top Explorer");
-                                List<Task> task = new List<Task>();
-
-                                foreach (stdPos pos in localpos /*U5kManService._std.stdpos*/)
+                                // Relleno los datos...
+                                gdata.STDTOPS.ForEach(top =>
                                 {
-                                    task.Add(
-                                        Task.Factory.StartNew(() =>
-                                        {
-                                            U5kGenericos.TraceCurrentThread(this.GetType().Name + " " + pos.name);
-                                            ExploraTop2(pos);
-                                        }, TaskCreationOptions.LongRunning));
-
-                                }
-
-                                Task.WaitAll(task.ToArray(), 9000);
-                                tm.StopAndPrint((msg) =>
-                                {
-                                    LogTrace<TopSnmpExplorer>(msg);
+                                    localpos.Add(new stdPos(top));
                                 });
-                            }
-                            U5kManService._std.STDTOPS = localpos;
-                        }
-                        catch (Exception x)
-                        {
-                            if (x is ThreadAbortException)
+                            });
+
+                            // Arranco los Procesos... 
+                            List<Task> task = new List<Task>();
+
+                            foreach (stdPos pos in localpos)
                             {
-                                Thread.ResetAbort();
-                                break;
+                                task.Add(
+                                    Task.Factory.StartNew(() =>
+                                    {
+                                        U5kGenericos.TraceCurrentThread(this.GetType().Name + " " + pos.name);
+                                        ExploraTop2(pos);
+                                    }, TaskCreationOptions.LongRunning));
                             }
+
+                            // Espero a que acaben todos.
+                            Task.WaitAll(task.ToArray(), 9000);
+
+                            // Actualizo los datos....
+                            GlobalServices.GetWriteAccess((gdata) =>
+                            {
+                                localpos.ForEach(top =>
+                                {
+                                    if (gdata.POSDIC.ContainsKey(top.name))
+                                    {
+                                        gdata.POSDIC[top.name].CopyFrom(top);
+                                    }
+                                });
+                            });
+
+                            tm.StopAndPrint((msg) =>
+                            {
+                                LogTrace<TopSnmpExplorer>(msg);
+                            });
                         }
-                        finally
+                    }
+                    catch (Exception x)
+                    {
+                        if (x is ThreadAbortException)
                         {
-                            U5kManService._std.wrAccRelease();
+                            Thread.ResetAbort();
+                            break;
                         }
                     }
                     GoToSleepInTimer();
@@ -299,24 +313,7 @@ namespace U5kManServer
             pos.stdpos = CambiaEstado(pos.stdpos, estado, 0,
                                       estado == std.Ok ? eIncidencias.ITO_ENTRADA : eIncidencias.ITO_CAIDA,
                                       eTiposInci.TEH_TOP, pos.name);
-            pos.stdg = pos/*.stdGlobal()*/.StdGlobal;
-            //if (stdg_old != pos.stdg)
-            //{
-            //    switch (pos.stdg)           // Ha habido un cambio de estado global...
-            //    {
-            //        case std.NoInfo:        // Desconectado o No Operativo.
-            //            U5kEstadisticaProc.Estadisticas.EventoOperador(pos.name, false);
-            //            break;
-
-            //        case std.Error:         // Conectado pero en Fallo.
-            //        case std.Ok:            // Plenamente operativo.
-            //            U5kEstadisticaProc.Estadisticas.EventoOperador(pos.name, true);
-            //            break;
-
-            //        default:
-            //            break;
-            //    }
-            //}
+            pos.stdg = pos.StdGlobal;
         }
 
         /// <summary>
@@ -522,72 +519,70 @@ namespace U5kManServer
         protected void ProcessPos(stdPos pos, IList<Variable> result)
         {
             // lock (pos)
-            foreach (Variable var in result)
+            foreach (Variable varItem in result)
             {
                 int val;
-                string oid = var.Id.ToString();
-                eTopPar par = (eTopPar)_OidPos.Where(p => p.Value == oid).First().Key;
-
-                int.TryParse(var.Data.ToString(), out val);
-
-                try
+                int.TryParse(varItem.Data.ToString(), out val);
+                //string oid = varItem.Id.ToString();
+                //eTopPar par = (eTopPar)_OidPos.Where(p => p.Value == oid).First().Key;
+                var BdtItem = _OidPos.Where(p => p.Value.EndsWith(varItem.Id.ToString())).ToList();
+                if (BdtItem.Count > 0)
                 {
-                    switch (par)
+                    try
                     {
-                        case eTopPar.EstadoTop:
-                            EstadoPosicionSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
-                            break;
-
-                        case eTopPar.EstadoPanel:
-                            PosicionPanelSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
-                            break;
-
-                        case eTopPar.EstadoJacksEjecutivo:
-                            PosicionEjecutivoSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
-                            break;
-
-                        case eTopPar.EstadoJacksAyudante:
-                            PosicionAyudanteSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
-                            break;
-                        case eTopPar.EstadoAltavozRadio:
-                            PosicionALRSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
-                            break;
-                        case eTopPar.EstadoAltavozLC:
-                            PosicionALTSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
-                            break;
-
-                        case eTopPar.EstadoLan1:
-                            PosicionLan1Set(pos.name, pos, val == 1 ? std.Ok : val == 2 ? std.Error : std.NoInfo);
-                            break;
-
-                        case eTopPar.EstadoLan2:
-                            PosicionLan2Set(pos.name, pos, val == 1 ? std.Ok : val == 2 ? std.Error : std.NoInfo);
-                            break;
-
-                        case eTopPar.EstadoSync:
-                            PosicionSyncStatusSet(pos.name, pos, var.Data.ToString());
-                            break;
-
-                        case eTopPar.SwVersion:
-                            pos.sw_version = var.Data.ToString();
-                            break;
-
-                        case eTopPar.EstadoAltavozHF:
-                            PosicionALHFSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
-                            break;
-
-                        case eTopPar.EstadoCableGrabacion:
-                            PosicionGRBCABSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
-                            break;
-
-                        default:
-                            break;
+                        switch (BdtItem[0].Key)
+                        {
+                            case eTopPar.EstadoTop:
+                                EstadoPosicionSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
+                                break;
+                            case eTopPar.EstadoPanel:
+                                PosicionPanelSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
+                                break;
+                            case eTopPar.EstadoJacksEjecutivo:
+                                PosicionEjecutivoSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
+                                break;
+                            case eTopPar.EstadoJacksAyudante:
+                                PosicionAyudanteSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
+                                break;
+                            case eTopPar.EstadoAltavozRadio:
+                                PosicionALRSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
+                                break;
+                            case eTopPar.EstadoAltavozLC:
+                                PosicionALTSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
+                                break;
+                            case eTopPar.EstadoLan1:
+                                PosicionLan1Set(pos.name, pos, val == 1 ? std.Ok : val == 2 ? std.Error : std.NoInfo);
+                                break;
+                            case eTopPar.EstadoLan2:
+                                PosicionLan2Set(pos.name, pos, val == 1 ? std.Ok : val == 2 ? std.Error : std.NoInfo);
+                                break;
+                            case eTopPar.EstadoSync:
+                                PosicionSyncStatusSet(pos.name, pos, varItem.Data.ToString());
+                                break;
+                            case eTopPar.SwVersion:
+                                pos.sw_version = varItem.Data.ToString();
+                                break;
+                            case eTopPar.EstadoAltavozHF:
+                                PosicionALHFSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
+                                break;
+                            case eTopPar.EstadoCableGrabacion:
+                                PosicionGRBCABSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    catch (Exception x)
+                    {
+                        LogException<TopSnmpExplorer>(pos.name, x);
                     }
                 }
-                catch (Exception x)
+                else
                 {
-                    LogException<TopSnmpExplorer>(pos.name, x);
+                    // Error OID no encontrado...
+                    LogError<TopSnmpExplorer>(String.Format("TOP OID [{0}] No encontrado", varItem.Id.ToString()));
                 }
+
             }
         }
     }

@@ -63,7 +63,7 @@ namespace U5kManServer.WebAppServer
                     {"/tifxinfo", restTifxInfo},
                     {"/logs", restLogs},
                     {"/logs/*", restLogs},
-                    {"/reset",(context, sb)=>
+                    {"/reset",(context, sb, gdt)=>
                         {
                             if (context.Request.HttpMethod == "POST")            
                             {
@@ -113,7 +113,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restListInci(HttpListenerContext context, StringBuilder sb)
+        protected void restListInci(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
@@ -140,12 +140,12 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restStd(HttpListenerContext context, StringBuilder sb)
+        protected void restStd(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
                 string user = context.Request.QueryString["user"];
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADStd>(new U5kManWADStd(user, true) { }));
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADStd>(new U5kManWADStd(gdt, user, true) { }));
             }
             else
             {
@@ -159,11 +159,11 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restCwps(HttpListenerContext context, StringBuilder sb)
+        protected void restCwps(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADCwps>(new U5kManWADCwps(true) { }));
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADCwps>(new U5kManWADCwps(gdt, true) { }));
             }
             else
             {
@@ -176,11 +176,11 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restAllHard(HttpListenerContext context, StringBuilder sb)
+        protected void restAllHard(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManAllhard>(new U5kManAllhard() { }));
+                sb.Append(U5kManWebAppData.JSerialize<U5kManAllhard>(new U5kManAllhard(gdt) { }));
             }
             else
             {
@@ -193,7 +193,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restCwpVersion(HttpListenerContext context, StringBuilder sb)
+        protected void restCwpVersion(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
@@ -201,7 +201,7 @@ namespace U5kManServer.WebAppServer
 #if STD_ACCESS_V0
                 stdPos top = U5kManService._std.stdpos.Where(t => t.name == name).FirstOrDefault();
 #else
-                stdPos top = U5kManService._std.STDTOPS.Where(t => t.name == name).FirstOrDefault();
+                stdPos top = gdt.STDTOPS.Where(t => t.name == name).FirstOrDefault();
 #endif
                 if (top == null)
                 {
@@ -225,11 +225,11 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restGws(HttpListenerContext context, StringBuilder sb)
+        protected void restGws(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADGws>(new U5kManWADGws(true) { }));
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADGws>(new U5kManWADGws(gdt, true) { }));
             }
             else
             {
@@ -243,12 +243,12 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restGwData(HttpListenerContext context, StringBuilder sb)
+        protected void restGwData(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             string name = context.Request.Url.LocalPath.Split('/')[2];
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADGwData>(new U5kManWADGwData(name, true) { }));
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADGwData>(new U5kManWADGwData(gdt, name, true) { }));
             }
             else if (context.Request.HttpMethod == "POST")
             {
@@ -277,11 +277,11 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restExtEqu(HttpListenerContext context, StringBuilder sb)
+        protected void restExtEqu(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADExtEqu>(new U5kManWADExtEqu(true) { }));
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADExtEqu>(new U5kManWADExtEqu(gdt, true) { }));
             }
             else
             {
@@ -295,11 +295,11 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restExtAtsDest(HttpListenerContext context, StringBuilder sb)
+        protected void restExtAtsDest(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADExtAtsDst>(new U5kManWADExtAtsDst(true) { }));
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADExtAtsDst>(new U5kManWADExtAtsDst(gdt, true) { }));
             }
             else
             {
@@ -313,11 +313,11 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restPabx(HttpListenerContext context, StringBuilder sb)
+        protected void restPabx(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADPbx>(new U5kManWADPbx(true) { }));
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADPbx>(new U5kManWADPbx(gdt, true) { }));
             }
             else
             {
@@ -331,11 +331,11 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restDbCwps(HttpListenerContext context, StringBuilder sb)
+        protected void restDbCwps(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADDbCwps>(new U5kManWADDbCwps(true) { }));
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADDbCwps>(new U5kManWADDbCwps(gdt, true) { }));
             }
             else
             {
@@ -349,11 +349,11 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restDbGws(HttpListenerContext context, StringBuilder sb)
+        protected void restDbGws(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADDbGws>(new U5kManWADDbGws(true) { }));
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADDbGws>(new U5kManWADDbGws(gdt, true) { }));
             }
             else
             {
@@ -367,7 +367,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restDbMNItems(HttpListenerContext context, StringBuilder sb)
+        protected void restDbMNItems(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
@@ -385,7 +385,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restDbInci(HttpListenerContext context, StringBuilder sb)
+        protected void restDbInci(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
@@ -417,7 +417,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restDbHist(HttpListenerContext context, StringBuilder sb)
+        protected void restDbHist(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "POST")
             {
@@ -439,7 +439,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restDbEstadistica(HttpListenerContext context, StringBuilder sb)
+        protected void restDbEstadistica(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "POST")
             {
@@ -456,11 +456,11 @@ namespace U5kManServer.WebAppServer
             }
         }
 
-        protected void restDbSystemUsers(HttpListenerContext context, StringBuilder sb)
+        protected void restDbSystemUsers(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(JsonConvert.SerializeObject(U5kManService._std.usuarios));
+                sb.Append(JsonConvert.SerializeObject(gdt.usuarios));
             }
             else
             {
@@ -474,11 +474,11 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restOptions(HttpListenerContext context, StringBuilder sb)
+        protected void restOptions(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADOptions>(new U5kManWADOptions(true) {}));
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADOptions>(new U5kManWADOptions(gdt, true) {}));
             }
             else if (context.Request.HttpMethod == "POST")
             {
@@ -505,7 +505,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restSnmpOptions(HttpListenerContext context, StringBuilder sb)
+        protected void restSnmpOptions(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
@@ -535,7 +535,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restRdSessions(HttpListenerContext context, StringBuilder sb)
+        protected void restRdSessions(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
@@ -556,7 +556,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restRdMNMan(HttpListenerContext context, StringBuilder sb)
+        protected void restRdMNMan(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
@@ -577,7 +577,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restHFTxData(HttpListenerContext context, StringBuilder sb)
+        protected void restHFTxData(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
@@ -598,7 +598,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restTifxInfo(HttpListenerContext context, StringBuilder sb)
+        protected void restTifxInfo(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
@@ -619,7 +619,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restSacta(HttpListenerContext context, StringBuilder sb)
+        protected void restSacta(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
@@ -632,27 +632,20 @@ namespace U5kManServer.WebAppServer
                 if (UrlFields.Length > 2)
                 {
                     string activar = UrlFields[2];
-                    U5KStdGeneral stdg = U5kManService._std.STDG;
+                    U5KStdGeneral stdg = gdt.STDG;
                     if (activar == "true")
                     {
                         stdg.SactaServiceEnabled = true;
                         Task.Factory.StartNew(() =>
                         {
-                            if (U5kManService._std.wrAccAcquire())
+                            ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
+                            sacta_srv.StartSacta();
+                            GlobalServices.GetWriteAccess((data) =>                            
                             {
-                                try
-                                {
-                                    ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-                                    sacta_srv.StartSacta();
-                                    U5kManService._main.EstadoSacta(16, stdg);
-                                    /** TODO. Generar Historico de Actuacion */
-                                    RecordManualAction("Activacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
-                                }
-                                finally
-                                {
-                                    U5kManService._std.wrAccRelease();
-                                }
-                            }
+                                U5kManService._main.EstadoSacta(16, stdg);
+                            });
+                            /** TODO. Generar Historico de Actuacion */
+                            RecordManualAction("Activacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
                         });
                     }
                     else if (activar == "false")
@@ -660,21 +653,15 @@ namespace U5kManServer.WebAppServer
                         stdg.SactaServiceEnabled = false;
                         Task.Factory.StartNew(() =>
                         {
-                            if (U5kManService._std.wrAccAcquire())
+
+                            ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
+                            sacta_srv.StartSacta();
+                            GlobalServices.GetWriteAccess((data) =>
                             {
-                                try
-                                {
-                                    ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-                                    sacta_srv.EndSacta();
-                                    U5kManService._main.EstadoSacta(0, stdg);
-                                    /** TODO. Generar Historico de Actuacion */
-                                    RecordManualAction("Desactivacion Manual de servicio SACTA.");   // todo. Multi-Idioma.
-                                }
-                                finally
-                                {
-                                    U5kManService._std.wrAccRelease();
-                                }
-                            }
+                                U5kManService._main.EstadoSacta(0, stdg);
+                            });
+                            /** TODO. Generar Historico de Actuacion */
+                            RecordManualAction("Desactivacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
                         });
                     }
                     else
@@ -711,7 +698,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restVersiones(HttpListenerContext context, StringBuilder sb)
+        protected void restVersiones(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
@@ -721,7 +708,7 @@ namespace U5kManServer.WebAppServer
                       JsonConvert.DeserializeObject<Utilities.VersionDetails.VersionData>(U5kManService._std._gen.stdServ2.jversion) };
 #else
                 /** 20180327. Se obtinen las versiones al pedirlas no periodicamente */
-                U5KStdGeneral stdg = U5kManService._std.STDG;
+                U5KStdGeneral stdg = gdt.STDG;
                 GetVersionDetails(stdg);
 
                 /** */
@@ -742,7 +729,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="context"></param>
         /// <param name="sb"></param>
-        protected void restLogs(HttpListenerContext context, StringBuilder sb)
+        protected void restLogs(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {

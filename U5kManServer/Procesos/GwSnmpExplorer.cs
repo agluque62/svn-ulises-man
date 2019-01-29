@@ -87,7 +87,7 @@ namespace U5kManServer
         {
             // General de la Pasarela.
             {eGwPar.GwStatus,OidGet("EstadoGw",".1.1.100.2.0")},
-            {eGwPar.Slot0Type,OidGet("TipoSlot0",".1.1.100.31.1.1.0")},    
+            {eGwPar.Slot0Type,OidGet("TipoSlot0",".1.1.100.31.1.1.0")},
             {eGwPar.Slot1Type,OidGet("TipoSlot1",".1.1.100.31.1.1.1")},
             {eGwPar.Slot2Type,OidGet("TipoSlot2",".1.1.100.31.1.1.2")},
             {eGwPar.Slot3Type,OidGet("TipoSlot3",".1.1.100.31.1.1.3")},
@@ -100,19 +100,19 @@ namespace U5kManServer
         
             // Para cada Recurso.
             {eGwPar.ResourceType,OidGet("TipoRecurso",".1.1.100.100.0")},
-            
+
             {eGwPar.RadioResourceType,OidGet("TipoRecursoRadio",".1.1.200")},
-            {eGwPar.RadioResourceStatus,OidGet("EstadoRecursoRadio",".1.1.200.2.0")},         
-            
+            {eGwPar.RadioResourceStatus,OidGet("EstadoRecursoRadio",".1.1.200.2.0")},
+
             {eGwPar.IntercommResourceType,OidGet("TipoRecursoLC",".1.1.300")},
             {eGwPar.IntercommResourceStatus,OidGet("EstadoRecursoLC",".1.1.300.2.0")},
-            
+
             {eGwPar.LegacyPhoneResourceType,OidGet("TipoRecursoTF",".1.1.400")},
             {eGwPar.LegacyPhoneResourceStatus,OidGet("EstadoRecursoTF",".1.1.400.2.0")},
-            
+
             {eGwPar.ATSPhoneResourceType,OidGet("TipoRecursoATS",".1.1.500")},
             {eGwPar.ATSPhoneResourceStatus,OidGet("EstadoRecursoATS",".1.1.500.2.0")},
-            
+
         };
 
         /// <summary>
@@ -144,23 +144,23 @@ namespace U5kManServer
         /// <summary>
         /// Oid de los Tipos Reales segun los tipos notificados.
         /// </summary>
-        Dictionary<int, string> _TypesOids = new Dictionary<int, string>() 
-        { 
-            { RadioResource_AgentType, _GwOids[eGwPar.RadioResourceType] }, 
-            { IntercommResource_AgentType, _GwOids[eGwPar.IntercommResourceType] }, 
-            { LegacyPhoneResource_AgentType, _GwOids[eGwPar.LegacyPhoneResourceType]}, 
-            { ATSPhoneResource_AgentType, _GwOids[eGwPar.ATSPhoneResourceType] }, 
+        Dictionary<int, string> _TypesOids = new Dictionary<int, string>()
+        {
+            { RadioResource_AgentType, _GwOids[eGwPar.RadioResourceType] },
+            { IntercommResource_AgentType, _GwOids[eGwPar.IntercommResourceType] },
+            { LegacyPhoneResource_AgentType, _GwOids[eGwPar.LegacyPhoneResourceType]},
+            { ATSPhoneResource_AgentType, _GwOids[eGwPar.ATSPhoneResourceType] },
         };
 
         /// <summary>
         /// Oid de los Estados segun los tipos notificados.
         /// </summary>
-        Dictionary<int, string> _StatusOids = new Dictionary<int, string>() 
-        { 
-            { RadioResource_AgentType, _GwOids[eGwPar.RadioResourceStatus] }, 
-            { IntercommResource_AgentType, _GwOids[eGwPar.IntercommResourceStatus] }, 
-            { LegacyPhoneResource_AgentType, _GwOids[eGwPar.LegacyPhoneResourceStatus] }, 
-            { ATSPhoneResource_AgentType, _GwOids[eGwPar.ATSPhoneResourceStatus] }, 
+        Dictionary<int, string> _StatusOids = new Dictionary<int, string>()
+        {
+            { RadioResource_AgentType, _GwOids[eGwPar.RadioResourceStatus] },
+            { IntercommResource_AgentType, _GwOids[eGwPar.IntercommResourceStatus] },
+            { LegacyPhoneResource_AgentType, _GwOids[eGwPar.LegacyPhoneResourceStatus] },
+            { ATSPhoneResource_AgentType, _GwOids[eGwPar.ATSPhoneResourceStatus] },
         };
 
         /// <summary>
@@ -217,54 +217,70 @@ namespace U5kManServer
             {
                 while (IsRunning())
                 {
-                    if (U5kManService._std.wrAccAcquire())
+                    try
                     {
-                        try
+                        if (U5kManService._Master == true)
                         {
-                            if (U5kManService._Master == true)
-                            {
-                                List<stdGw> stdgws = U5kManService._std.STDGWS;
-                                List<Task> task = new List<Task>();
+                            Utilities.TimeMeasurement tm = new Utilities.TimeMeasurement("GW Explorer");
 
-                                Utilities.TimeMeasurement tm = new Utilities.TimeMeasurement("GW Explorer");
-                                foreach (stdGw gw in stdgws)
-                                {
-                                    task.Add(
-                                        Task.Factory.StartNew(() =>
-                                            {
-                                                try
-                                                {
-                                                    U5kGenericos.TraceCurrentThread(this.GetType().Name + " " + gw.name);
-                                                    ExploraGw(gw);
-                                                }
-                                                catch (Exception x)
-                                                {
-                                                    LogException<GwExplorer>("Supervisando Pasarela " + gw.name, x);
-                                                }
-                                            }, TaskCreationOptions.LongRunning)
-                                    );
-                                }
-                                Task.WaitAll(task.ToArray(), 9000);
-                                tm.StopAndPrint((msg) =>
-                                {
-                                    LogTrace<GwExplorer>(msg);
-                                });
-                                U5kManService._std.STDGWS = stdgws;
-                            }
-                        }
-                        catch (Exception x)
-                        {
-                            if (x is ThreadAbortException)
+                            List<stdGw> localgws = new List<stdGw>();
+                            GlobalServices.GetWriteAccess((gdata) =>
                             {
-                                Thread.ResetAbort();
-                                break;
+                                // Relleno los datos...
+                                gdata.STDGWS.ForEach(gw =>
+                                {
+                                    localgws.Add(new stdGw(gw));
+                                });
+                            });
+
+                            // Arranco los procesos de exploracion...
+                            List<Task> task = new List<Task>();
+                            foreach (stdGw gw in localgws)
+                            {
+                                task.Add(
+                                    Task.Factory.StartNew(() =>
+                                        {
+                                            try
+                                            {
+                                                U5kGenericos.TraceCurrentThread(this.GetType().Name + " " + gw.name);
+                                                ExploraGw(gw);
+                                            }
+                                            catch (Exception x)
+                                            {
+                                                LogException<GwExplorer>("Supervisando Pasarela " + gw.name, x);
+                                            }
+                                        }, TaskCreationOptions.LongRunning)
+                                );
                             }
-                            LogException<GwExplorer>("Supervisando Pasarelas ", x);
+                            
+                            // Espero que acaben todos los procesos.
+                            Task.WaitAll(task.ToArray(), 9000);
+                            /// Copio los datos obtenidos a la tabla...
+                            GlobalServices.GetWriteAccess((gdata) =>
+                            {
+                                localgws.ForEach(gw =>
+                                {
+                                    if (gdata.GWSDIC.ContainsKey(gw.name))
+                                    {
+                                        gdata.GWSDIC[gw.name].CopyFrom(gw);
+                                    }
+                                });
+                            });
+
+                            tm.StopAndPrint((msg) =>
+                            {
+                                LogTrace<GwExplorer>(msg);
+                            });
                         }
-                        finally
+                    }
+                    catch (Exception x)
+                    {
+                        if (x is ThreadAbortException)
                         {
-                            U5kManService._std.wrAccRelease();
+                            Thread.ResetAbort();
+                            break;
                         }
+                        LogException<GwExplorer>("Supervisando Pasarelas ", x);
                     }
 
                     GoToSleepInTimer();
@@ -556,7 +572,7 @@ namespace U5kManServer
 
             /** Actualiza los Parametros Globales de la Pasarela */
             GwActualizaEstado(gw);
-            
+
             /** */
             if (gw.presente)
                 GetNtpStatus(gw);
