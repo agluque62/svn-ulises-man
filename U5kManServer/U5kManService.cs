@@ -1206,6 +1206,7 @@ namespace U5kManServer
             stdSnmpMod = from.stdSnmpMod;
             stdSipMod = from.stdSipMod;
 #endif
+            stdFA = from.stdFA;
         }
 
         public bool Equals(stdPhGw other)
