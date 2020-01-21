@@ -1445,6 +1445,12 @@ namespace U5kManServer.WebAppServer
             public DateTime hasta { get; set; }
             public U5kEstadisticaTiposElementos tipo { get; set; }
             public List<string> elementos { get; set; }
+
+            public void Normalize()
+            {
+                if (hasta < desde)
+                    hasta = desde;
+            }
         }
         /// <summary>
         /// 
@@ -1457,6 +1463,7 @@ namespace U5kManServer.WebAppServer
         public U5kManWADDbEstadistica(string jfiltro)
         {
             Filtro f = JDeserialize<Filtro>(jfiltro);
+            f.Normalize();
             res = U5kEstadisticaProc.Estadisticas.Calcula(f.desde, f.hasta, f.tipo, f.elementos);
         }
     }

@@ -3,7 +3,7 @@ COPYING AUTHORIZATION
 ----------------------------------------------------------------------------------------------------------
 
 Código fuente modificado del SW GNU y bajo COPYING.LESSER disponible libremente bajo petición por escrito a 
-NÚCLEO a la siguiente dirección: C/Vía de los Poblados, 7 – 28033 MADRID (España).
+NÚCLEO a la siguiente dirección: C/Virgilio 2, 28223 Pozuelo de Alarcón, Madrid (España).
 
 ----------------------------------------------------------------------------------------------------------
 LICENCIAS DE CODIGO ABIERTO

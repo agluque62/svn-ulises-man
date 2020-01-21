@@ -1,4 +1,4 @@
-<h3 translate>SPV_GWD_11</h3>
+<h3 translate>INDEX_OPC_CONFIGURACION</h3>
 <section id="_tabs">
     <ul class="nav nav-tabs">
         <li data-ng-class="{'active': ctrl.pagina()==0}">
@@ -170,75 +170,75 @@
       <h1><strong translate>Configuracion de Servicio SACTA</strong></h1>
       <form name="sacta_form" class="text-left text-primary" ng-show="ctrl.sacta_cfg!=null">
           <div class="row">
-              <div class="col-md-3">Tick Presencia</div>
+              <div class="col-md-3" translate>Tick Presencia</div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.TickPresencia" nu-number min="1000" max="9999" /></div>
-              <div class="col-md-3">Timeout Presencia</div>
+              <div class="col-md-3" translate>Timeout Presencia</div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.TimeoutPresencia" nu-number min="15000" max="60000" /></div>
           </div>
           <div class="row sacta-cab bg-primary">
-              <div class="col-md-5">SCV</div>
-              <div class="col-md-7">SACTA</div>
+              <div class="col-md-5" translate>SCV</div>
+              <div class="col-md-7" translate>SACTA</div>
           </div>
           <div class="row">
-              <div class="col-md-2">Dominio</div>
+              <div class="col-md-2" translate>Dominio</div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.Domain" nu-number min="1" max="9999" /></div>
-              <div class="col-md-2">Dominio</div>
+              <div class="col-md-2" translate>Dominio</div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.Domain" nu-number min="1" max="9999" /></div>
           </div>
           <div class="row">
-              <div class="col-md-2">Centro</div>
+              <div class="col-md-2" translate>Centro</div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.Center" nu-number min="1" max="9999" /></div>
-              <div class="col-md-2">Centro</div>
+              <div class="col-md-2" translate>Centro</div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.Center" nu-number min="1" max="9999" /></div>
           </div>
           <div class="row">
-              <div class="col-md-2">Usuario</div>
-              <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.User" nu-number min="1" max="9999" /></div>
-              <div class="col-md-2">Grupo</div>
-              <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.GrpUser" nu-number min="1" max="9999" /></div>
+              <div class="col-md-2" translate>Usuario</div>
+              <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.User" nu-number min="1" max="65536" /></div>
+              <div class="col-md-2" translate>Grupo</div>
+              <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.GrpUser" nu-number min="1" max="65536" /></div>
           </div>
           <div class="row">
-              <div class="col-md-2">Ignorar Sectores</div>
+              <div class="col-md-2" translate>Ignorar Sectores</div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.Ignore" nu-numberlist min="1" max="9999"/></div>
-              <div class="col-md-2">SPSI</div>
-              <div class="col-md-5"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.spsi_users" nu-numberlist min="1" max="9999"/></div>
+              <div class="col-md-2" translate>SPSI</div>
+              <div class="col-md-5"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.spsi_users" nu-numberlist min="1" max="65536"/></div>
           </div>
           <div class="row">
               <div class="col-md-2"></div>
               <div class="col-md-3"></div>
-              <div class="col-md-2">SPV</div>
-              <div class="col-md-5"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.spv_users" nu-numberlist min="1" max="9999"/></div>
+              <div class="col-md-2" translate>SPV</div>
+              <div class="col-md-5"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.spv_users" nu-numberlist min="1" max="65536"/></div>
           </div>
           <div class="row sacta-cab2 bg-info">
-              <div class="col-md-2">SCV-LAN</div>
+              <div class="col-md-2" translate>SCV-LAN</div>
               <div class="col-md-3"></div>
-              <div class="col-md-2">LAN1</div>
+              <div class="col-md-2" translate>LAN1</div>
               <div class="col-md-2"></div>
-              <div class="col-md-1">LAN2</div>
+              <div class="col-md-1" translate>LAN2</div>
               <div class="col-md-2"></div>
           </div>
           <div class="row">
-              <div class="col-md-2">Puerto</div>
+              <div class="col-md-2" translate>Puerto</div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.udpport" nu-number min="10000" max="20000" /></div>
-              <div class="col-md-2">Puerto</div>
+              <div class="col-md-2" translate>Puerto</div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan1.udpport" nu-number min="10000" max="20000"/></div>
 <!--              <div class="col-md-1">Puerto</div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan2.udpport" nu-number min="10000" max="20000"/></div>-->
           </div>
           <div class="row">
-              <div class="col-md-2">Interfaz</div>
+              <div class="col-md-2" translate>Interfaz</div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.Interfaz" nu-ipadd/></div>
-              <div class="col-md-2">Unicast</div>
+              <div class="col-md-2" translate>Unicast</div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan1.ipmask" nu-ipadd/></div>
-              <div class="col-md-1">Unicast</div>
+              <div class="col-md-1" translate>Unicast</div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan2.ipmask" nu-ipadd/></div>
           </div>
           <div class="row">
               <div class="col-md-2"></div>
               <div class="col-md-3"></div>
-              <div class="col-md-2">Multicast</div>
+              <div class="col-md-2" translate>Multicast</div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan1.mcast" nu-ipadd/></div>
-              <div class="col-md-1">Multicast</div>
+              <div class="col-md-1" translate>Multicast</div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan2.mcast" nu-ipadd/></div>
           </div>
           <div class="row text-right ctrl">  

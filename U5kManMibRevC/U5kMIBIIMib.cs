@@ -104,9 +104,557 @@ namespace U5kManMibRevC
         {
             snmpObjects = new List<SnmpObjectBase>()
             {
-                new IfNumber(), new IfTable()
+                //new IfNumber(), new IfTable()
+                new IfNumberLoc(), new IfTableLoc()
             };
         }
+
+        internal sealed class IfNumberLoc : ScalarObject
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="IfNumberLoc"/> class.
+            /// </summary>
+            public IfNumberLoc()
+                : base(".1.3.6.1.2.1.2.1.0")
+            {
+            }
+            /// <summary>
+            /// 
+            /// </summary>
+            public override ISnmpData Data
+            {
+                get
+                {
+                    var number = MibIITableHelpers.IfData.IfTable.Count();
+                    return new Integer32(number);
+                }
+                set
+                {
+                    throw new AccessFailureException();
+                }
+            }
+
+        }
+        internal sealed class IfTableLoc : TableObject
+        {
+            internal sealed class IfIndex : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfIndex"/> class.
+                public IfIndex(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.1.{0}", index)
+                {
+                    Index = index-1;
+                }
+                public override ISnmpData Data
+                {
+                    get { return new Integer32((int)MibIITableHelpers.IfData.IfTable[Index].dwIndex); }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfDescr : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfDescr"/> class.
+                public IfDescr(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.2.{0}", index)
+                {
+                    Index = index-1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new OctetString(Encoding.ASCII.GetString(row.bDescr, 0, (int)row.dwDescrLen - 1));
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfType : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfType"/> class.
+                public IfType(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.3.{0}", index)
+                {
+                    Index = index-1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwType);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfMtu : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfMtu"/> class.
+                public IfMtu(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.4.{0}", index)
+                {
+                    Index = index-1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwMtu);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfSpeed : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfSpeed"/> class.
+                public IfSpeed(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.5.{0}", index)
+                {
+                    Index = index-1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwSpeed);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfPhysAddress : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfPhysAddress"/> class.
+                public IfPhysAddress(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.6.{0}", index)
+                {
+                    Index = index-1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        var first = row.bPhysAddr[0];
+                        var last = row.bPhysAddr[7];
+                        string PhysAddress = "";
+                        if (first == 0 && last != 0)
+                        {
+                            PhysAddress = row.bPhysAddr[0].ToString("X2") + '-' +
+                            row.bPhysAddr[1].ToString("X2") + '-' +
+                            row.bPhysAddr[2].ToString("X2") + '-' +
+                            row.bPhysAddr[3].ToString("X2") + '-' +
+                            row.bPhysAddr[4].ToString("X2") + '-' +
+                            row.bPhysAddr[5].ToString("X2") + '-' +
+                            row.bPhysAddr[6].ToString("X2") + '-' +
+                            row.bPhysAddr[7].ToString("X2");
+                        }
+                        else if (first != 0)
+                        {
+                            PhysAddress = row.bPhysAddr[0].ToString("X2") + '-' +
+                            row.bPhysAddr[1].ToString("X2") + '-' +
+                            row.bPhysAddr[2].ToString("X2") + '-' +
+                            row.bPhysAddr[3].ToString("X2") + '-' +
+                            row.bPhysAddr[4].ToString("X2") + '-' +
+                            row.bPhysAddr[5].ToString("X2");
+                        }
+                        return new OctetString(PhysAddress);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfAdminStatus : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfAdminStatus"/> class.
+                public IfAdminStatus(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.7.{0}", index)
+                {
+                    Index = index-1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwAdminStatus);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfOperStatus : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfOperStatus"/> class.
+                public IfOperStatus(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.8.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32(MibIITableHelpers.IfData.SnmpOperationalStatus((int)row.dwOperStatus, (int)row.dwAdminStatus));
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfLastChange : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfLastChange"/> class.
+                public IfLastChange(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.9.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new TimeTicks(row.dwLastChange);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfInOctects : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfInOctects"/> class.
+                public IfInOctects(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.10.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwInOctets);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfInUcastPkts : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfInUcastPkts"/> class.
+                public IfInUcastPkts(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.11.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwInUcastPkts);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfInNUcastPkts : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfInNUcastPkts"/> class.
+                public IfInNUcastPkts(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.12.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwInNUcastPkts);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfInDiscards : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfInDiscards"/> class.
+                public IfInDiscards(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.13.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwInDiscards);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfInErrors : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfInErrors"/> class.
+                public IfInErrors(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.14.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwInErrors);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfInUnknowProtos : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfInUnknowProtos"/> class.
+                public IfInUnknowProtos(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.15.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwInUnknownProtos);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfOutOctets : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfOutOctets"/> class.
+                public IfOutOctets(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.16.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwOutOctets);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfOutUcastPkts : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfOutUcastPkts"/> class.
+                public IfOutUcastPkts(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.17.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwOutUcastPkts);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfOutNUcastPkts : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfOutNUcastPkts"/> class.
+                public IfOutNUcastPkts(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.18.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwOutNUcastPkts);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfOutDiscards : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfOutDiscards"/> class.
+                public IfOutDiscards(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.19.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwOutDiscards);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfOutErrors : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfOutErrors"/> class.
+                public IfOutErrors(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.20.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwOutErrors);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfOutQLen : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfOutQLen"/> class.
+                public IfOutQLen(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.21.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get
+                    {
+                        var row = MibIITableHelpers.IfData.IfTable[Index];
+                        return new Integer32((int)row.dwOutQLen);
+                    }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+            internal sealed class IfSpecific : ScalarObject
+            {
+                private int Index { get; set; }
+                /// <summary>
+                /// Initializes a new instance of the <see cref="IfSpecific"/> class.
+                public IfSpecific(int index, object onlineData)
+                    : base(".1.3.6.1.2.1.2.2.1.22.{0}", index)
+                {
+                    Index = index - 1;
+                }
+                public override ISnmpData Data
+                {
+                    get { return new OctetString(".0.0"); }
+                    set { throw new AccessFailureException(); }
+                }
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="IfTableLoc"/> class.
+            /// </summary>
+            public IfTableLoc()
+            {
+                /** Ejemplo para programar el evento de actualizacion de la tabla */
+                NetworkChange.NetworkAddressChanged +=
+                    (sender, args) => LoadElements();
+#if NET452
+            NetworkChange.NetworkAvailabilityChanged +=
+                (sender, args) => LoadElements();
+#endif                
+                LoadElements();
+            }
+
+            // ".1.3.6.1.2.1.4.22"
+            private readonly IList<ScalarObject> _elements = new List<ScalarObject>();
+            private void LoadElements()
+            {
+                _elements.Clear();
+
+                //var netToMediaTable = MibIITableHelpers.IpNetTable.Data;
+                var ifTable = MibIITableHelpers.IfData.IfTable;
+                var columnTypes = new[]
+                {
+                    typeof(IfIndex),
+                    typeof(IfDescr),
+                    typeof(IfType),
+                    typeof(IfMtu),
+                    typeof(IfSpeed),
+                    typeof(IfPhysAddress),
+                    typeof(IfAdminStatus),
+                    typeof(IfOperStatus),
+                    typeof(IfLastChange),
+                    typeof(IfInOctects),
+                    typeof(IfInUcastPkts),
+                    typeof(IfInNUcastPkts),
+                    typeof(IfInDiscards),
+                    typeof(IfInErrors),
+                    typeof(IfInUnknowProtos),
+                    typeof(IfOutOctets),
+                    typeof(IfOutUcastPkts),
+                    typeof(IfOutNUcastPkts),
+                    typeof(IfOutDiscards),
+                    typeof(IfOutErrors),
+                    typeof(IfOutQLen),
+                    typeof(IfSpecific),
+                };
+                foreach (var type in columnTypes)
+                {
+                    for (int i = 0; i < ifTable.Count; i++)
+                    {
+                        _elements.Add((ScalarObject)Activator.CreateInstance(type, new object[] { i + 1, ifTable[i] }));
+                    }
+                }
+            }
+            protected override IEnumerable<ScalarObject> Objects
+            {
+                get { return _elements; }
+            }
+        }
+
     }
     /// <summary>
     /// 

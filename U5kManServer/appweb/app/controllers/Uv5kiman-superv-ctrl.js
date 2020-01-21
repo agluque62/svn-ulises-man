@@ -96,31 +96,62 @@ angular.module("Uv5kiman")
         return $lserv.translate("Servidor Radio no Presente");
     };
 
-    /** Para el estado especifico de los NBX */
-    ctrl.nbx_std_class = function (nbx) {
-        return nbx.modo == "Master" ? stdc_class[stdc.Ok] :
-            nbx.modo == "Slave" ? stdc_class[stdc.Aviso] : stdc_class[stdc.Error];
+    /** Establece el modo de presentacion de los NBX */
+    ctrl.nmxSplitted = function () {
+        //var splitted = ctrl.std && ctrl.std.version ? (ctrl.std.version == "2.5.9" ? false : true) : false;
+        //return splitted;
+        return false;       // En esta version el modo es no split
     };
-
-    /** Para la info adicional de un NBX */
-    ctrl.nbx_info = function (nbx) {
+    ctrl.nbx_mixed_std_class = function () {
+        var clase = ctrl.std === undefined || ctrl.std.csi === undefined || ctrl.std.csi.mixed === undefined || ctrl.std.csi.mixed.std === undefined ? stdc_class[stdc.Error] :
+            ctrl.std.csi.mixed.std === "Ok" ? stdc_class[stdc.Ok] :
+                ctrl.std.csi.mixed.std === "Warning" ? stdc_class[stdc.Aviso] :
+                    ctrl.std.csi.mixed.std === "Alarm" ? stdc_class[stdc.Error] : stdc_class[stdc.Error];
+        return clase;
+    };
+    ctrl.nbx_mixed_name = function () {
+        var name = ctrl.std === undefined || ctrl.std.csi === undefined || ctrl.std.csi.mixed === undefined || ctrl.std.csi.mixed.mas === undefined ? "???" :
+            ctrl.std.csi.mixed.mas === "" ? "---" : ctrl.std.csi.mixed.mas;
+        return name;
+    };
+    ctrl.nbx_mixed_list_class = function () {
+        return stdc_class[stdc.Ok];
+    };
+    ctrl.nbx_mixed_info_services = function (item) {
         var info = sprintf(
             "<table class='nbxtb'>" +
-            "<tr><td>CFG</td><td class='res'>%1$s</td><td>Radio</td><td class='res'>%2$s</td></tr>" +
-            "<tr><td>TIFX</td><td class='res'>%3$s</td><td>Presencia</td><td class='res'>%4$s</td></tr>" +
+            "<tr><td>Config</td><td class='res'>%1$s</td><td>Radio</td><td class='res'>%2$s</td></tr>" +
+            "<tr><td>Presencia</td><td class='res'>%3$s</td><td>Tifx</td><td class='res'>%4$s</td></tr>" +
             "</table>",
-            nbx_detail_std(nbx.CfgService),
-            nbx_detail_std(nbx.RadioService),
-            nbx_detail_std(nbx.TifxService),
-            nbx_detail_std(nbx.PresenceService));
+            item.CfgService, item.RadioService, item.PresenceService, item.TifxService);
         return info;
     };
 
-    function nbx_detail_std(std) {
-        return std == 0 ? $lserv.translate('Slave') :
-            std == 1 ? $lserv.translate('Master') :
-            std == 2 ? $lserv.translate('Stopped') : $lserv.translate('Error');
-    }
+    /** Para el estado especifico de los NBX */
+    //ctrl.nbx_std_class = function (nbx) {
+    //    return nbx.modo == "Master" ? stdc_class[stdc.Ok] :
+    //        nbx.modo == "Slave" ? stdc_class[stdc.Aviso] : stdc_class[stdc.Error];
+    //};
+
+    ///** Para la info adicional de un NBX */
+    //ctrl.nbx_info = function (nbx) {
+    //    var info = sprintf(
+    //        "<table class='nbxtb'>" +
+    //        "<tr><td>CFG</td><td class='res'>%1$s</td><td>Radio</td><td class='res'>%2$s</td></tr>" +
+    //        "<tr><td>TIFX</td><td class='res'>%3$s</td><td>Presencia</td><td class='res'>%4$s</td></tr>" +
+    //        "</table>",
+    //        nbx_detail_std(nbx.CfgService),
+    //        nbx_detail_std(nbx.RadioService),
+    //        nbx_detail_std(nbx.TifxService),
+    //        nbx_detail_std(nbx.PresenceService));
+    //    return info;
+    //};
+
+    //function nbx_detail_std(std) {
+    //    return std == 0 ? $lserv.translate('Slave') :
+    //        std == 1 ? $lserv.translate('Master') :
+    //        std == 2 ? $lserv.translate('Stopped') : $lserv.translate('Error');
+    //}
 
     /** Nuevas funciones para el NBX SPLIT */
     ctrl.nbx_splitted_enable = nbx_splitted;

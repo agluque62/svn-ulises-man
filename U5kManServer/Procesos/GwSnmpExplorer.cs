@@ -864,7 +864,7 @@ namespace U5kManServer
                     break;
 
                 default:
-                    LogTrace<GwExplorer>(String.Format("Recibido TRAP-GW OID-Desconocida de {0}, OID={1}", gw.ip, oidEnt));
+                    LogTrace<GwExplorer>(String.Format("Recibido TRAP-GW OID-Desconocida de {0}, OID={1}", gw?.ip, oidEnt));
                     break;
             }
         }

@@ -51,7 +51,7 @@ namespace U5kManServer
         /// 
         /// </summary>
         /// <param name="inci"></param>
-        StoreFilter _inciFilter = new StoreFilter();
+        StoreFilterControl _inciFilter = new StoreFilterControl();
         public void AddInci(DateTime fecha, int scv, eIncidencias inci, int thw, string idhw, params object[] parametros)
         {
             lock (_incidencias)
@@ -61,6 +61,7 @@ namespace U5kManServer
                 {
                     if (_inciDescr.Where(rr => rr.id == (int)inci).Count() > 0)
                     {
+                        var inciDescr = _inciDescr.Where(rr => rr.id == (int)inci).First();
                         /** */
                         int npar = parametros.Length;
                         Array.Resize(ref parametros, 8);
@@ -81,7 +82,7 @@ namespace U5kManServer
                             reconocida = DateTime.MinValue
                         };
 
-                        if (_inciFilter.StoreFilterPass(tinci) == true)
+                        if (_inciFilter.ToStore(tinci, inciDescr.Trep) == true)
                         {
                             _incidencias.Enqueue(tinci);
                         }
@@ -124,7 +125,7 @@ namespace U5kManServer
                             _init = Init();
                         else
                         {
-
+#if _HV00_
                             lock (_incidencias)
                             {
                                 if (U5kManService._Master == true)
@@ -138,6 +139,25 @@ namespace U5kManServer
                                     StoreInci(inci);
                                 }
                             }
+#else
+                            if (U5kManService._Master == true)
+                            {
+                                SupervisaCambioDeDia();
+
+                                U5kIncidencia inci = null;
+                                lock (_incidencias)
+                                {
+                                    if (_incidencias.Count > 0)
+                                    {
+                                        inci = _incidencias.Dequeue();
+                                    }
+                                }
+                                if (inci != null)
+                                {
+                                    StoreInci(inci);
+                                }
+                            }
+#endif
                         }
                     }
                     catch (Exception x)
@@ -168,7 +188,6 @@ namespace U5kManServer
                     LogException<HistThread>("", x);
                 }
             }
-            Dispose();
             LogInfo<HistThread>("Finalizado...");
         }
 
@@ -234,9 +253,8 @@ namespace U5kManServer
             if (_hoy.Day != DateTime.Today.Day)
             {
                 _hoy = DateTime.Today;
-
+#if _HV00_
                 _bdt.SupervisaTablaIncidencia(U5kManService.cfgSettings/* Properties.u5kManServer.Default*/.DiasEnHistorico);
-
                 /** Genero Incidencia Cambio de Dia */
                 U5kIncidencia tinci = new U5kIncidencia()
                 {
@@ -250,6 +268,16 @@ namespace U5kManServer
                     reconocida = DateTime.MinValue
                 };
                 _incidencias.Enqueue(tinci);
+#else
+                RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
+                    eIncidencias.IGRL_CAMBIO_DE_DIA, eTiposInci.TEH_SISTEMA, "SPV",
+                    new object[] { });
+
+                long borrados = _bdt.SupervisaTablaIncidencia(U5kManService.cfgSettings.DiasEnHistorico);
+                RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
+                    eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, "SPV",
+                    new object[] {"Supervision Tabla Historicos", borrados, "Registros Eliminados" });
+#endif
             }
         }
         /// <summary>
@@ -261,6 +289,7 @@ namespace U5kManServer
 #if DEBUG_1
             TestDBClose();
 #endif
+#if _HV00_
             if (U5kManService._Master == true)
             {
                 bool _alarma = _inciDescr.Where(e => e.id == inci.id).First().alarm;
@@ -274,58 +303,70 @@ namespace U5kManServer
                         U5kManService.AddInci(inci.fecha, strInciNoFecha(inci));
                 }
             }
+#else
+            bool _alarma = _inciDescr.Where(e => e.id == inci.id).First().alarm;
+            LogDebug<HistThread>(strDbgInci(inci)/*strInci(inci)*/);
+            // Inserto en la BDT
+            if (U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.GenerarHistoricos == true)
+            {
+                _bdt.InsertaIncidencia(_alarma, inci);
+                if (_alarma)
+                    U5kManService.AddInci(inci.fecha, strInciNoFecha(inci));
+            }
+#endif
         }
         /// <summary>
         /// 
         /// </summary>
-        class StoreFilter
+        class StoreFilterControl
         {
-            class StoreFilteData
+            class StoreFilterData
             {
-                public DateTime timestamp { get; set; }
-                public Int32 repeats { get; set; }
+                public DateTime Timestamp { get; set; }
+                public Int32 Repeats { get; set; }
             }
-            public StoreFilter()
+            public StoreFilterControl()
             {
             }
-            //private  bool ToStore(U5kIncidencia inci)
-            //{
-            //    /** Control de tipo de evento */
-            //    if (StoreFilterPass(inci) == false)
-            //    {
-            //        return false;
-            //    }
+            public bool ToStore(U5kIncidencia inci, int trep)
+            {
+                /** Control de tipo de evento */
+                if (StoreFilterPass(inci) == false)
+                {
+                    return false;
+                }
 
-            //    /** Control de repetición */
-            //    string key = String.Format("{0}_{1}_{2}", inci.id, inci.idhw, inci.desc);
-            //    bool bStore = true;
-            //    DateTime now = DateTime.Now;
-            //    Int32 repeats = 1;
+                if (trep == 0)                                  // TREP=0, indica que siempre se debe almacenar.
+                    return true;
 
-            //    if (_control.ContainsKey(key))
-            //    {
-            //        TimeSpan elapsed = now - _control[key].timestamp;
-            //        bStore = elapsed > TimeSpan.FromSeconds(30);            // Solo se gestiona el almacenamiento si no se ha repetido en 30 segundos...
-            //        repeats = bStore ? 1 : _control[key].repeats + 1;
-            //    }
-            //    /** Aviso para evento que se está repitiendo */
-            //    if (repeats == 20)
-            //    {
-            //    }
+                /** Control de repetición */
+                string key = String.Format("{0}_{1}_{2}", inci.id, inci.idhw, NormalizeDescription(inci.desc));
+                bool bStore = true;
+                DateTime now = DateTime.Now;
+                Int32 repeats = 1;
 
-            //    _control[key] = new StoreFilteData() { timestamp = now, repeats = repeats };
-
-            //    /** Limpiar los eventos que no se repiten... */
-            //    CleanOld(now);
-            //    return bStore;
-            //}
+                if (_control.ContainsKey(key))
+                {
+                    TimeSpan elapsed = now - _control[key].Timestamp;
+                    bStore = elapsed > TimeSpan.FromSeconds(trep);      // Solo se gestiona el almacenamiento si no se ha repetido en los segundos establecidos en su registro...
+                    repeats = bStore ? 1 : _control[key].Repeats + 1;
+                }
+                /** Aviso para evento que se está repitiendo */
+                if (repeats == 20)
+                {
+                }
+                _control[key] = new StoreFilterData() { Timestamp = now, Repeats = repeats };
+                /** Limpiar los eventos que no se repiten... */
+                CleanOld(now);
+                return bStore;
+            }
 
             /// <summary>
             /// Filtros de Incidencias.
             /// </summary>
             /// <param name="inci"></param>
             /// <returns></returns>
-            public bool StoreFilterPass(U5kIncidencia inci)
+            private bool StoreFilterPass(U5kIncidencia inci)
             {
                 if (U5kManService.cfgSettings/* Properties.u5kManServer.Default*/.Historico_PttSqhOnBdt == false)
                 {
@@ -350,7 +391,7 @@ namespace U5kManServer
                 if (elapsed > TimeSpan.FromMinutes(30))
                 {
                     var keysForClean = (from item in _control
-                                        where now - item.Value.timestamp > TimeSpan.FromMinutes(5)
+                                        where now - item.Value.Timestamp > TimeSpan.FromMinutes(5)
                                         select item.Key).ToList();
 
                     keysForClean.ForEach((key) => _control.Remove(key));
@@ -358,7 +399,16 @@ namespace U5kManServer
                 }
             }
 
-            Dictionary<string, StoreFilteData> _control = new Dictionary<string, StoreFilteData>();
+            string NormalizeDescription(string desc)
+            {
+                if (desc.Contains("Ver LOG"))
+                {
+                    return desc.Substring(0, desc.IndexOf("Ver LOG"));
+                }
+                return desc;
+            }
+
+            Dictionary<string, StoreFilterData> _control = new Dictionary<string, StoreFilterData>();
             DateTime lastClean = DateTime.Now;
         }
 

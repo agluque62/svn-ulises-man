@@ -127,7 +127,7 @@ angular.module("Uv5kiman")
                         this.set('closable', false);
                     },
                     build: function () {
-                        this.setHeader('<p style="text-align: left; font-size: 90%;"><i>' + $lserv.translate('Ulises V 5000 I. Acerca de...') + '</i></p>');
+                        this.setHeader('<p style="text-align: left; font-size: 90%;color: #4A7729;"><i><b>' + $lserv.translate('Ulises V 5000 I. Acerca de...') + '</b></i></p>');
                         this.set('resizable', true);
                     },
                     // This will be called each time an action button is clicked.
@@ -150,10 +150,10 @@ angular.module("Uv5kiman")
             var url_license = "http://" + window.location.hostname + ':' + window.location.port + '/COPYING.AUTHORIZATION.txt';
             var msg = '<div>' +
                       '<br/>' +
-                      '<h4 style="color: #C1022C;">Ulises V 5000 I</h4>' +
-                      '<p style="text-align:center; color: blue;">Version ' + response.data.version + '</p>' +
+                      '<h4 style="color: #4A7729;">Ulises V 5000 I</h4>' +
+                      '<p style="text-align:center; color: #4A7729;">Version ' + response.data.version + '</p>' +
                       '<br/>' +
-                      '<p style="text-align:center; color: #C1022C;">' + $lserv.translate('INDEX_PIE') + '</p>' +
+                      '<p style="text-align:center; color: #4A7729;">' + $lserv.translate('INDEX_PIE') + '</p>' +
                       '<p style="text-align: right"><a href="' + url_license + '" target="_blank">' + $lserv.translate('Acuerdo de Licencia') + '</a></p>' +
                       '</div>';
             alertify.About(msg).resizeTo(500, 300).set({ onclose:function(){ 

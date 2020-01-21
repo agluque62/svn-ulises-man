@@ -166,7 +166,6 @@ namespace U5kManServer
 #else
             SetUpTimerBackup(new TimeSpan(0, 15, 0));
 #endif
-
             Decimal interval = Properties.u5kManServer.Default.SpvInterval;
             using (timer = new TaskTimer(new TimeSpan(0, 0, 0, 0, Decimal.ToInt32(interval)), this.Cancel))
             {
@@ -436,7 +435,7 @@ namespace U5kManServer
                 U5KStdGeneral.ClusterErrors ClusterError = U5KStdGeneral.ClusterErrors.NoError;
                 bool _Master = false;
 
-#if DEBUG1
+#if DEBUG
                 bool ServidorDual = false;
 #else
                 bool ServidorDual = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual;
@@ -771,7 +770,7 @@ namespace U5kManServer
                 if (cfg.TipoBdt == 0)
                 {
                     List<U5kiDbHelper.BackupInciItem> items =
-                        U5kiDbHelper.Backup(cfg.MySqlServer, cfg.BdtSchema, cfg.MySqlUser, cfg.MySqlPwd);
+                        U5kiDbHelper.NewBackup(cfg.MySqlServer, cfg.BdtSchema, cfg.MySqlUser, cfg.MySqlPwd, Properties.u5kManServer.Default.MySqlDumpVersion);
                     items.ForEach(item =>
                     {
                         LogInfo<U5kServiceMain>(item.What);
@@ -980,6 +979,7 @@ namespace U5kManServer
 
                 StdServ TestingServer = new StdServ();
                 /** Chequear el TEAMING */
+#if _NEM_V0_
                 NICEventMonitor.NicEventMonitorConfig cfg = new NICEventMonitor.NicEventMonitorConfig(Properties.u5kManServer.Default.TeamingConfig);
                 using (NICEventMonitor monitor = new NICEventMonitor(cfg))
                 {
@@ -1010,6 +1010,32 @@ namespace U5kManServer
                         }
                     }
                 }
+#else
+                using (NicEventMonitor monitor = new NicEventMonitor(Properties.u5kManServer.Default.TeamingConfig,null,null))
+                {
+                    if (monitor.GetState((id, status) =>
+                    {
+                        TestingServer.lanes[id] = status == NicEventMonitor.LanStatus.Up ? std.Ok : std.Error;
+                    }) == false)
+                    {
+                        // No hay eventos de Teaming. Asumo que la red no es dual...
+                        /** Chequear el estado de la LAN que da servicio a la IP-FISICA del Servidor */
+                        string MyIp = Properties.u5kManServer.Default.MiDireccionIP;
+                        string eth_name = "";
+                        bool eth_up = false;
+                        if (Utilities.NICS.GetEthInterface(MyIp, ref eth_name, ref eth_up) == true)
+                        {
+                            TestingServer.lanes[eth_name] = eth_up ? std.Ok : std.Error;
+                        }
+                        else
+                        {
+                            LogError<U5kServiceMain>(
+                                String.Format("No se encuentra Interfaz ETH para la ip {0}", MyIp));
+                            return;
+                        }
+                    }
+                }
+#endif
                 /** Chequear el Estado de Sincronismo */
                 using (NtpClientStatus ntpc = new NtpClientStatus(Properties.u5kManServer.Default.NtpClient))
                 {

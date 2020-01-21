@@ -32,6 +32,7 @@ namespace U5kManServer
 #else
         Ed137RevCMib _mib;
 #endif
+#if _PASARELAS_NO_UNIFICADAS_
         /// <summary>
         /// Para gestionar los eventos de las Pasarelas...
         /// </summary>
@@ -39,10 +40,45 @@ namespace U5kManServer
         EventosLC _evLcen = new EventosLC();
         EventosTLF _evTlf = new EventosTLF();
         EventosATS _evAts = new EventosATS();
+#endif
         SnmpAgent snmpAgent = new SnmpAgent();
 
         SystemAgentState State { get; set; }
         public bool ReloadRequest { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool SnmpAgentStartForTestUnit()
+        {
+            try
+            {
+                U5kManService._Master = true;
+
+                SnmpAgentInit();
+                snmpAgent.Start();
+                LogInfo<U5kSnmpSystemAgent>("Agente SNMP. Arrancado");
+                return true;
+            }
+            catch (Exception x)
+            {
+                LogError<U5kSnmpSystemAgent>("Error Arrancando Agente SNMP: " + x.Message);
+                return false;
+            }
+        }
+        public void SnmpAgentStopForTestUnit()
+        {
+            try
+            {
+                snmpAgent.Close();
+                U5kManService._Master = false;
+                LogInfo<U5kSnmpSystemAgent>("Agente SNMP. Detenido...");
+            }
+            catch (Exception x)
+            {
+                LogError<U5kSnmpSystemAgent>("Error Arrancando Agente SNMP: " + x.Message);
+            }
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -145,20 +181,6 @@ namespace U5kManServer
             {
 #if _ED137_REVB_
                 _mib = new U5kScvMib();
-#else
-                //_mib = new Ed137RevCMib(
-                //    new AgentDataGet((toma) =>
-                //    {
-                //        toma(rMONData);
-                //    }),
-                //    new AgentDataGet(
-                //    (toma) =>
-                //    {
-                //        GlobalServices.GetWriteAccess((data) =>
-                //        {
-                //            toma(data);
-                //        });
-                //    }), AgentData.OidBase);
 #endif
                 snmpAgent.Init(ipServ);            // Poner la IP del Servidor....
                 snmpAgent.TrapReceived += new Action<string, string, ISnmpData, IPEndPoint, IPEndPoint>(RecibidoTrap);
@@ -344,22 +366,24 @@ namespace U5kManServer
         /// <param name="ipfrom"></param>
         void RecibidoTrap(string oidtrap, string oidvar, ISnmpData data, IPEndPoint ipfrom, IPEndPoint ipto)
         {
-            /** Ajusto el oidvar para que comienze por <.>*/
+            LogTrace<U5kSnmpSystemAgent>($"Trap from {ipto.Address.ToString()}, Oid: {oidtrap}, Var: {oidvar}");
+            /** Ajusto el oidtrap / oidvar para que comienze por <.>*/
             oidvar = oidvar.StartsWith(".") ? oidvar : "." + oidvar;
-
+            oidtrap = oidtrap.StartsWith(".") ? oidtrap : "." + oidtrap;
             GlobalServices.GetWriteAccess((gdata) =>
             {
                 try
                 {
                     if (U5kManService._Master == true)
                     {
-                        List<stdPos> stdpos = gdata.STDTOPS;
-#if DEBUG1
-                ipfrom.Address = IPAddress.Parse("10.12.60.129");
-#endif
-                        stdPos pos = stdpos.Find(r => r.ip == ipfrom.Address.ToString());                                                                   // Busco si es una posicion.
-                        List<stdGw> stdgws = gdata.STDGWS;
-                        stdGw gw = stdgws.Find(r => r.ip == ipfrom.Address.ToString() || r.gwA.ip == ipfrom.Address.ToString() || r.gwB.ip == ipfrom.Address.ToString());      // Busco si es una Pasarela.
+                        // Busco si es una posicion.
+                        List<stdPos> stdpos = gdata?.STDTOPS;
+                        stdPos pos = stdpos?.Find(r => r.ip == ipfrom.Address.ToString());
+
+                        // Busco si es una Pasarela.
+                        List<stdGw> stdgws = gdata?.STDGWS;
+                        stdGw gw = stdgws?.Find(r => r.ip == ipfrom.Address.ToString() || r.gwA.ip == ipfrom.Address.ToString() || r.gwB.ip == ipfrom.Address.ToString());
+                        
                         if (oidvar.StartsWith(Properties.u5kManServer.Default.HfEventOids) ||
                             oidvar.StartsWith(Properties.u5kManServer.Default.CfgEventOid))
                         {
@@ -370,6 +394,7 @@ namespace U5kManServer
                             if (gw != null)
                             {
                                 stdPhGw pgw = gw.gwA.ip == ipfrom.Address.ToString() ? gw.gwA : gw.gwB;
+#if _PASARELAS_NO_UNIFICADAS_
                                 var BdtItem = GwExplorer._GwOids.Where(p => p.Value.EndsWith(oidvar)).ToList();
                                 if (BdtItem.Count > 0)
                                 {
@@ -421,9 +446,22 @@ namespace U5kManServer
                                 {
                                     LogError<U5kSnmpSystemAgent>(String.Format("GW OID [{0}] No encontrado para {1}", oidvar, ipfrom));
                                 }
+#else
+                                /** Pasarelas Unificadas */
+                                if (oidtrap.Contains(".1.3.6.1.4.1.7916.8.3.2.1") == true)
+                                {
+                                    /** Pasarelas Unificadas */
+                                    GwExplorer.RecibidoTrapGw_unificada(gw, pgw, oidtrap, oidvar, data);
                             }
-                            else if (pos != null /*&& pos.stdpos != std.NoInfo*/)          // Proviene de un Puesto.
+                                else
+                                {
+                                    LogError<U5kSnmpSystemAgent>(String.Format("GW OID [{0}] No encontrado para {1}", oidvar, ipfrom));
+                                }
+#endif
+                            }
+                            else if (pos != null /*&& pos.stdpos != std.NoInfo*/)
                             {
+                                // Proviene de un Puesto.
                                 var BdtItem = TopSnmpExplorer._OidPos.Where(p => p.Value.EndsWith(oidvar)).ToList();
                                 if (BdtItem.Count > 0)
                                 {
@@ -436,6 +474,13 @@ namespace U5kManServer
                             }
                             else
                             {
+#if DEBUG
+                                if (oidtrap.Contains(".1.3.6.1.4.1.7916.8.3.2.1") == true)
+                                {
+                                    /** Pasarelas Unificadas */
+                                    GwExplorer.RecibidoTrapGw_unificada(null, null, oidtrap, oidvar, data);
+                                }
+#endif
                                 LogError<U5kSnmpSystemAgent>(String.Format("OID [{0}] No encontrado para {1}", oidvar, ipfrom));
                             }
                         }

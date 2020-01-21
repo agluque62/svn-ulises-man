@@ -169,7 +169,7 @@ namespace U5kManServer.Services
         public CentralServicesMonitor(Func<bool> masterStateInfo,
             Action<bool, string, string, string> internalEvent,
             Action<String, Exception> notify,
-            Action<int, String> trace = null, int Port = 8103)
+            Action<int, String> trace = null, int Port = 1022)
         {
             SmpAccess = new Semaphore(1, 1);
             UdpServer = new UdpClient(Port);
@@ -214,8 +214,12 @@ namespace U5kManServer.Services
             {
                 var idRadio = RadioServer != null ? RadioServer.ip : "???";
                 var idPhone = PhoneServer != null ? PhoneServer.ip : "???";
-                var stdRadio = GlobalRadioServiceState.ToString();
-                var stdPhone = GlobalPhoneServiceState.ToString();
+                var stdRadio = RadioServer != null ? 
+                    (RadioServer.ServerType=="Mixed" ? GlobalMixedServiceState.ToString() : GlobalRadioServiceState.ToString()) : 
+                    GlobalRadioServiceState.ToString();
+                var stdPhone = PhoneServer != null ? 
+                    (PhoneServer.ServerType=="Mixed" ? GlobalMixedServiceState.ToString() : GlobalPhoneServiceState.ToString()) : 
+                    GlobalPhoneServiceState.ToString();
                 ReleaseDataAccess();
 
                 cb(idRadio, stdRadio, idPhone, stdPhone);
@@ -239,6 +243,12 @@ namespace U5kManServer.Services
                         std = GlobalPhoneServiceState.ToString(),
                         mas = PhoneServer == null ? "" : PhoneServer.ip,
                         phsl = DataAndStates.Where(e => e.Value.ServerType == "Phone").Select(e => e)
+                    },
+                    mixed = new
+                    {
+                        std = GlobalMixedServiceState.ToString(),
+                        mas = RadioServer == null ? "" : RadioServer.ip,
+                        phsl = DataAndStates.Where(e => e.Value.ServerType == "Mixed").Select(e => e)
                     }
                 };
 
@@ -283,6 +293,7 @@ namespace U5kManServer.Services
                                     RaiseInternalEvent(false, not.ServerType, not.Machine, "Activado");
                                 }
                                 /** Actualizo la tabla */
+                                not.TimeStamp = DateTime.Now;
                                 DataAndStates[key] = not;
                             }
                             catch (Exception x)
@@ -304,13 +315,13 @@ namespace U5kManServer.Services
                             UdpServer.BeginReceive(ReceiveCallback, null);
                         else
                         {
-                            RaiseMessage("UdpServer No valido...");
+                            RaiseMessage("CentralServiceMonitor Stopped: Invalid UdpServer...");
                         }
                     }
                 }
                 else
                 {
-                    RaiseMessage("UdpServer No valido...");
+                    RaiseMessage("CentralServiceMonitor not started: Invalid UdpServer...");
                 }
             });
         }
@@ -375,6 +386,8 @@ namespace U5kManServer.Services
                     RaiseInternalEvent(false, not.ServerType, not.Machine, "Desactivado");
 
                     DataAndStates.Remove(k);
+
+                    TraceMsg(2, String.Format("{0} Desactivado...", k));
                 });
 
                 lastSup = DateTime.Now;
@@ -395,12 +408,14 @@ namespace U5kManServer.Services
                 RadioServerState.Supervises(RadioServer, () =>
                 {
                     RaiseInternalEvent(true, "RadioServer", "", "No Server Found");
+                    TraceMsg(2, String.Format("No RadioServer Found"));
                 });
 
                 /** Supervisa el servidor de telefonia (presencia) */
                 PhoneServerState.Supervises(PhoneServer, () =>
                 {
                     RaiseInternalEvent(true, "PhoneServer", "", "No Server Found");
+                    TraceMsg(2, String.Format("No PhoneServer Found"));
                 });
 
                 lastSup = DateTime.Now;
@@ -423,28 +438,48 @@ namespace U5kManServer.Services
                 {
                     GettingDataOfRadio = Task.Factory.StartNew(() =>
                     {
-                        var currentMasters = DataAndStates.Where(e => e.Value.RadioService == "Master");
-                        if (currentMasters != null && currentMasters.Count() > 0)
+                        try
                         {
-                            ServerDataAndState master = currentMasters.First().Value;
+                            var currentMasters = DataAndStates.Where(e => e.Value.RadioService == "Master");
 
-                            TraceMsg(2, "Getting Data Of Radio...");
-
-                            string LocalRadioSessionsString = HttpHelper.Get(master.ip, master.WebPort, "/rdsessions", "[]");
-                            string LocalRadioMNDataString = HttpHelper.Get(master.ip, master.WebPort, "/gestormn", "[]");
-                            string LocalHFRadioDataString = HttpHelper.Get(master.ip, master.WebPort, "/rdhf", "{}");
-
-                            if (GetDataAccess())
+                            if (currentMasters != null && currentMasters.Count() > 0)
                             {
-                                RadioSessionsString = LocalRadioSessionsString;
-                                RadioMNDataString = LocalRadioMNDataString;
-                                HFRadioDataString = LocalHFRadioDataString;
+                                ServerDataAndState master = currentMasters.First().Value;
 
-                                TraceMsg(2, "Data Of Radio READY...");
-                                ReleaseDataAccess();
+                                TraceMsg(2, "Getting Data Of Radio...");
+
+                                string LocalRadioSessionsString = HttpHelper.Get(master.ip, master.WebPort, "/rdsessions", "[]");
+                                string LocalRadioMNDataString = HttpHelper.Get(master.ip, master.WebPort, "/gestormn", "[]");
+                                string LocalHFRadioDataString = HttpHelper.Get(master.ip, master.WebPort, "/rdhf", "{}");
+
+                                if (GetDataAccess())
+                                {
+                                    RadioSessionsString = LocalRadioSessionsString;
+                                    RadioMNDataString = LocalRadioMNDataString;
+                                    HFRadioDataString = LocalHFRadioDataString;
+
+                                    TraceMsg(2, "Data Of Radio READY...");
+                                    ReleaseDataAccess();
+                                }
+                            }
+                            else
+                            {
+                                TraceMsg(2, String.Format("OperationalRadioDataGet. No Radio Service."));
+                                if (GetDataAccess())
+                                {
+                                    RadioSessionsString = "[]";
+                                    RadioMNDataString = "[]";
+                                    HFRadioDataString = "{}";
+                                    TraceMsg(2, "OperationalRadioDataGet. Radio Data Cleared");
+
+                                    ReleaseDataAccess();
+                                }
                             }
                         }
-                        GettingDataOfRadio = null;
+                        finally
+                        {
+                            GettingDataOfRadio = null;
+                        }
                     });
                     lastGet = DateTime.Now;
                 }
@@ -466,26 +501,44 @@ namespace U5kManServer.Services
                 {
                     GettingDataOfTelephony = Task.Factory.StartNew(() =>
                     {
-                        var currentMasters = DataAndStates.Where(e => e.Value.PresenceService == "Master");
-                        if (currentMasters != null && currentMasters.Count() > 0)
+                        try
                         {
-                            ServerDataAndState master = currentMasters.First().Value;
-
-                            TraceMsg(2, "Getting Data Of Telephony...");
-
-                            string LocalPresenceDataString = HttpHelper.Get(master.ip, master.WebPort, "/tifxinfo");
-                            string LocalPhoneDataString = HttpHelper.Get(master.ip, master.WebPort, "/phone");
-
-                            if (GetDataAccess())
+                            var currentMasters = DataAndStates.Where(e => e.Value.PresenceService == "Master");
+                            if (currentMasters != null && currentMasters.Count() > 0)
                             {
-                                PresenceDataString = LocalPresenceDataString;
-                                PhoneDataString = LocalPhoneDataString;
+                                ServerDataAndState master = currentMasters.First().Value;
 
-                                TraceMsg(2, "Data Of Telephony READY...");
-                                ReleaseDataAccess();
+                                TraceMsg(2, "Getting Data Of Telephony...");
+
+                                string LocalPresenceDataString = HttpHelper.Get(master.ip, master.WebPort, "/tifxinfo");
+                                string LocalPhoneDataString = HttpHelper.Get(master.ip, master.WebPort, "/phone");
+
+                                if (GetDataAccess())
+                                {
+                                    PresenceDataString = LocalPresenceDataString;
+                                    PhoneDataString = LocalPhoneDataString;
+
+                                    TraceMsg(2, "Data Of Telephony READY...");
+                                    ReleaseDataAccess();
+                                }
+                            }
+                            else
+                            {
+                                TraceMsg(2, String.Format("OperationalPhoneDataGet. No Phone Service."));
+                                if (GetDataAccess())
+                                {
+                                    PresenceDataString = "{}";
+                                    PhoneDataString = "{}";
+
+                                    TraceMsg(2, "OperationalPhoneDataGet. Phone Data Cleared");
+                                    ReleaseDataAccess();
+                                }
                             }
                         }
-                        GettingDataOfTelephony = null;
+                        finally
+                        {
+                            GettingDataOfTelephony = null;
+                        }
                     });
 
                     lastGet = DateTime.Now;
@@ -526,6 +579,19 @@ namespace U5kManServer.Services
             {
                 int total = DataAndStates.Where(e => e.Value.ServerType == "Radio").Count();
                 int master = DataAndStates.Where(e => e.Value.ServerType == "Radio" && e.Value.RadioService=="Master").Count();
+                return master == 1 && total > 1 ? ServiceStates.Ok :
+                    master == 1 && total == 1 ? ServiceStates.Warning : ServiceStates.Alarm;
+            }
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        private ServiceStates GlobalMixedServiceState
+        {
+            get
+            {
+                int total = DataAndStates.Where(e => e.Value.ServerType == "Mixed").Count();
+                int master = DataAndStates.Where(e => e.Value.ServerType == "Mixed" && e.Value.RadioService == "Master").Count();
                 return master == 1 && total > 1 ? ServiceStates.Ok :
                     master == 1 && total == 1 ? ServiceStates.Warning : ServiceStates.Alarm;
             }
@@ -608,7 +674,7 @@ namespace U5kManServer.Services
                         {
                             if (DateTime.Now - DateOfChange > globalStateAlarmTimeout)
                             {
-                                // Alarma No tenemos servidor de Radio                           
+                                // Alarma No tenemos servidor de Radio
                                 State = GlobalStates.Fallo;
                                 DateOfChange = DateTime.Now;
                                 cb();

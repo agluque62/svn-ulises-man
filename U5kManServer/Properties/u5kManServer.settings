@@ -147,7 +147,7 @@
 &lt;/ArrayOfString&gt;</Value>
     </Setting>
     <Setting Name="nbxSupPort" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">8103</Value>
+      <Value Profile="(Default)">1022</Value>
     </Setting>
     <Setting Name="MainStanbyMcastAdd" Type="System.String" Scope="Application">
       <Value Profile="(Default)">224.100.10.1</Value>
@@ -274,7 +274,7 @@
 &lt;ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" /&gt;</Value>
     </Setting>
     <Setting Name="TeamingConfig" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-8" ?&gt;&lt;NicEventMonitorConfig &gt;&lt;TeamingType&gt;Intel&lt;/TeamingType&gt;&lt;WindowsLog&gt;System&lt;/WindowsLog&gt;&lt;EventSource&gt;iANSMiniport&lt;/EventSource&gt;&lt;UpEventId&gt;15&lt;/UpEventId&gt;&lt;DownEventId&gt;11&lt;/DownEventId&gt;&lt;/NicEventMonitorConfig&gt;   </Value>
+      <Value Profile="(Default)">{ "TeamingType": "Intel", "WindowsLog": "System", "EventSource":"iANSMiniport", "UpEventId": [15], "DownEventId": [11], "PropertyIndex": 1 }</Value>
     </Setting>
     <Setting Name="NtpClient" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">1</Value>
@@ -292,7 +292,7 @@
       <Value Profile="(Default)">1000</Value>
     </Setting>
     <Setting Name="LogRepeatFilterSecs" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">60</Value>
+      <Value Profile="(Default)">30</Value>
     </Setting>
     <Setting Name="LogRepeatSupervisionMin" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">10</Value>
@@ -318,6 +318,12 @@
     </Setting>
     <Setting Name="SnmpEnterpriseBaseOidType" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="MySqlDumpVersion" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">5.6</Value>
+    </Setting>
+    <Setting Name="TeamingConfigXML" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-8" ?&gt;&lt;NicEventMonitorConfig &gt;&lt;TeamingType&gt;Intel&lt;/TeamingType&gt;&lt;WindowsLog&gt;System&lt;/WindowsLog&gt;&lt;EventSource&gt;iANSMiniport&lt;/EventSource&gt;&lt;UpEventId&gt;15&lt;/UpEventId&gt;&lt;DownEventId&gt;11&lt;/DownEventId&gt;&lt;/NicEventMonitorConfig&gt;   </Value>
     </Setting>
   </Settings>
 </SettingsFile>

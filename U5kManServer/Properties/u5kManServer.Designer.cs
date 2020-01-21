@@ -12,7 +12,7 @@ namespace U5kManServer.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.8.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.3.0.0")]
     internal sealed partial class u5kManServer : global::System.Configuration.ApplicationSettingsBase {
         
         private static u5kManServer defaultInstance = ((u5kManServer)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new u5kManServer())));
@@ -307,7 +307,7 @@ namespace U5kManServer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("8103")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1022")]
         public int nbxSupPort {
             get {
                 return ((int)(this["nbxSupPort"]));
@@ -695,10 +695,8 @@ namespace U5kManServer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("<?xml version=\"1.0\" encoding=\"utf-8\" ?><NicEventMonitorConfig ><TeamingType>Intel" +
-            "</TeamingType><WindowsLog>System</WindowsLog><EventSource>iANSMiniport</EventSou" +
-            "rce><UpEventId>15</UpEventId><DownEventId>11</DownEventId></NicEventMonitorConfi" +
-            "g>   ")]
+        [global::System.Configuration.DefaultSettingValueAttribute("{ \"TeamingType\": \"Intel\", \"WindowsLog\": \"System\", \"EventSource\":\"iANSMiniport\", \"" +
+            "UpEventId\": [15], \"DownEventId\": [11], \"PropertyIndex\": 1 }")]
         public string TeamingConfig {
             get {
                 return ((string)(this["TeamingConfig"]));
@@ -752,7 +750,7 @@ namespace U5kManServer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("60")]
+        [global::System.Configuration.DefaultSettingValueAttribute("30")]
         public int LogRepeatFilterSecs {
             get {
                 return ((int)(this["LogRepeatFilterSecs"]));
@@ -824,6 +822,27 @@ namespace U5kManServer.Properties {
         public int SnmpEnterpriseBaseOidType {
             get {
                 return ((int)(this["SnmpEnterpriseBaseOidType"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5.6")]
+        public string MySqlDumpVersion {
+            get {
+                return ((string)(this["MySqlDumpVersion"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("<?xml version=\"1.0\" encoding=\"utf-8\" ?><NicEventMonitorConfig ><TeamingType>Intel" +
+            "</TeamingType><WindowsLog>System</WindowsLog><EventSource>iANSMiniport</EventSou" +
+            "rce><UpEventId>15</UpEventId><DownEventId>11</DownEventId></NicEventMonitorConfi" +
+            "g>   ")]
+        public string TeamingConfigXML {
+            get {
+                return ((string)(this["TeamingConfigXML"]));
             }
         }
     }

@@ -133,19 +133,19 @@ namespace U5kManServer
                     (alarma, str1, str2, str3) =>                
                     {
                         eIncidencias inci = alarma == true ? eIncidencias.IGRL_NBXMNG_ALARM : eIncidencias.IGRL_NBXMNG_EVENT;
-                        RecordEvent<MainThread>(DateTime.Now, inci, eTiposInci.TEH_SISTEMA, "SPV",
+                        RecordEvent<Services.CentralServicesMonitor>(DateTime.Now, inci, eTiposInci.TEH_SISTEMA, "SPV",
                             new object[] { str1, " Server en " + str2, str3, "", "", "", "", "" });
                     },
                     (m, x) =>
                     {
                         if (x != null)
-                            LogException<MainThread>("CentralServiceMonitor", x);
+                            LogException<Services.CentralServicesMonitor>("CentralServiceMonitor", x);
                         else
-                            LogDebug<MainThread>(m);
+                            LogDebug<Services.CentralServicesMonitor>(m);
                     },
                     (l, m) =>
                     {
-                        LogTrace<MainThread>(m);
+                        LogTrace<Services.CentralServicesMonitor>(m);
                     },
                         Properties.u5kManServer.Default.nbxSupPort
                 );

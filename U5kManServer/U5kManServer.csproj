@@ -147,6 +147,40 @@
     <Content Include="appweb\app\views\Uv5kiman-tlf.html" />
     <Content Include="appweb\COPYING.AUTHORIZATION.txt" />
     <Content Include="appweb\disabled.html" />
+    <Content Include="appweb\images\audio-recorder.jpg" />
+    <Content Include="appweb\images\corporativo-a.png" />
+    <Content Include="appweb\images\Corporativo.jpg" />
+    <Content Include="appweb\images\Corporativo.png" />
+    <Content Include="appweb\images\extern2.jpg" />
+    <Content Include="appweb\images\extern2.png" />
+    <Content Include="appweb\images\gw-tipo1-1.png" />
+    <Content Include="appweb\images\gw-tipo1-2.png" />
+    <Content Include="appweb\images\gw-tipo1-3.png" />
+    <Content Include="appweb\images\gw-tipo1-4.png" />
+    <Content Include="appweb\images\gw-tipo1-5.png" />
+    <Content Include="appweb\images\gw-tipo1-6.png" />
+    <Content Include="appweb\images\gw-tipo1-7.png" />
+    <Content Include="appweb\images\gw-tipo1-8.png" />
+    <Content Include="appweb\images\gw-tipo2-1.png" />
+    <Content Include="appweb\images\gw-tipo2-2.png" />
+    <Content Include="appweb\images\gw-tipo2-3.png" />
+    <Content Include="appweb\images\gw-tipo2-4.png" />
+    <Content Include="appweb\images\gw-tipo2-5.png" />
+    <Content Include="appweb\images\gw-tipo2-6.png" />
+    <Content Include="appweb\images\gw-tipo2-7.png" />
+    <Content Include="appweb\images\gw-tipo2-8.png" />
+    <Content Include="appweb\images\phone-focus-01.jpg" />
+    <Content Include="appweb\images\phone-focus-02.jpg" />
+    <Content Include="appweb\images\phone-focus.jpg" />
+    <Content Include="appweb\images\radio-server-new.png" />
+    <Content Include="appweb\images\radio.jpg" />
+    <Content Include="appweb\images\radiojt_rx.jpg" />
+    <Content Include="appweb\images\radiorh.jpg" />
+    <Content Include="appweb\images\radiorh_rx.jpg" />
+    <Content Include="appweb\images\radio_rx.jpg" />
+    <Content Include="appweb\images\speakeroff.png" />
+    <Content Include="appweb\images\speakeron.png" />
+    <Content Include="appweb\images\Trama.png" />
     <Content Include="tbConvInci.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -276,6 +310,9 @@
     <None Include="ndf.uv5k.137b5.mib">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="ndf.uv5k.137c5.mib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="NLog.xsd">
       <SubType>Designer</SubType>
     </None>
@@ -287,6 +324,9 @@
     </None>
     <None Include="RFC1213-MIB">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="RMON-MIB">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="versiones.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -362,6 +402,11 @@ xcopy /E /Y "$(ProjectDir)appweb" "$(TargetDir)appweb"</PostBuildEvent>
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties appweb_4languages_4es_3ES_1json__JSONSchema="INDEX_OPC_HISTORICOS" />
+    </VisualStudio>
+  </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

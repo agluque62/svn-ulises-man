@@ -148,8 +148,14 @@
       <Component Id ="Uv5kMib" Guid="{1DB0B851-E569-42FF-A89A-D45FB48C447F}">
         <File Id="Uv5kMib" Name="ndf.uv5k.137b5.mib"></File>
       </Component>
+      <Component Id ="Uv5kMib1" Guid="*">
+        <File Id="Uv5kMib1" Name="ndf.uv5k.137c5.mib"></File>
+      </Component>
       <Component Id ="Rfc1213Mib" Guid="{286316A3-0ADA-49B3-ABF6-B1A6CBCF6642}">
         <File Id="Rfc1213Mib" Name="RFC1213-MIB"></File>
+      </Component>
+      <Component Id ="RfcRmonMib" Guid="*">
+        <File Id="RfcRmonMib" Name="RMON-MIB"></File>
       </Component>
       <Component Id ="tbConvInci" Guid="{06262E12-99DA-4824-A97A-ED2DD770B043}">
         <File Id="tbConvInci" Name="tbConvInci.txt"></File>

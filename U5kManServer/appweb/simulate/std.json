@@ -1,7 +1,7 @@
 {
 	"IamAlive": {},
-	"version": "2.5.10",
-	"cfg": "Disgregada (2018-11-27 11:16:19)",
+	"version": "2.5.9",
+	"cfg": "Disgregada (2019-03-20 11:11:20)",
 	"hf": 0,
 	"recw": 1,
 	"sv1": {
@@ -9,19 +9,19 @@
 		"enable": 1,
 		"std": 0,
 		"sel": 0,
-		"url": "http://192.168.0.212/NucleoDF/U5kCfg/Cluster/Default.aspx"
+		"url": "http://10.12.60.35/NucleoDF/U5kCfg/Cluster/Default.aspx"
 	},
 	"sv2": {
 		"name": "Nodo en (192.168.0.111:6001)\r\nError Solicitando Info\nCluster Error: NoLocalServerNameDetected",
 		"enable": 1,
 		"std": 0,
 		"sel": 0,
-		"url": "http://192.168.0.212/NucleoDF/U5kCfg/Cluster/Default.aspx"
+		"url": "http://10.12.60.35/NucleoDF/U5kCfg/Cluster/Default.aspx"
 	},
 	"cwp": {
 		"name": "Puestos de Operador",
 		"enable": 1,
-		"std": 5,
+		"std": 0,
 		"sel": 0,
 		"url": ""
 	},
@@ -35,7 +35,7 @@
 	"pbx": {
 		"name": "10.12.60.36:8080",
 		"enable": 1,
-		"std": 1,
+		"std": 0,
 		"sel": 0,
 		"url": "http://10.12.60.36:8080/pbx/"
 	},
@@ -71,93 +71,65 @@
 	},
 	"csi": {
 		"radio": {
-			"std": "Ok",
-			"mas": "192.168.0.71",
-			"rdsl": [{
-					"Key": "192.168.0.71#RadioServer",
-					"Value": {
-						"ip": "192.168.0.71",
-						"url": "http://192.168.0.71:8000/",
-						"Machine": "DF1501",
-						"ServerType": "Radio",
-						"GlobalMaster": "Master",
-						"RadioService": "Master",
-						"CfgService": "Master",
-						"PhoneService": "Slave",
-						"TifxService": "Slave",
-						"PresenceService": "Slave",
-						"WebPort": "8000",
-						"TimeStamp": "2018-12-05T15:03:14.3387303+01:00"
-					}
-				}, {
-					"Key": "192.168.0.72#RadioServer",
-					"Value": {
-						"ip": "192.168.0.72",
-						"url": "http://192.168.0.72:8000/",
-						"Machine": "DF1501",
-						"ServerType": "Radio",
-						"GlobalMaster": "Master",
-						"RadioService": "Slave",
-						"CfgService": "Slave",
-						"PhoneService": "Master",
-						"TifxService": "Master",
-						"PresenceService": "Master",
-						"WebPort": "8000",
-						"TimeStamp": "2018-12-05T15:03:14.7772303+01:00"
-					}
-				}
-			]
+			"std": "Alarm",
+			"mas": "10.12.60.35",
+			"rdsl": []
 		},
 		"phone": {
-			"std": "Warning",
-			"mas": "192.168.0.72",
+			"std": "Alarm",
+			"mas": "10.12.60.35",
+			"phsl": []
+		},
+		"mixed": {
+			"std": "Ok",
+			"mas": "10.12.60.35",
 			"phsl": [{
-					"Key": "192.168.0.71#PhoneServer",
+					"Key": "10.12.60.35#Mixed",
 					"Value": {
-						"ip": "192.168.0.71",
-						"url": "http://192.168.0.71:8000/",
-						"Machine": "DF1501",
-						"ServerType": "Phone",
-						"GlobalMaster": "Master",
+						"ip": "10.12.60.35",
+						"url": "http://10.12.60.35:1023/",
+						"Machine": "NUCLEODF-VM01",
+						"ServerType": "Mixed",
+						"GlobalMaster": "Error",
 						"RadioService": "Master",
 						"CfgService": "Master",
-						"PhoneService": "Slave",
-						"TifxService": "Slave",
-						"PresenceService": "Slave",
-						"WebPort": "8000",
-						"TimeStamp": "2018-12-05T15:03:14.3392303+01:00"
-					}
-				}, {
-					"Key": "192.168.0.72#PhoneServer",
-					"Value": {
-						"ip": "192.168.0.72",
-						"url": "http://192.168.0.72:8000/",
-						"Machine": "DF1501",
-						"ServerType": "Phone",
-						"GlobalMaster": "Master",
-						"RadioService": "Slave",
-						"CfgService": "Slave",
-						"PhoneService": "Master",
+						"PhoneService": "Error",
 						"TifxService": "Master",
 						"PresenceService": "Master",
-						"WebPort": "8000",
-						"TimeStamp": "2018-12-05T15:03:14.7787303+01:00"
+						"WebPort": "1023",
+						"TimeStamp": "2019-03-20T12:48:52.0208005+01:00"
 					}
 				}, {
-					"Key": "192.168.0.72#PhoneServer",
+					"Key": "192.168.0.71#Mixed",
 					"Value": {
-						"ip": "192.168.0.73",
-						"url": "http://192.168.0.72:8000/",
+						"ip": "192.168.0.71",
+						"url": "http://192.168.0.71:1023/",
 						"Machine": "DF1501",
-						"ServerType": "Phone",
+						"ServerType": "Mixed",
 						"GlobalMaster": "Master",
 						"RadioService": "Slave",
 						"CfgService": "Slave",
 						"PhoneService": "Slave",
 						"TifxService": "Slave",
 						"PresenceService": "Slave",
-						"WebPort": "8000",
-						"TimeStamp": "2018-12-05T15:03:14.7787303+01:00"
+						"WebPort": "1023",
+						"TimeStamp": "2019-03-20T12:48:53.1608643+01:00"
+					}
+				}, {
+					"Key": "192.168.0.72#Mixed",
+					"Value": {
+						"ip": "192.168.0.72",
+						"url": "http://192.168.0.72:1023/",
+						"Machine": "DF1501",
+						"ServerType": "Mixed",
+						"GlobalMaster": "Master",
+						"RadioService": "Slave",
+						"CfgService": "Slave",
+						"PhoneService": "Slave",
+						"TifxService": "Slave",
+						"PresenceService": "Slave",
+						"WebPort": "1023",
+						"TimeStamp": "2019-03-20T12:48:53.0548643+01:00"
 					}
 				}
 			]
@@ -165,7 +137,7 @@
 	},
 	"perfil": 0,
 	"lang": "es",
-	"rd_status": -1,
+	"rd_status": 2,
 	"tf_status": 2,
-	"ServiceSite": "DF1501"
+	"ServiceSite": "NUCLEODF-VM01"
 }

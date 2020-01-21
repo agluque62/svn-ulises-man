@@ -1,7 +1,7 @@
 {
 	"Server": "SERV01",
-	"Version" : "2.5.10",
-	"Fecha": "10/12/2018",
+	"Version" : "2.6.0",
+	"Fecha": "2-3-2020",
 	"Components" : [
 		{
 			"Name": "UV5K-SGM Gestor Cluster",
@@ -76,12 +76,12 @@
 					"Date": "",
 					"Size": ""
 				},
-				{
-					"Path": ".\\ndf.uv5k.137b5.mib",
-					"MD5": "",
-					"Date": "",
-					"Size": ""
-				}
+        {
+          "Path": ".\\U5kManMibRevC.dll",
+          "MD5": "",
+          "Date": "",
+          "Size": ""
+        }
 			]
 		}
 	]

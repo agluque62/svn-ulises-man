@@ -79,21 +79,27 @@
                         <td colspan="3">
                             <div id="chis">
                                 <button id="btnConsulta1" type="button"
-                                    class="btn btn-default"
-                                    ng-click="ctrl.getHistorico()">
+                                        class="btn btn-default"
+                                        ng-click="ctrl.getHistorico()">
                                     <i translate>HST_BT1_01</i>
                                 </button>
                                 <button type="button"
-                                    class="btn btn-default"
-                                    ng-show="ctrl.lhis.length > 0"
-                                    ng-click="ctrl.clearhis()">
+                                        class="btn btn-default"
+                                        ng-show="ctrl.lhis.length > 0"
+                                        ng-click="ctrl.clearhis()">
                                     <i translate>HST_BT1_02</i>
                                 </button>
                                 <button type="button"
-                                    class="btn btn-default"
-                                    ng-show="ctrl.lhis.length > 0"
-                                    ng-click="ctrl.toPdf()">
+                                        class="btn btn-default"
+                                        ng-show="ctrl.lhis.length > 0"
+                                        ng-click="ctrl.toPdf()">
                                     <i translate>HST_BT1_03</i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-default"
+                                        ng-show="ctrl.lhis.length > 0"
+                                        ng-click="ctrl.toExcel()">
+                                    <i translate>Excel</i>
                                 </button>
                             </div>
                         </td>

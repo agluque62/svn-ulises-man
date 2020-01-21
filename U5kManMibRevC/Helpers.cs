@@ -23,36 +23,44 @@ namespace U5kManMibRevC
             const int ERROR_INSUFFICIENT_BUFFER = 122;
 
             /** Datos Grupo IF */
-            //public struct MIB_IFROW
-            //{
-            //    WCHAR wszName[MAX_INTERFACE_NAME_LEN];
-            //    IF_INDEX dwIndex;
-            //    IFTYPE dwType;
-            //    DWORD dwMtu;
-            //    DWORD dwSpeed;
-            //    DWORD dwPhysAddrLen;
-            //    UCHAR bPhysAddr[MAXLEN_PHYSADDR];
-            //    DWORD dwAdminStatus;
-            //    INTERNAL_IF_OPER_STATUS dwOperStatus;
-            //    DWORD dwLastChange;
-            //    DWORD dwInOctets;
-            //    DWORD dwInUcastPkts;
-            //    DWORD dwInNUcastPkts;
-            //    DWORD dwInDiscards;
-            //    DWORD dwInErrors;
-            //    DWORD dwInUnknownProtos;
-            //    DWORD dwOutOctets;
-            //    DWORD dwOutUcastPkts;
-            //    DWORD dwOutNUcastPkts;
-            //    DWORD dwOutDiscards;
-            //    DWORD dwOutErrors;
-            //    DWORD dwOutQLen;
-            //    DWORD dwDescrLen;
-            //    UCHAR bDescr[MAXLEN_IFDESCR];
-            //}
-
-            /** Datos Grupo IP */
+            public const int IF_ROW_COUNT = 16;
+            public const int MAX_INTERFACE_NAME_LEN = 256;
+            public const int MAXLEN_PHYSADDR = 8;
+            public const int MAXLEN_IFDESCR = 256;
             [StructLayout(LayoutKind.Sequential)]
+            public struct MIB_IFROW
+            {
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAX_INTERFACE_NAME_LEN*2)]
+                public byte[] wszName;
+                public UInt32 dwIndex;
+                public UInt32 dwType;
+                public UInt32 dwMtu;
+                public UInt32 dwSpeed;
+                public UInt32 dwPhysAddrLen;
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAXLEN_PHYSADDR)]
+                public byte[] bPhysAddr;
+                public UInt32 dwAdminStatus;
+                public UInt32 dwOperStatus;
+                public UInt32 dwLastChange;
+                public UInt32 dwInOctets;
+                public UInt32 dwInUcastPkts;
+                public UInt32 dwInNUcastPkts;
+                public UInt32 dwInDiscards;
+                public UInt32 dwInErrors;
+                public UInt32 dwInUnknownProtos;
+                public UInt32 dwOutOctets;
+                public UInt32 dwOutUcastPkts;
+                public UInt32 dwOutNUcastPkts;
+                public UInt32 dwOutDiscards;
+                public UInt32 dwOutErrors;
+                public UInt32 dwOutQLen;
+                public UInt32 dwDescrLen;
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = MAXLEN_IFDESCR)]
+                public byte[] bDescr;
+            }
+
+                /** Datos Grupo IP */
+                [StructLayout(LayoutKind.Sequential)]
             public struct MIB_IPSTATS
             {
                 public Int32 dwForwarding;
@@ -185,6 +193,9 @@ namespace U5kManMibRevC
                 public Int32 dwLocalPort;
             }
 
+            [DllImport("Iphlpapi.dll", SetLastError= true)]
+            public static extern int GetIfTable(IntPtr pIfTable, ref int pdwSize, bool bOrder);
+
             [DllImport("iphlpapi.dll", SetLastError = true)]
             public static extern int GetIpStatistics(ref MIB_IPSTATS pStats);
             [DllImport("IpHlpApi.dll")]
@@ -253,7 +264,7 @@ namespace U5kManMibRevC
                     buffer = Marshal.AllocCoTaskMem(bytesNeeded);
                     // Make the call again. If it did not succeed, then
                     // raise an error.
-                    result = TableDataGet(buffer, ref bytesNeeded, false);
+                    result = TableDataGet(buffer, ref bytesNeeded, true);
                     // If the result is not 0 (no error), then throw an exception.
                     if (result != 0)
                     {
@@ -287,241 +298,53 @@ namespace U5kManMibRevC
             }
         }
 
-        //public class IpAddrTable
-        //{
-        //    public class IpAddTableEntry
-        //    {
-        //        public string IpAdEntAddr { get; set; }
-        //        public int IpAdEntIfIndex { get; set; }
-        //        public string IpAdEntNetMask { get; set; }
-        //        public int IpAdEntBcastAddr { get; set; }
-        //        public int IpAdEntReasmMaxSize { get; set; }
-        //    }
-        //    static public List<IpAddTableEntry> Data
-        //    {
-        //        get
-        //        {
-        //            var lst = new List<IpAddTableEntry>();
-        //            int index = 1;
-        //            var adapters = NetworkInterface.GetAllNetworkInterfaces();
-        //            foreach (NetworkInterface adapter in adapters)
-        //            {
-        //                foreach (UnicastIPAddressInformation unicastIPAddressInformation in adapter.GetIPProperties().UnicastAddresses)
-        //                {
-        //                    if (unicastIPAddressInformation.Address.AddressFamily == AddressFamily.InterNetwork)
-        //                    {
-        //                        lst.Add(new IpAddTableEntry
-        //                        {
-        //                            IpAdEntAddr = unicastIPAddressInformation.Address.ToString(),
-        //                            IpAdEntIfIndex = index,
-        //                            IpAdEntNetMask = unicastIPAddressInformation.IPv4Mask.ToString(),
-        //                            IpAdEntBcastAddr = 1,
-        //                            IpAdEntReasmMaxSize = 65535
-        //                        });
-        //                    }
-        //                }
-        //                index++;
-        //            }
-        //            return lst;
-
-        //        }
-        //    }
-        //}
-        //public class IpRouteTable
-        //{
-        //    public class IpRouteTableEntry
-        //    {
-        //        public string IpRouteDest { get; set; }
-        //        public Int32 IpRouteIfIndex { get; set; }
-        //        public Int32 IpRouteMetric1 { get; set; }
-        //        public Int32 IpRouteMetric2 { get; set; }
-        //        public Int32 IpRouteMetric3 { get; set; }
-        //        public Int32 IpRouteMetric4 { get; set; }
-        //        public Int32 IpRouteMetric5 { get; set; }
-        //        public string IpRouteNextHop { get; set; }
-        //        public Int32 IpRouteType { get; set; }
-        //        public Int32 IpRouteProto { get; set; }
-        //        public Int32 IpRouteAge { get; set; }
-        //        public string IpRouteMask { get; set; }
-        //        public string IpRouteInfo { get; set; }
-        //    };
-
-        //    static public List<IpRouteTableEntry> Data
-        //    {
-        //        get
-        //        {
-        //            var lst = new List<IpRouteTableEntry>();
-        //            ManagementObjectSearcher searcher = new ManagementObjectSearcher("root\\CIMV2",        
-        //                "SELECT * FROM Win32_IP4RouteTable");
-        //            var routeTable = searcher.Get().Cast<ManagementObject>().ToList();
-        //            routeTable.ForEach(e =>
-        //            {
-        //                try
-        //                {
-        //                    var item = new IpRouteTableEntry()
-        //                    {
-        //                        IpRouteDest = e["Destination"].ToString(),
-        //                        IpRouteIfIndex = Convert.ToInt32(e["InterfaceIndex"]),
-        //                        IpRouteMetric1 = Convert.ToInt32(e["Metric1"]),
-        //                        IpRouteMetric2 = Convert.ToInt32(e["Metric2"]),
-        //                        IpRouteMetric3 = Convert.ToInt32(e["Metric3"]),
-        //                        IpRouteMetric4 = Convert.ToInt32(e["Metric4"]),
-        //                        IpRouteMetric5 = Convert.ToInt32(e["Metric5"]),
-        //                        IpRouteNextHop = e["NextHop"].ToString(),
-        //                        IpRouteType = Convert.ToInt32(e["Type"]),
-        //                        IpRouteProto = Convert.ToInt32(e["Protocol"]),
-        //                        IpRouteAge = Convert.ToInt32(e["Age"]),
-        //                        IpRouteMask = e["Mask"].ToString(),
-        //                        IpRouteInfo = e["Information"].ToString(),
-        //                    };
-
-        //                    lst.Add(item);
-        //                }
-        //                catch (Exception )
-        //                {
-        //                }
-        //            });
-
-        //            return lst;
-        //        }
-        //    }
-        //}
-        //public class IpNetTable
-        //{
-        //    // The max number of physical addresses.
-        //    const int MAXLEN_PHYSADDR = 8;
-        //    // Define the MIB_IPNETROW structure.
-        //    [StructLayout(LayoutKind.Sequential)]
-        //    struct MIB_IPNETROW
-        //    {
-        //        [MarshalAs(UnmanagedType.U4)]
-        //        public int dwIndex;
-        //        [MarshalAs(UnmanagedType.U4)]
-        //        public int dwPhysAddrLen;
-        //        [MarshalAs(UnmanagedType.U1)]
-        //        public byte mac0;
-        //        [MarshalAs(UnmanagedType.U1)]
-        //        public byte mac1;
-        //        [MarshalAs(UnmanagedType.U1)]
-        //        public byte mac2;
-        //        [MarshalAs(UnmanagedType.U1)]
-        //        public byte mac3;
-        //        [MarshalAs(UnmanagedType.U1)]
-        //        public byte mac4;
-        //        [MarshalAs(UnmanagedType.U1)]
-        //        public byte mac5;
-        //        [MarshalAs(UnmanagedType.U1)]
-        //        public byte mac6;
-        //        [MarshalAs(UnmanagedType.U1)]
-        //        public byte mac7;
-        //        [MarshalAs(UnmanagedType.U4)]
-        //        public int dwAddr;
-        //        [MarshalAs(UnmanagedType.U4)]
-        //        public int dwType;
-        //    }
-
-        //    // Clase de datos convertidos.
-        //    public class IpNetToMediaEntry
-        //    {
-        //        public Int32 IpNetToMediaIfIndex { get; set; }
-        //        public string IpNetToMediaPhysAddress { get; set; }
-        //        public string IpNetToMediaNetAddress { get; set; }
-        //        public Int32 IpNetToMediaType { get; set; }
-        //    }
-
-        //    static public List<IpNetToMediaEntry> Data
-        //    {
-        //        get
-        //        {
-        //            var data = new List<IpNetToMediaEntry>();
-        //            int bytesNeeded = 0;
-        //            // The result from the API call.
-        //            int result = IpHlpApiHelper.GetIpNetTable(IntPtr.Zero, ref bytesNeeded, false);
-        //            // Call the function, expecting an insufficient buffer.
-        //            if (result != IpHlpApiHelper.ERROR_INSUFFICIENT_BUFFER)
-        //            {
-        //                // Throw an exception.
-        //                throw new Win32Exception(result);
-        //            }
-
-        //            // Allocate the memory, do it in a try/finally block, to ensure
-        //            // that it is released.
-        //            IntPtr buffer = IntPtr.Zero;
-        //            // Try/finally.
-        //            try
-        //            {
-        //                // Allocate the memory.
-        //                buffer = Marshal.AllocCoTaskMem(bytesNeeded);
-        //                // Make the call again. If it did not succeed, then
-        //                // raise an error.
-        //                result = IpHlpApiHelper.GetIpNetTable(buffer, ref bytesNeeded, false);
-        //                // If the result is not 0 (no error), then throw an exception.
-        //                if (result != 0)
-        //                {
-        //                    // Throw an exception.
-        //                    throw new Win32Exception(result);
-        //                }
-
-        //                // Now we have the buffer, we have to marshal it. We can read
-        //                // the first 4 bytes to get the length of the buffer.
-        //                int entries = Marshal.ReadInt32(buffer);
-
-        //                // Increment the memory pointer by the size of the int.
-        //                IntPtr currentBuffer = new IntPtr(buffer.ToInt64() + Marshal.SizeOf(typeof(int)));
-
-        //                // Allocate an array of entries.
-        //                MIB_IPNETROW[] table = new MIB_IPNETROW[entries];
-
-        //                // Cycle through the entries.
-        //                for (int index = 0; index < entries; index++)
-        //                {
-        //                    // Call PtrToStructure, getting the structure information.
-        //                    table[index] = (MIB_IPNETROW)Marshal.PtrToStructure(new
-        //                       IntPtr(currentBuffer.ToInt64() + (index *
-        //                       Marshal.SizeOf(typeof(MIB_IPNETROW)))), typeof(MIB_IPNETROW));
-        //                }
-
-        //                for (int index = 0; index < entries; index++)
-        //                {
-        //                    MIB_IPNETROW row = table[index];
-
-        //                    var item = new IpNetToMediaEntry()
-        //                    {
-        //                        IpNetToMediaIfIndex = row.dwIndex,
-        //                        IpNetToMediaPhysAddress = row.mac0.ToString("X2") + '-' +
-        //                                                  row.mac1.ToString("X2") + '-' +
-        //                                                  row.mac2.ToString("X2") + '-' +
-        //                                                  row.mac3.ToString("X2") + '-' +
-        //                                                  row.mac4.ToString("X2") + '-' +
-        //                                                  row.mac5.ToString("X2") + '-' ,
-        //                        IpNetToMediaNetAddress = new IPAddress(BitConverter.GetBytes(row.dwAddr)).ToString(),
-        //                        IpNetToMediaType = row.dwType
-        //                    };
-        //                    //IPAddress ip = new IPAddress(BitConverter.GetBytes(row.dwAddr));
-        //                    //Console.Write("IP:" + ip.ToString() + "\t\tMAC:");
-
-        //                    //Console.Write(row.mac0.ToString("X2") + '-');
-        //                    //Console.Write(row.mac1.ToString("X2") + '-');
-        //                    //Console.Write(row.mac2.ToString("X2") + '-');
-        //                    //Console.Write(row.mac3.ToString("X2") + '-');
-        //                    //Console.Write(row.mac4.ToString("X2") + '-');
-        //                    //Console.WriteLine(row.mac5.ToString("X2"));
-        //                    data.Add(item);
-        //                }
-        //            }
-        //            finally
-        //            {
-        //                // Release the memory.
-        //                IpHlpApiHelper.FreeMibTable(buffer);
-        //            }
-
-        //            return data;
-        //        }
-        //    }
-        //}
-
         public class IfData
         {
+            static public List<IpHlpApiHelper.MIB_IFROW> IfTable
+            {
+                get
+                {
+                    if (LastIfTable == null || DateTime.Now - LastRead > TimeSpan.FromSeconds(10))
+                    {
+                        LastIfTable = IpHlpApiHelper.Table<IpHlpApiHelper.MIB_IFROW>(IpHlpApiHelper.GetIfTable);
+                        LastRead = DateTime.Now;
+                    }
+                    return LastIfTable;
+                }
+            }
+
+            static public int SnmpOperationalStatus(int input, int admin)
+            {
+                if (admin == 2)
+                    return 6;
+                else if (admin == 1)
+                {
+                    switch (input)
+                    {
+                        case 0:         // IF_OPER_STATUS_NON_OPERATIONAL
+                            return 2;
+                        case 1:         // IF_OPER_STATUS_UNREACHABLE
+                            return 6;
+                        case 2:         // IF_OPER_STATUS_DISCONNECTED 
+                            return 6;
+                        case 3:         // IF_OPER_STATUS_CONNECTING
+                            return 1;
+                        case 4:         // IF_OPER_STATUS_CONNECTED
+                            return 1;
+                        case 5:         // IF_OPER_STATUS_OPERATIONAL 
+                            return 1;
+                        default:
+                            return 4;
+                    }
+                }
+                else
+                {
+                    return 4;
+                }
+            }
+
+            private static List<IpHlpApiHelper.MIB_IFROW> LastIfTable = null;
+            private static DateTime LastRead = DateTime.Now;
         }
 
         public class IpData
@@ -557,7 +380,6 @@ namespace U5kManMibRevC
                 }
             }
         }
-
         public class TcpData
         {
             static public IpHlpApiHelper.MIB_TCPSTATS Statistics

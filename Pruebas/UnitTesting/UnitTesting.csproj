@@ -67,6 +67,8 @@
     <Compile Include="JSonParsingTest.cs" />
     <Compile Include="CentralServicesMonitorTest.cs" />
     <Compile Include="NetworkInformationTests.cs" />
+    <Compile Include="BackupTest.cs" />
+    <Compile Include="ClassReferences\UnitsTestingTypes.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

@@ -9,15 +9,15 @@ IMPORTS
         FROM SNMPv2-TC;
 		
 uv5kiPublic MODULE-IDENTITY
-		LAST-UPDATED "201706051400Z"
-		ORGANIZATION "NUCLEODF"
+		LAST-UPDATED "201904011400Z"
+		ORGANIZATION "NUCLEOCC"
 		CONTACT-INFO 
 			"Direccion Tecnica
 			Via de los Poblados 7,
 			Madrid 28033.
-			email: direccion.tecnica@nucleodf.com"
+			email: direccion.tecnica@nucleocc.com"
 		DESCRIPTION "Ulises V5000"
-		REVISION "201706051400Z"
+		REVISION "201904011400Z"
 			DESCRIPTION
          "..."
 	::= { enterprises 7916 8 1 5}

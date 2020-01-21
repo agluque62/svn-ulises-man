@@ -142,7 +142,7 @@ namespace NucleoGeneric
 
 #else
     public class NGThread : BaseCode
-    {
+    { 
         public string Name { get; set; }
         public CancellationTokenSource Cancel
         {

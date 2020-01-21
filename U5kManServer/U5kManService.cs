@@ -1720,11 +1720,22 @@ namespace U5kManServer
                         stdPos local = paraBorrar.Where(p => p.Equals(pos)).FirstOrDefault();
                         if (local != null)
                         {
+                            /** No ha cambiado */
                             paraBorrar.Remove(local);
                         }
                         else
                         {
-                            stdpos[pos.name]=pos;
+                            /** Ha cambiado, puede ser nueva o no*/
+                            if (stdpos.ContainsKey(pos.name))
+                            {
+                                /** Es un cambio, no una adicion, luego hay que borrarlas de las pendientes */
+                                stdPos local1 = paraBorrar.Where(p => p.name==pos.name).FirstOrDefault();
+                                if (local1 != null)
+                                {
+                                    paraBorrar.Remove(local1);
+                                }
+                            }
+                            stdpos[pos.name]=pos;                            
                         }
                     }
                     // Borrar los restos...
@@ -1824,6 +1835,16 @@ namespace U5kManServer
                         }
                         else
                         {
+                            /** Ha cambiado, puede ser nueva o no*/
+                            if (stdgws.ContainsKey(gw.name))
+                            {
+                                /** Es un cambio, no una adicion, luego hay que borrarlas de las pendientes */
+                                local = paraBorrar.Where(p => p.name == gw.name).FirstOrDefault();
+                                if (local != null)
+                                {
+                                    paraBorrar.Remove(local);
+                                }
+                            }
                             stdgws[gw.name] = gw;
                         }
                     }
@@ -1922,6 +1943,16 @@ namespace U5kManServer
                         }
                         else
                         {
+                            /** Ha cambiado, puede ser nueva o no*/
+                            if (stdequ.ContainsKey(equ.Key))
+                            {
+                                /** Es un cambio, no una adicion, luego hay que borrarlas de las pendientes */
+                                local = paraBorrar.Where(e => e.Key == equ.Key).FirstOrDefault();
+                                if (local != null)
+                                {
+                                    paraBorrar.Remove(local);
+                                }
+                            }
                             stdequ[equ.Key]= equ;
                         }
                     }

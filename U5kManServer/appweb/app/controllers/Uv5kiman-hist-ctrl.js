@@ -32,7 +32,7 @@ angular.module("Uv5kiman")
         //    filtro_reset(pagina);
         var menu = $lserv.Submenu(pagina);
         return menu ? menu : 0;
-    }
+    };
 
     /** Opciones DPicker */
     ctrl.dpOptions = {
@@ -67,35 +67,51 @@ angular.module("Uv5kiman")
     ctrl.inci=[];
     ctrl.OnTpMatChange = function () {
         fhis_prepare(true);
-    }
+    };
 
     /** Obtiene el Historico del Servidor */
-    ctrl.getHistorico = function() {
-        console.log(ctrl.ls.LogFilter());
-        ctrl.clearhis();
-        $("body").css("cursor", "progress");
-        $serv.db_hist_get(ctrl.ls.LogFilter()).then(
-            function (response) {
-                ctrl.lhis = response.data.lista;
-                $("body").css("cursor", "default");
-                if (ctrl.lhis.length == 0) {
-                    alertify.warning($lserv.translate("No se han encontrado registros"));
-                }
-            },
-            function (response) {
-                $("body").css("cursor", "default");
-                console.log(response);
-                ctrl.lhis = [];
-                alertify.success($lserv.translate("Error en Consulta de Base de Datos."));
-            });
+    function LogFilterNormalize(filter) {
+        var now = moment().endOf('day').toDate();
+        if (filter.dtDesde > now ||
+            filter.dtHasta > now) {
+            alertify.alert($lserv.translate('Error en la Seleccion'), $lserv.translate('La fecha inicial o la fecha final está en el futuro!'));
+            return false;
+        }
+        else if (filter.dtDesde > filter.dtHasta) {
+            alertify.alert($lserv.translate('Error en la Seleccion'), $lserv.translate('La fecha inicial es mayor que la fecha Final!'));
+            return false;
+        }
+        return true;
+
     }
+  ctrl.getHistorico = function () {
+      console.log(ctrl.ls.LogFilter());
+      ctrl.clearhis();
+      if (LogFilterNormalize(ctrl.ls.LogFilter()) == true) {
+          $("body").css("cursor", "progress");
+          $serv.db_hist_get(ctrl.ls.LogFilter()).then(
+              function (response) {
+                  ctrl.lhis = response.data.lista;
+                  $("body").css("cursor", "default");
+                  if (ctrl.lhis.length == 0) {
+                      alertify.warning($lserv.translate("No se han encontrado registros"));
+                  }
+              },
+              function (response) {
+                  $("body").css("cursor", "default");
+                  console.log(response);
+                  ctrl.lhis = [];
+                  alertify.success($lserv.translate("Error en Consulta de Base de Datos."));
+              });
+      }
+    };
 
     /** */
     ctrl.hist_reg_txt = function () {
         var nreg = ctrl.lhis.length;
         var npag = nreg == 0 ? 0 : Math.ceil(nreg / ctrl.itemsPage);
         return sprintf($lserv.translate("Registros: %1$d, Paginas: %2$d"), nreg, npag);
-    }
+    };
 
     /** Limpia la Lista de Incidencias */
     ctrl.linci_clear = function () {
@@ -103,29 +119,29 @@ angular.module("Uv5kiman")
         document.getElementById("list_inci").selectedIndex = "-1";
         //ctrl.fil.Inci = [];
         //ctrl.fil.txt = "";
-    }
+    };
 
     /** Accede a Configurar el Filtro de Historicos */
     ctrl.setfiltro = function () {
         /** */
         dateRangeUpdate();
         $("#hfiltroModal").modal("show");
-    }
+    };
 
     /** */
     ctrl.textoInciSel = function () {
         if (ctrl.linci.length == 0) return "";
 
         var txt = (ctrl.ls.LogFilter().Inci.length == 0 ? "" :
-                   ctrl.ls.LogFilter().Inci.length == 1 ? ctrl.linci.filter($lserv.inci_filter_one, ctrl.ls.LogFilter().Inci[0])[0].desc :
-                                               ctrl.linci.filter($lserv.inci_filter_one, ctrl.ls.LogFilter().Inci[0])[0].desc + ", ...");
+            ctrl.ls.LogFilter().Inci.length == 1 ? ctrl.linci.filter($lserv.inci_filter_one, ctrl.ls.LogFilter().Inci[0])[0].desc :
+                ctrl.linci.filter($lserv.inci_filter_one, ctrl.ls.LogFilter().Inci[0])[0].desc + ", ...");
         return txt;
-    }
+    };
 
     /** */
     ctrl.textoTexto = function () {
         return ctrl.ls.LogFilter().txt == undefined ? "" : ctrl.ls.LogFilter().txt;
-    }
+    };
 
     /** */
     ctrl.textoGrpSel = function () {
@@ -139,27 +155,26 @@ angular.module("Uv5kiman")
             $lserv.translate("Todos")
         ];
         return ctrl.ls.LogFilter().tpMat < 7 ? txtGrupos[ctrl.ls.LogFilter().tpMat] : sprintf($lserv.translate("Error %1$d"), ctrl.ls.LogFilter().tpMat);
-    }
+    };
 
     /** Generacion de Informe PDF de Historicos */
-    ctrl.toPdf = function() {
+    ctrl.toPdf = function () {
         var now = new Date();
         var lpag = ctrl.portrait == true ? 47 : 30;
         var lsep = 5;
-        var doc = new jsPDF(ctrl.portrait==true ? 'portrait' : 'landscape');         
+        var doc = new jsPDF(ctrl.portrait == true ? 'portrait' : 'landscape');
         var nPages = Math.ceil(ctrl.lhis.length / lpag);
         doc.setFont("verdana");
 
-        for (pg=0; pg<nPages; pg++)
-        {
+        for (pg = 0; pg < nPages; pg++) {
             /** La Cabecera ... */
-            doc.addImage(imgData, 'JPEG', 10, 10, 15, 15);
+            doc.addImage(imgData, 'JPEG', 10, 10, 30, 15);
             doc.setFontSize(14);
-            doc.setTextColor(0xC1, 0x02, 0x2C);            
-            doc.text(45, 15,$lserv.translate('HCT_MSG_02')/*"ULISES-5000 I. INFORME DE HISTORICOS"*/);
+            doc.setTextColor(0x4A, 0x77, 0x29);
+            doc.text(45, 22, $lserv.translate('HCT_MSG_02')/*"ULISES-5000 I. INFORME DE HISTORICOS"*/);
 
             doc.setFontSize(10);
-            doc.setTextColor(0,0,0);            
+            doc.setTextColor(0, 0, 0);
             doc.text(20, 32, $lserv.translate('HCT_MSG_03')/*"Fecha"*/);
             doc.text(75, 32, $lserv.translate('HCT_MSG_04')/*"Incidencia"*/);
             doc.line(20, 34, ctrl.portrait == true ? 190 : 290, 34);
@@ -168,7 +183,7 @@ angular.module("Uv5kiman")
             doc.setFontSize(8);
             doc.setTextColor(0, 0, 0);
             doc.text(160, 20, $lserv.translate("Desde:")); doc.text(210, 20, $lserv.translate("Hasta:"));
-            doc.text(160, 24, $lserv.translate("Grupo:"));  doc.text(210, 24, $lserv.translate("Elemento:"));
+            doc.text(160, 24, $lserv.translate("Grupo:")); doc.text(210, 24, $lserv.translate("Elemento:"));
             doc.text(160, 28, $lserv.translate("Incidencias:"));
             doc.text(160, 32, $lserv.translate("Contiene:"));
 
@@ -181,23 +196,23 @@ angular.module("Uv5kiman")
             doc.text(180, 32, ctrl.textoTexto());
 
             /** El Cuerpo */
-            var iInicial = pg*lpag;
+            var iInicial = pg * lpag;
             var iFinal = iInicial + lpag;
             iFinal = iFinal <= ctrl.lhis.length ? iFinal : ctrl.lhis.length;
             var cLine = 0;
 
             doc.setFontSize(9);
-            for (iInci=iInicial; iInci<iFinal; iInci++,cLine++) {
+            for (iInci = iInicial; iInci < iFinal; iInci++ , cLine++) {
                 var left = 20;
-                var top = 40 + lsep*cLine;
+                var top = 40 + lsep * cLine;
                 doc.setTextColor(0, 0, 0);
                 doc.text(left, top, ctrl.lhis[iInci].date);         // La Fecha
 
-                doc.setTextColor(0xC1, 0x02, 0x2C);
+                doc.setTextColor(0x4A, 0x77, 0x29);
                 doc.text(left + 32, top, ctrl.lhis[iInci].idhw);      // El Item
 
-                doc.setTextColor(0xC1, 0x02, 0x2C);
-                doc.text(left+55, top, ctrl.lhis[iInci].desc);      // La Incidencias
+                doc.setTextColor(0x4A, 0x77, 0x29);
+                doc.text(left + 55, top, ctrl.lhis[iInci].desc);      // La Incidencias
             }
 
             /** El Pie ... */
@@ -205,26 +220,48 @@ angular.module("Uv5kiman")
             doc.setTextColor(0, 0, 0);      // Negro
             doc.text(10, topPie, now.toLocaleString());
             doc.text(80, topPie, $lserv.translate('HCT_MSG_05')/*'DF-Nucleo. 2016. All rights reserved. '*/);
-            doc.text(190, topPie, $lserv.translate('HCT_MSG_06')/*'Pag '*/ + (pg+1));
+            doc.text(190, topPie, $lserv.translate('HCT_MSG_06')/*'Pag '*/ + (pg + 1));
 
             /** Pagina Siguiente */
-            if (pg < (nPages-1))
+            if (pg < (nPages - 1))
                 doc.addPage();
         }
 
         // Salvar el Documento...
         doc.save('uv5ki-man-hist-' + now.toLocaleString() + '.pdf');
-    }
+    };
+
+    /** Salva el Informe de Historicos a EXCEL (csv) */
+    ctrl.toExcel = function () {
+    /** Filtro Aplicado */
+        var strData = "Applied Filter\n";
+        strData += ("From;" + ctrl.ls.LogFilter().dtDesde.toLocaleString() + ";To;" + ctrl.ls.LogFilter().dtHasta.toLocaleString() + "\n");
+        strData += ("Group;" + ctrl.textoGrpSel() + ";Item;" + ctrl.ls.LogFilter().Mat + "\n");
+        strData += ("Codes;" + ctrl.textoInciSel() + "\n");
+        strData += ("Content;" + ctrl.textoTexto() + "\n");
+        strData += "\n";
+    /** Tabla */
+        strData += "Date;Item;Description;Ack\n";
+        ctrl.lhis.forEach(function (inci, index) {
+            strData += (inci.date + ";" + inci.idhw + ";" + inci.desc + ";" + inci.acknw + "-" + inci.user + "\n");
+        });
+
+        var now = new Date();
+        var myLink = document.createElement('a');
+        myLink.download = 'uv5ki-man-hist-' + now.toLocaleString() + '.csv';
+        myLink.href = "data:application/csv," + escape(strData);
+        myLink.click();
+    };
 
     /** Borrado del Historico */
     ctrl.clearhis = function () {
         // TODO. Leer la Fecha / Hora introducida.
         ctrl.lhis = [];
-    }
+    };
 
     ctrl.filmat = function (id) {
         ctrl.ls.LogFilter().Mat = id;
-    }
+    };
 
     /** */
     // OLD
@@ -241,6 +278,22 @@ angular.module("Uv5kiman")
         mat: []
     };
 
+    function StatsFilterNormalize(filter) {
+        var now = moment().add(1, 'days').toDate();
+
+        filter.desde = moment(filter.desde).startOf('day').toDate();
+        filter.hasta = moment(filter.hasta).endOf('day').toDate();
+        if (filter.desde > now ||
+            filter.hasta > now) {
+            alertify.alert($lserv.translate('Error en la Seleccion'), $lserv.translate('La fecha inicial o la fecha final está en el futuro!'));
+            return false;
+        }
+        else if (filter.desde > filter.hasta) {
+            alertify.alert($lserv.translate('Error en la Seleccion'), $lserv.translate('La fecha inicial es mayor que la fecha Final!'));
+            return false;
+        }
+        return true;
+    }
     /** Obtiene el Historico del Servidor */
     ctrl.getEstadistica = function () {
         /** Preparamos el filtro para Estadistica */
@@ -254,24 +307,29 @@ angular.module("Uv5kiman")
             elementos: elemento==undefined ? [] : [elemento]
         };
         console.log(filtro);
-        $serv.db_esta_get(filtro).then(function (response) {
-            //ctrl.lhis = response.data.lista;
-            console.log(response.data);
-            prepare_lest(response.data);
+        /** Normalizar el filtro. */
+        ctrl.clearest();
+        if (StatsFilterNormalize(filtro) == true) {
+            $serv.db_esta_get(filtro).then(function (response) {
+                //ctrl.lhis = response.data.lista;
+                console.log(response.data);
+                prepare_lest(response.data);
+                alertify.success($lserv.translate("Operacion realizada..."));
+            }, function (response) {
+                console.log(response);
+                alertify.success($lserv.translate("Error en la peticion"));
+            });
         }
-        , function (response) {
-            console.log(response);
-        });
     }
     /** */
     ctrl.OnEstTpMatChange = function () {
         fest_prepare(true);
-    }
+    };
 
     /** */
     ctrl.clearest = function () {
         ctrl.est.lest = [];
-    }
+    };
 
     /** */
     ctrl.toPDFest = function () {
@@ -293,10 +351,10 @@ angular.module("Uv5kiman")
         doc.text(30, 50, $lserv.translate("Elementos Considerados"));
         doc.setTextColor(0, 0, 0);      // Negro
         doc.text(30, 70, $lserv.translate("Valores Calculados"));
-        doc.text(90, 40, sprintf($lserv.translate("Desde %1$s hasta %2$s"), 
-            ctrl.ls.StsFilter().dtDesde.toLocaleDateString(), 
+        doc.text(90, 40, sprintf($lserv.translate("Desde %1$s hasta %2$s"),
+            ctrl.ls.StsFilter().dtDesde.toLocaleDateString(),
             ctrl.ls.StsFilter().dtHasta.toLocaleDateString()));
-        doc.text(90, 50, sprintf("%1$s: %2$s", 
+        doc.text(90, 50, sprintf("%1$s: %2$s",
             // (ctrl.ls.StsFilter().tpMat == "1" ? $lserv.translate("Operadores") : $lserv.translate("Pasarelas")),
             getTipoMat(ctrl.ls.StsFilter().tpMat),
             ctrl.ls.StsFilter().Mat));
@@ -320,7 +378,7 @@ angular.module("Uv5kiman")
 
         // Salvar el Documento...
         doc.save('uv5ki-man-est-' + now.toLocaleString() + '.pdf');
-    }
+    };
 
 
     /** Funciones Internas.. */
@@ -453,47 +511,47 @@ angular.module("Uv5kiman")
     /** */
     function prepare_lest(data) {
         ctrl.est.lest = [
-                {
-                    texto: $lserv.translate("Elementos Considerados"),
-                    valor: data.res.NumeroElementos
-                },
-                {
-                    texto: $lserv.translate("Total Horas Consideradas"),
-                    valor: data.res.HorasTotales
-                },
-                {
-                    texto: $lserv.translate("Total Horas en Operacion"),
-                    valor: data.res.HorasOperativas
-                },
-                {
-                    texto: $lserv.translate("Numero de Fallos"),
-                    valor: data.res.NumeroDeFallos
-                },
-                {
-                    texto: $lserv.translate("Numero de Activaciones"),
-                    valor: data.res.NumeroDeActivaciones
-                },
-                {
-                    texto: $lserv.translate("Fallos por Unidad Considerada"),
-                    valor: data.res.TasaFallosUnidades.toFixed(2)
-                },
-                {
-                    texto: $lserv.translate("Fallos por Año"),
-                    valor: data.res.TasaFallosAnno.toFixed(2)
-                },
-                {
-                    texto: $lserv.translate("MTBF (Horas)"),
-                    valor: data.res.MTBF.toFixed(2)
-                },
-                {
-                    texto: $lserv.translate("MUT (Horas)"),
-                    valor: data.res.MUT.toFixed(2)
-                },
-                {
-                    texto: $lserv.translate("Disponibilidad (%)"),
-                    valor: data.res.Disponibilidad.toFixed(2)
-                },
-        ]
+            {
+                texto: $lserv.translate("Elementos Considerados"),
+                valor: data.res.NumeroElementos
+            },
+            {
+                texto: $lserv.translate("Total Horas Consideradas"),
+                valor: data.res.HorasTotales
+            },
+            {
+                texto: $lserv.translate("Total Horas en Operacion"),
+                valor: data.res.HorasOperativas
+            },
+            {
+                texto: $lserv.translate("Numero de Fallos"),
+                valor: data.res.NumeroDeFallos
+            },
+            {
+                texto: $lserv.translate("Numero de Activaciones"),
+                valor: data.res.NumeroDeActivaciones
+            },
+            {
+                texto: $lserv.translate("Fallos por Unidad Considerada"),
+                valor: data.res.TasaFallosUnidades.toFixed(2)
+            },
+            {
+                texto: $lserv.translate("Fallos por Año"),
+                valor: data.res.TasaFallosAnno.toFixed(2)
+            },
+            {
+                texto: $lserv.translate("MTBF (Horas)"),
+                valor: data.res.MTBF.toFixed(2)
+            },
+            {
+                texto: $lserv.translate("MUT (Horas)"),
+                valor: data.res.MUT.toFixed(2)
+            },
+            {
+                texto: $lserv.translate("Disponibilidad (%)"),
+                valor: data.res.Disponibilidad.toFixed(2)
+            }
+        ];
     }
 
     /** */
@@ -513,8 +571,8 @@ angular.module("Uv5kiman")
         $serv.db_ope_get().then(function (response) {
             console.log(response.data);
             ctrl.pict = response.data.lista;
-        }
-        , function (response) {
+        },
+            function (response) {
             console.log(response);
         });        
     }

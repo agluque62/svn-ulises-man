@@ -173,39 +173,45 @@ namespace U5kManServer
 
         }
         /// <summary>
-        /// 
+        /// Debe venir con el SMP Global Adquirido...
         /// </summary>
         public void FromMasterToSlave()
         {
+#if _STATS_INTERNAL_LOCK_
             lock (_locker)
+#endif
             {
                 DeactivateAll();
             }
         }
         /// <summary>
-        /// 
+        /// Debe venir con el SMP Global Adquirido...
         /// </summary>
         /// <param name="name"></param>
         public void AddOperador(string name)
         {
+#if _STATS_INTERNAL_LOCK_
             lock (_locker)
+#endif
             {
                 AddElemento(U5kEstadisticaTiposElementos.Cwp, name);
             }
         }
         /// <summary>
-        /// 
+        /// Debe venir con el SMP Global Adquirido...
         /// </summary>
         /// <param name="name"></param>
         public void AddPasarela(string name)
         {
+#if _STATS_INTERNAL_LOCK_
             lock (_locker)
+#endif
             {
                 AddElemento(U5kEstadisticaTiposElementos.Gateway, name);
             }
         }
         /// <summary>
-        /// 
+        /// Debe venir con el SMP Global Adquirido...
         /// </summary>
         /// <param name="name"></param>
         /// <param name="tipo"></param>
@@ -213,7 +219,9 @@ namespace U5kManServer
         {
             if (tipo == 2 || tipo == 3 || tipo == 5)
             {
+#if _STATS_INTERNAL_LOCK_
                 lock (_locker)
+#endif
                 {
                     AddElemento(tipo == 2 ? U5kEstadisticaTiposElementos.ExtRadio :
                         tipo == 3 ? U5kEstadisticaTiposElementos.ExtPhone : U5kEstadisticaTiposElementos.Recorder, name);
@@ -222,11 +230,13 @@ namespace U5kManServer
         }
 
         /// <summary>
-        /// 
+        /// Debe venir con el SMP Global NO Adquirido...
         /// </summary>
         public void Start()
         {
+#if _STATS_INTERNAL_LOCK_
             lock (_locker)
+#endif
             {
                 _timer.Start();
                 _timer_reg.Start();
@@ -234,18 +244,27 @@ namespace U5kManServer
         }
 
         /// <summary>
-        /// 
+        /// Debe venir con el SMP Global NO Adquirido...
         /// </summary>
         public void Stop()
         {
+#if _STATS_INTERNAL_LOCK_
             lock (_locker)
+#endif
             {
                 _timer_reg.Stop();
                 _timer.Stop();
 
                 if (U5kManService._Master == true)
                 {
+#if _STATS_INTERNAL_LOCK_    
                     DeactivateAll();
+#else
+                    GlobalServices.GetWriteAccess(data =>
+                    {
+                        DeactivateAll();
+                    });
+#endif
                     /** Para grabar los ultimos eventos.. */
                     Timer_Reg_Elapsed(null, null);
                 }
@@ -267,7 +286,9 @@ namespace U5kManServer
         {
             if (U5kManService._Master == true)
             {
+#if _STATS_INTERNAL_LOCK_
                 lock (_locker)
+#endif
                 {
                     U5kEstadisticaContador TOpe = Find(U5kEstadisticaTiposElementos.Cwp, nope);
                     if (TOpe != null )
@@ -285,7 +306,9 @@ namespace U5kManServer
         {
             if (U5kManService._Master == true)
             {
+#if _STATS_INTERNAL_LOCK_
                 lock (_locker)
+#endif
                 {
                     U5kEstadisticaContador TGw = Find(U5kEstadisticaTiposElementos.Gateway, npas);
                     if (TGw != null)
@@ -302,7 +325,9 @@ namespace U5kManServer
         {
             if (U5kManService._Master == true)
             {
+#if _STATS_INTERNAL_LOCK_
                 lock (_locker)
+#endif
                 {
                     U5kEstadisticaContador contador = _Contadores.Find(
                         (cnt => (cnt.TipoElemento == U5kEstadisticaTiposElementos.ExtRadio ||
@@ -331,6 +356,9 @@ namespace U5kManServer
             double na = (double)parNa(SqlFiltroActivaciones(desde, hasta, tipo, Elementos));
             double to = (double)parTo(SqlFiltroTiempoOperativo(desde, hasta, tipo, Elementos));
 
+            /** Evita resultados no coherentes en BDT corruptas, normalmente por manipulacion del reloj. */
+            to = to >= (th * nu) ? th * nu : to;
+
             U5kEstadisticaResultado res = new U5kEstadisticaResultado()
             {
                 NumeroElementos = (UInt32)nu,
@@ -338,13 +366,13 @@ namespace U5kManServer
                 HorasOperativas = (UInt32)to,
                 NumeroDeFallos = (UInt32)nf,
                 NumeroDeActivaciones = (UInt32)na,
-
                 TasaFallosUnidades = nu == 0 ? 0 : (nf / nu),               // * 100,
                 TasaFallosAnno = th == 0 ? 0 : ((nf * (365 * 24)) / (th)),  // * 100,
                 MTBF = nf == 0 ? th * nu : (th * nu) / nf,
                 MUT = na == 0 ? to : (to) / na,
                 Disponibilidad = th == 0 || nu == 0 ? 0 : (to / (th * nu)) * 100
             };
+            //NormalizeRes(res);
             return res;
         }
         /// <summary>
@@ -366,10 +394,16 @@ namespace U5kManServer
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             U5kGenericos.TraceCurrentThread(this.GetType().Name + " TimerElapsed");
+#if _STATS_INTERNAL_LOCK_
             lock (_locker)
+#endif
             {
                 if (U5kManService._Master == true)
                 {
+#if !_STATS_INTERNAL_LOCK_
+                    GlobalServices.GetWriteAccess(data => 
+                    {
+#endif
                     DateTime now = DateTime.Now;
                     TimeSpan time_add = now - _last_inc;
                     TimeSpan time2reg = now - _last_reg;
@@ -393,7 +427,10 @@ namespace U5kManServer
 
                     /** 201808. Se generaban cada 10 min, en vez de cada 10 seg. */
                     //GenerateActivityEvents();
-                }
+#if !_STATS_INTERNAL_LOCK_
+                });
+#endif
+                }            
                 IamAlive1.Tick("Estadisticas-T1", () =>
                 {
                     IamAlive1.Message("Estadisticas-T1. Is Alive.");
@@ -411,8 +448,14 @@ namespace U5kManServer
 
             int nreg = 0;
             int maxreg = sender == null ? 1000 : 10;
+#if _STATS_INTERNAL_LOCK_
             lock (_locker_reg)
+#endif
             {
+#if !_STATS_INTERNAL_LOCK_
+                GlobalServices.GetWriteAccess(data =>
+                {
+#endif
                 while (_registros.Count > 0 && nreg < maxreg)
                 {
                     U5kEstadisticaContador contador = _registros.Dequeue();
@@ -435,15 +478,23 @@ namespace U5kManServer
 #endif
                     nreg++;
                 }
-                
+
+#if _STATS_INTERNAL_LOCK_
                 /** 201808. Se generaban cada 10 min, en vez de cada 10 seg. */
                 if (U5kManService._Master == true)
                     GenerateActivityEvents();
-
+#endif
                 IamAlive2.Tick("Estadisticas-T2", () =>
                 {
                     IamAlive2.Message("Estadisticas-T2. Is Alive.");
                 });
+#if !_STATS_INTERNAL_LOCK_
+            });
+                if (U5kManService._Master == true)
+                {
+                    GenerateActivityEvents();
+                }
+#endif
             }
         }
 
@@ -516,9 +567,7 @@ namespace U5kManServer
                     {
                         EventoExterno(e.sip_user ?? e.Id, e.EstadoGeneral != std.NoInfo);
                     });
-
                 }));
-
                 cntForGenerateActivityEvents = Properties.u5kManServer.Default.StatisticsActivityMonitoringTime;
             }
         }
@@ -550,7 +599,9 @@ namespace U5kManServer
         /// <param name="contador"></param>
         private void RegistraContador(U5kEstadisticaContador contador)
         {
+#if _STATS_INTERNAL_LOCK_
             lock (_locker_reg)
+#endif
             {
                 _registros.Enqueue(contador.Clone());
             }
@@ -594,7 +645,7 @@ namespace U5kManServer
             return 1050;
 #else
             TimeSpan intervalo = hasta - desde;
-            return (UInt32)(intervalo.TotalHours);
+            return (UInt32)Math.Round(intervalo.TotalHours);
 #endif
         }
 
@@ -774,11 +825,18 @@ namespace U5kManServer
             return "";
         }
 
+        private void NormalizeRes(U5kEstadisticaResultado res)
+        {
+            res.Disponibilidad = res.Disponibilidad > 100 ? 100 : res.Disponibilidad;
+            res.Disponibilidad = res.Disponibilidad < 0 ? 0 : res.Disponibilidad;
+        }
         /// <summary>
         /// 
-        /// </summary>
+        /// </summary>            
+#if _STATS_INTERNAL_LOCK_
         private Object _locker = new Object();
         private Object _locker_reg = new Object();
+#endif
         private DateTime _last_inc, _last_reg;
 #if DEBUG1
         private TimeSpan _time2reg = new TimeSpan(0, 1, 0);

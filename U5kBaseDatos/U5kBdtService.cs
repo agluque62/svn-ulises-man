@@ -644,6 +644,58 @@ namespace U5kBaseDatos
         /// <summary>
         /// 
         /// </summary>
+        //public List<U5kIncidenciaDescr> ListaDeIncidencias(System.Collections.Specialized.StringCollection filtro)
+        //{
+        //    List<U5kIncidenciaDescr> _lst = new List<U5kIncidenciaDescr>();
+
+        //    string strsql = _idioma.Name.StartsWith("en") ? "select * from incidencias_ingles" :
+        //        _idioma.Name.StartsWith("fr") ? "select * from incidencias_frances" : "select * from incidencias";
+
+        //    DataSet dsInci = GetDataSet(strsql);
+        //    DataTable incis = dsInci.Tables[0];
+
+        //    int nInci = -1;
+        //    int alarma = 0;
+        //    foreach (System.Data.DataRow inci in incis.Rows)
+        //    {
+        //        try
+        //        {
+        //            if (inci.IsNull("IdIncidencia"))
+        //            {
+        //                _logger.Error("Lista de Incidencias. Error. Registro de Incidencia NULO");
+        //                continue;
+        //            }
+
+        //            nInci = inci.IsNull("IdIncidencia") ? -1 :
+        //                incis.Columns["IdIncidencia"].DataType.Name == "UInt32" ? (int)inci.Field<uint>("IdIncidencia") :
+        //                inci.Field<int>("IdIncidencia");
+
+        //            var fInci = inci.IsNull("Incidencia") ? "ERROR Incidencia " + nInci.ToString() : inci.Field<string>("Incidencia");
+        //            var strf = inci.IsNull("Descripcion") ? "ERROR Descripcion " + nInci.ToString() : inci.Field<string>("Descripcion");
+
+        //            alarma = inci.IsNull("generaerror") ? 0 :
+        //                incis.Columns["generaerror"].DataType.Name == "Boolean" ? (inci.Field<bool>("generaerror") ? 1 : 0) :
+        //                inci.Field<int>("generaerror");
+
+        //            if (filtro == null || filtro.Count == 0 || filtro.Contains(nInci.ToString()) == false)
+        //            {
+        //                _lst.Add(new U5kIncidenciaDescr
+        //                {
+        //                    id = nInci,
+        //                    desc = fInci,
+        //                    alarm = alarma == 0 ? false : true,
+        //                    strformat = strf
+        //                });
+        //            }
+        //        }
+        //        catch (Exception x)
+        //        {
+        //            _logger.Error(x, String.Format("ListaDeIncidencias. Excepcion en Incidencia {0}", nInci));
+        //        }
+        //    }
+        //    return _lst;
+        //}
+
         public List<U5kIncidenciaDescr> ListaDeIncidencias(System.Collections.Specialized.StringCollection filtro)
         {
             List<U5kIncidenciaDescr> _lst = new List<U5kIncidenciaDescr>();
@@ -655,7 +707,7 @@ namespace U5kBaseDatos
             DataTable incis = dsInci.Tables[0];
 
             int nInci = -1;
-            int alarma = 0;
+            //int alarma = 0;
             foreach (System.Data.DataRow inci in incis.Rows)
             {
                 try
@@ -671,11 +723,15 @@ namespace U5kBaseDatos
                         inci.Field<int>("IdIncidencia");
 
                     var fInci = inci.IsNull("Incidencia") ? "ERROR Incidencia " + nInci.ToString() : inci.Field<string>("Incidencia");
-                    var strf = inci.IsNull("Descripcion") ? "ERROR Descripcion " + nInci.ToString() : inci.Field<string>("Descripcion");
+                    var strf = inci.IsNull("Descripcion") ? /*"ERROR Descripcion " + nInci.ToString()*/fInci : inci.Field<string>("Descripcion");
 
-                    alarma = inci.IsNull("generaerror") ? 0 :
+                    var alarma = inci.IsNull("generaerror") ? 0 :
                         incis.Columns["generaerror"].DataType.Name == "Boolean" ? (inci.Field<bool>("generaerror") ? 1 : 0) :
                         inci.Field<int>("generaerror");
+
+                    var nTrep = inci.IsNull("trep") ? 0 :
+                        incis.Columns["trep"].DataType.Name == "UInt32" ? (int)inci.Field<uint>("trep") :
+                        inci.Field<int>("trep");
 
                     if (filtro == null || filtro.Count == 0 || filtro.Contains(nInci.ToString()) == false)
                     {
@@ -684,7 +740,8 @@ namespace U5kBaseDatos
                             id = nInci,
                             desc = fInci,
                             alarm = alarma == 0 ? false : true,
-                            strformat = strf
+                            strformat = strf,
+                            Trep = nTrep
                         });
                     }
                 }
@@ -748,21 +805,30 @@ namespace U5kBaseDatos
         /// 
         /// </summary>
         /// <param name="dias"></param>
-        public void SupervisaTablaIncidencia(int dias)
+        public long SupervisaTablaIncidencia(int dias)
         {
+            long afectados = 0;
             try
             {
                 lock (_lock)
                 {
                     string fecha = String.Format("{0:yyyy-MM-dd}", DateTime.Now - new TimeSpan(dias, 0, 0, 0));
-                    string sqlDel = String.Format("DELETE FROM historicoincidencias WHERE FechaHora < \"{0}\"", fecha);
-                    SqlExecute(sqlDel);
+                    //string sqlDel = String.Format("DELETE FROM historicoincidencias WHERE FechaHora < \"{0}\"", fecha);
+                    string sqlDel = String.Format("DELETE FROM historicoincidencias WHERE FechaHora < \"{0}\" ORDER BY FechaHora ASC LIMIT 10000;", fecha);
+
+                    long borrados = 0;
+                    while ((borrados=SqlExecute(sqlDel)) > 0)
+                    {
+                        afectados += borrados;
+                        System.Threading.Tasks.Task.Delay(100).Wait();
+                    }
                 }
             }
             catch (Exception /*x*/)
             {
                 throw /*x*/;
             }
+            return afectados;
         }
 
         /// <summary>
@@ -1503,6 +1569,8 @@ namespace U5kBaseDatos
         public string desc { get; set; }
         public string strformat { get; set; }
         public bool alarm { get; set; }
+        /** 20190305. */
+        public int Trep { get; set; }
     }
 
     [Serializable()]
@@ -1755,7 +1823,7 @@ namespace U5kBaseDatos
                 }
             }
         }
-        static string FindFile(string[] paths, string nameoffile)
+        static string FindFile(string[] paths, string nameoffile, string fileVersion = "")
         {
             nfiles = 0;
             foreach (string path in paths)
@@ -1764,7 +1832,21 @@ namespace U5kBaseDatos
                 {
                     nfiles++;
                     if (file.EndsWith(nameoffile))
-                        return file;
+                    {
+                        if (fileVersion != "")
+                        {
+                            var versionInfo = FileVersionInfo.GetVersionInfo(file);
+                            string version = versionInfo.ProductVersion;
+                            if (version.StartsWith(fileVersion))
+                            {
+                                return file;
+                            }
+                        }
+                        else
+                        {
+                            return file;
+                        }
+                    }
                 }
             }
             return string.Empty;
@@ -1780,7 +1862,7 @@ namespace U5kBaseDatos
             public String What { get; set; }
             public bool IsError { get; set; }
         }
-        public static List<BackupInciItem> Backup(string host, string bdt, string user, string pwd, int days2con=7)
+        public static List<BackupInciItem> Backup(string host, string bdt, string user, string pwd, string fileVersion="", int days2con=7)
         {
             var InciItems = new List<BackupInciItem>();
             try
@@ -1790,7 +1872,7 @@ namespace U5kBaseDatos
                 /** Busco el fichero de backup.... */
                 string sqldumpfile = FindFile( new string [] {
                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                    Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) }, "mysqldump.exe");
+                    Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) }, "mysqldump.exe", fileVersion);
                 if (sqldumpfile != String.Empty)
                 {
                     ProcessStartInfo psi = new ProcessStartInfo();
@@ -1838,6 +1920,82 @@ namespace U5kBaseDatos
                         InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Backup de Base de Datos completado.", IsError = false });
                     }
 //                    LogManager.GetCurrentClassLogger().Warn("Backup de Base de Datos. {0} {1}", error ? "Error en Ejecucion" : "Ejecutado", error ? strerror : "");
+                    File.WriteAllText("mysql-err.txt", strerror);
+                }
+                else
+                {
+                    // LogManager.GetCurrentClassLogger().Error("Error en Backup de Base de Datos. No se encuentra MYSQLDUMP.EXE");
+                    InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Error en Backup de Base de Datos. No se encuentra MYSQLDUMP.EXE", IsError = true });
+                }
+            }
+            catch (Exception x)
+            {
+                // LogManager.GetCurrentClassLogger().Error(x, "U5kiDbHelper.Backup Exception");
+                InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "U5kiDbHelper.Backup Exception: " + x.Message, IsError = true });
+            }
+            return InciItems;
+        }
+        public static List<BackupInciItem> NewBackup(string host, string bdt, string user, string pwd, string fileVersion = "", int days2con = 7)
+        {
+            var InciItems = new List<BackupInciItem>();
+            try
+            {
+                InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Iniciando Backup de Base de Datos", IsError = false });
+                /** Busco el fichero de backup.... */
+                string sqldumpfile = FindFile(new string[] {
+                    Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                    Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) }, "mysqldump.exe", fileVersion);
+                if (sqldumpfile != String.Empty)
+                {
+                    string dumpCmd = string.Format("\"{3}\" -u{0} -p{1} -h{2} --database new_cd40 new_cd40_trans",
+                        user, pwd, host, sqldumpfile);
+                    string cmd = "cmd.exe";
+                    string fileout = String.Format("{0:yyyyMMddHHmm}-{1}-bkp.sql", DateTime.Now, bdt);
+                    string Arguments = "/c " + dumpCmd + " > " + fileout;
+
+                    ProcessStartInfo psi = new ProcessStartInfo()
+                    {
+                        FileName = cmd,
+                        RedirectStandardInput = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        StandardOutputEncoding = Encoding.UTF8,
+                        Arguments = Arguments,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    Process process = Process.Start(psi);
+
+                    string output = process.StandardOutput.ReadToEnd();
+                    string strerror = process.StandardError.ReadToEnd();
+
+                    bool error = true;
+                    if (!strerror.Contains("Got error:") && !strerror.Contains("no-beep"))
+                    {
+                        error = false;
+
+                        /** Limpio los mas antiguos */
+#if DEBUG
+                        DateTime lastTime = DateTime.Now.AddMinutes(-days2con);
+#else
+                        DateTime lastTime = DateTime.Today.AddDays(-days2con);        // TODO Poner Configurable...
+#endif
+                        string[] files2delete = Directory.GetFiles(".", "*-bkp.sql").Where(f => (new FileInfo(f)).LastWriteTime < lastTime).ToArray();
+                        foreach (string file in files2delete)
+                        {
+                            InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Eliminado backup antiguo: " + file, IsError = false });
+                            File.Delete(file);
+                        }
+                    }
+                    if (error)
+                    {
+                        InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Error en Ejecucion de Backup: " + strerror, IsError = true });
+                    }
+                    else
+                    {
+                        InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Backup de Base de Datos completado.", IsError = false });
+                    }
+                    //                    LogManager.GetCurrentClassLogger().Warn("Backup de Base de Datos. {0} {1}", error ? "Error en Ejecucion" : "Ejecutado", error ? strerror : "");
                     File.WriteAllText("mysql-err.txt", strerror);
                 }
                 else

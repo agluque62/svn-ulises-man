@@ -11,249 +11,99 @@ using System.Xml;
 using System.Xml.Serialization;
 using System.Management;
 
+// using NLog;
+using Newtonsoft.Json;
+
 namespace Utilities
 {
-    public class NICEventMonitor : IDisposable
+    public class NicEventMonitor : IDisposable
     {
         /// <summary>
-        /// 
+        /// Log this class
         /// </summary>
-        public enum LanStatus { Unknown=0, Up=1, Down=2 }
+        // private static Logger _Logger = LogManager.GetCurrentClassLogger();
         /// <summary>
         /// 
         /// </summary>
-        public enum TeamType { Marvell, Intel, Unknown }
+        public enum LanStatus { Unknown = 0, Up = 1, Down = 2 }
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        //public enum TeamType { Marvell, Intel, Unknown }
         /// <summary>
         /// 
         /// </summary>
-        public event Action<int> StatusChanged;
-        public event Action<string> MessageError;
-#if OLD
-        /// <summary>
-        /// 
-        /// </summary>
-        public LanStatus Lan1Status { get; set; }
-        public LanStatus Lan2Status { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Lan1Device { get; set; }
-        public string Lan2Device { get; set; }
-#else
-        public class NICItem : IEquatable<NICItem>
-        {
-            public int Index { get; set; }
-            public string DeviceId { get; set; }
-            public LanStatus Status { get; set; }
-            public bool Equals(NICItem other)
-            {
-                return other.DeviceId == DeviceId;
-            }
-        }
-        public List<NICItem> NICList = new List<NICItem>();
+        public event Action<int, LanStatus> StatusChanged = null;            // Lan 0/1, Estado LanStatus
+        public event Action<String, Exception> MessageError = null;
+
         /// <summary>
         /// 
         /// </summary>
         public class NicEventMonitorConfig
         {
+            /// <summary>
+            /// Log this class
+            /// </summary>
             public string TeamingType { get; set; }
             public string WindowsLog { get; set; }
             public string EventSource { get; set; }
-            public int UpEventId { get; set; }
-            public int DownEventId { get; set; }
+            public int [] UpEventId { get; set; }
+            public int [] DownEventId { get; set; }
+            public int PropertyIndex { get; set; }
 
-            public NicEventMonitorConfig() 
+            public NicEventMonitorConfig()
             {
                 TeamingType = "Intel";
                 WindowsLog = "System";
                 EventSource = "iANSMiniport";
-                UpEventId = 15;
-                DownEventId = 11;
-            }
-            public NicEventMonitorConfig(string xml_string) : this()
-            {
-                XmlSerializer deserializer = new XmlSerializer(typeof(NicEventMonitorConfig));
-                using (TextReader reader = new StringReader(xml_string))
-                {
-                    try
-                    {
-                        object obj = deserializer.Deserialize(reader);
-                        TeamingType = ((NicEventMonitorConfig)obj).TeamingType;
-                        WindowsLog = ((NicEventMonitorConfig)obj).WindowsLog;
-                        EventSource = ((NicEventMonitorConfig)obj).EventSource;
-                        UpEventId = ((NicEventMonitorConfig)obj).UpEventId;
-                        DownEventId = ((NicEventMonitorConfig)obj).DownEventId;
-                    }
-                    catch (Exception x)
-                    {
-                        throw new Exception(String.Format("NicEventMonitorConfig Exception {0}", x.Message));
-                    }
-                }
-            }
-            public string Serialize()
-            {
-                XmlSerializer serializer = new XmlSerializer(typeof(NicEventMonitorConfig));
-                using (TextWriter writer = new StringWriter())
-                {
-                    serializer.Serialize(writer, this);
-                    return writer.ToString();
-                } 
+                UpEventId = new int[] { 15 };
+                DownEventId = new int[] { 11 };
+                PropertyIndex = 1;
             }
         }
-
-#endif
-
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="lan1dev"></param>
-        /// <param name="lan2dev"></param>
-        public NICEventMonitor(string nicservice, bool fileInsteadLog, string logName = "System", string lan1dev = "Unkown", string lan2dev = "Unkown") 
+        /// <param name="cfg"></param>
+        public NicEventMonitor(NicEventMonitorConfig cfg,
+            Action<int, LanStatus> change,
+            Action<String, Exception> message,
+            string filepath = "")
         {
             try
             {
-                NicService = nicservice;
-                FileInsteadLog = fileInsteadLog;
-                LogName = logName;
-#if OLD
-                Lan1Status = LanStatus.Unknown;
-                Lan2Status = LanStatus.Unknown;
-                Lan1Device = lan1dev;
-                Lan2Device = lan2dev;
-#endif
-                UpEventId = 123;
-                DownEventId = 83;
-                LogEntriesGet();
-                SearchForPhysicalDevices();
-                InitialStatusGet();
+                StatusChanged = change;
+                MessageError = message;
+                Cfg = cfg;
+                FilePath = filepath;
+                Init();
             }
             catch (Exception x)
             {
-                throw new Exception(String.Format("NICEventMonitor-1 Exception {0}", x.Message));
+                RaiseMessageError(x);
             }
+            Cfg = cfg;
+            FilePath = filepath;
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="teaming"></param>
-        public NICEventMonitor(string teaming, string logger, string service, int evDown, int evUp)
+
+        public NicEventMonitor(string jconfig,
+            Action<int, LanStatus> change,
+            Action<String, Exception> message,
+            string filepath = "")
         {
             try
             {
-                Team = teaming == "Marvell" ? TeamType.Marvell :
-                    teaming == "Intel" ? TeamType.Intel : TeamType.Unknown;
-
-                NicService = service;
-                UpEventId = evUp;
-                DownEventId = evDown;
-
-                LogName = logger;
-                FileInsteadLog = false;
-
-                if (Team != TeamType.Unknown)
-                {
-#if DEBUG1
-                    Stopwatch sw = new Stopwatch();
-                    sw.Start();
-#endif
-                    LogEntriesGet();
-#if DEBUG1
-                    LogManager.GetCurrentClassLogger().Fatal(String.Format("LogEntries. {0} ms, {1} ticks. {2} s.",
-                        sw.ElapsedMilliseconds, sw.ElapsedTicks, (float)((float)sw.ElapsedTicks / (float)Stopwatch.Frequency)));
-#endif
-                    SearchForPhysicalDevices();
-#if DEBUG1
-                    LogManager.GetCurrentClassLogger().Fatal(String.Format("SearchForPhysicalDevices. {0} ms, {1} ticks. {2} s.",
-                        sw.ElapsedMilliseconds, sw.ElapsedTicks, (float)((float)sw.ElapsedTicks / (float)Stopwatch.Frequency)));
-#endif
-                    InitialStatusGet();
-#if DEBUG1
-                    LogManager.GetCurrentClassLogger().Fatal(String.Format("InitialStatusGet. {0} ms, {1} ticks. {2} s.",
-                        sw.ElapsedMilliseconds, sw.ElapsedTicks, (float)((float)sw.ElapsedTicks / (float)Stopwatch.Frequency)));
-#endif
-
-                    //watcher = new EventLogWatcher(new EventLogQuery(LogName, FileInsteadLog ? PathType.FilePath : PathType.LogName));
-                    //watcher.EventRecordWritten += new EventHandler<EventRecordWrittenEventArgs>(watcher_EventRecordWritten);
-                }
-
-#if _OLD_
-                if (teaming == "Marvell")
-                {
-                    Team = TeamType.Marvell;
-                    LogName = "System";
-
-                    FileInsteadLog = false;
-
-                    NicService = "yukonw7";             // TODO. En config...
-                    UpEventId = 123;
-                    DownEventId = 83;
-
-                    LogEntriesGet();
-                    SearchForPhysicalDevices();
-                }
-                else if (teaming == "Intel")
-                {
-                    Team = TeamType.Intel;
-                    LogName = "System";
-
-                    FileInsteadLog = false;
-
-                    NicService = "e1rexpress";
-                    UpEventId = 32;
-                    DownEventId = 27;
-
-                    LogEntriesGet();
-                    SearchForPhysicalDevices();
-                }
-                else
-                {
-                    Team = TeamType.Unknown;
-                    NicService = "UNKNOWN";
-                    FileInsteadLog = false;
-                    LogName = "System";
-
-                    UpEventId = 123;
-                    DownEventId = 83;
-                    return;
-                }
-                watcher = new EventLogWatcher(new EventLogQuery(LogName, FileInsteadLog ? PathType.FilePath : PathType.LogName));
-                watcher.EventRecordWritten += new EventHandler<EventRecordWrittenEventArgs>(watcher_EventRecordWritten);
-#endif
+                StatusChanged = change;
+                MessageError = message;
+                Cfg = JsonConvert.DeserializeObject<NicEventMonitorConfig>(jconfig);
+                FilePath = filepath;
+                Init();
             }
             catch (Exception x)
             {
-                throw new Exception(String.Format("NICEventMonitor-2 Exception {0}", x.Message));
+                RaiseMessageError(x);
             }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="cfg"></param>
-        public NICEventMonitor(NicEventMonitorConfig cfg) :
-            this(cfg.TeamingType, cfg.WindowsLog, cfg.EventSource, cfg.DownEventId, cfg.UpEventId)
-        {
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void Start()
-        {
-            try
-            {
-                if ( watcher==null )
-                {
-                    watcher = new EventLogWatcher(new EventLogQuery(LogName, FileInsteadLog ? PathType.FilePath : PathType.LogName));
-                    watcher.EventRecordWritten += new EventHandler<EventRecordWrittenEventArgs>(watcher_EventRecordWritten);
-                    watcher.Enabled = true;
-                }
-            }
-            catch (Exception x)
-            {
-                RaiseMessageError(x.Message);
-            }
-
         }
 
         /// <summary>
@@ -263,181 +113,67 @@ namespace Utilities
         {
             try
             {
-                if (watcher != null && watcher.Enabled == true)
-                {
-                    watcher.EventRecordWritten -= new EventHandler<EventRecordWrittenEventArgs>(watcher_EventRecordWritten);
-                    watcher = null;
-                    watcher.Enabled = false;
-#if OLD
-                    Lan1Status = Lan1Status == LanStatus.Unknown ? LanStatus.Unknown : LanStatus.Down;
-                    Lan2Status = Lan2Status == LanStatus.Unknown ? LanStatus.Unknown : LanStatus.Down;
-#endif
-                }
+                watcher.Enabled = false;
+                watcher.Dispose();
                 NICList.Clear();
             }
             catch (Exception x)
             {
-                RaiseMessageError(x.Message);
+                RaiseMessageError(x);
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="lan">0: LAN1, 1: LAN2</param>
-        /// <param name="status"></param>
-        public void EventSimulate(int lan, bool status) 
+        public bool GetState(Action<string, LanStatus> cb)
         {
+            if(NICList.Count > 0)
+            {
+                NICList.ForEach((nic) =>
+                {
+                    cb(nic.DeviceId, nic.Status);
+                });
+                return true;
+            }
+            return false;
+        }
+
+        public static void SimulateSystemWriteEvent(string source, string idLan, int codeevent)
+        {
+#if DEBUG
+
             try
             {
-#if OLD
-                using (EventLog eventLog = new EventLog(LogName))
+                using (EventLog eventLog = new EventLog("System", Environment.MachineName, source))
                 {
-                    eventLog.Source = "EventSimulate";
-
-                    eventLog.WriteEntry(String.Format("Log message {0} example", lan == 0 ? Lan1Device : Lan2Device),
-                        EventLogEntryType.Information,
-                        status == false ? DownEventId : UpEventId, 1);
-
-                    eventLog.Close();
-                }
-#else
-                if (lan < NICList.Count)
-                {
-                    using (EventLog eventLog = new EventLog(LogName))
+                    EventInstance eventInstance = new EventInstance(codeevent, 1, EventLogEntryType.Information);
+                    object[] prop = new object[] 
                     {
-                        eventLog.Source = "EventSimulate";
-                        eventLog.WriteEntry(String.Format("Log message {0} example", NICList[lan].DeviceId),
-                            EventLogEntryType.Information,
-                            status == false ? DownEventId : UpEventId, 1);
-
-                        eventLog.Close();
-                    }
-                }
-#endif
-            }
-            catch (Exception x)
-            {
-                RaiseMessageError(x.Message);
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        protected void watcher_EventRecordWritten(object sender, EventRecordWrittenEventArgs e)
-        {
-            if (e.EventRecord.Id == UpEventId)
-            {
-#if OLD
-                if (e.EventRecord.ToXml().Contains(Lan1Device) == true)
-                {
-                    Lan1Status = LanStatus.Up;
-                    RaiseStatusChanged(0);
-                }
-                else if (e.EventRecord.ToXml().Contains(Lan2Device) == true)
-                {
-                    Lan2Status = LanStatus.Up;
-                    RaiseStatusChanged(1);
-                }
-                else
-                {
-                    RaiseMessageError(e.EventRecord.ToXml());
-                }
-#elif OLD_1
-                for (int lan = 0; lan<NICList.Count; lan++)
-                {
-                    if (e.EventRecord.ToXml().Contains(NICList[lan].DeviceId) == true)
-                    {
-                        NICList[lan].Status = LanStatus.Up;
-                        RaiseStatusChanged(lan);
-                        break;
-                    }
-                }
-#else
-                string idLan = e.EventRecord.Properties[0].Value.ToString();
-                NICItem lan = NICList.Where(nic => nic.DeviceId == idLan).FirstOrDefault();
-                lan.Status = LanStatus.Up;
-                RaiseStatusChanged(lan.Index);
-
-#endif
-                RaiseMessageError(String.Format("UpEventRecord: {0}", e.EventRecord.ToXml()));
-            }
-            else if (e.EventRecord.Id == DownEventId)
-            {
-#if OLD
-                if (e.EventRecord.ToXml().Contains(Lan1Device) == true)
-                {
-                    Lan1Status = LanStatus.Down;
-                    RaiseStatusChanged(0);
-                }
-                else if (e.EventRecord.ToXml().Contains(Lan2Device) == true)
-                {
-                    Lan2Status = LanStatus.Down;
-                    RaiseStatusChanged(0);
-                }
-                else
-                {
-                    RaiseMessageError(e.EventRecord.ToXml());
-                }
-#elif OLD_1
-                for (int lan = 0; lan < NICList.Count; lan++)
-                {
-                    if (e.EventRecord.ToXml().Contains(NICList[lan].DeviceId) == true)
-                    {
-                        NICList[lan].Status = LanStatus.Down;
-                        RaiseStatusChanged(lan);
-                        break;
-                    }
-                }
-#else
-                string idLan = e.EventRecord.Properties[0].Value.ToString();
-                NICItem lan = NICList.Where(nic => nic.DeviceId == idLan).FirstOrDefault();
-                lan.Status = LanStatus.Down;
-                RaiseStatusChanged(lan.Index);
-#endif
-                RaiseMessageError(String.Format("DownEventRecord: {0}", e.EventRecord.ToXml()));
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void ScanForDevices()
-        {
-            try
-            {
-                ManagementObjectSearcher mos = null;
-                mos = new ManagementObjectSearcher(@"SELECT * FROM   Win32_NetworkAdapter WHERE  Manufacturer != 'Microsoft'");
-                IList<ManagementObject> managementObjectList = mos.Get()
-                                                                  .Cast<ManagementObject>()
-                                                                  .OrderBy(p => Convert.ToUInt32(p.Properties["Index"].Value))
-                                                                  .ToList();
-                foreach (ManagementObject mo in managementObjectList)
-                {
-                    Console.Clear();
-                    foreach (PropertyData pd in mo.Properties)
-                    {
-                        Console.WriteLine(pd.Name + ": " + (pd.Value ?? "N/A"));
-                    }
-                    Console.ReadKey(true);
+                        idLan, idLan
+                    };
+                    eventLog.WriteEvent(eventInstance, prop);
                 }
             }
             catch (Exception x)
             {
-                RaiseMessageError(x.Message);
+                Debug.WriteLine("Excepcion: " + x.Message);
+                
             }
+#endif
         }
-
         /// <summary>
         /// 
         /// </summary>
-        /// <returns></returns>
-        public string Info()
+        protected void Init()
         {
-            return String.Format("LogName: {0}, NicService: {1}, UpEventId: {2}, DownEventId: {3}", LogName, NicService, UpEventId, DownEventId);
+            LogEntriesGet();
+            SearchForPhysicalDevices();
+            InitialStatusGet();
+            if (FilePath == "")
+            {
+                EventLogQuery logquery = FilePath == "" ? new EventLogQuery(Cfg.WindowsLog, PathType.LogName) : new EventLogQuery(FilePath, PathType.FilePath);
+                watcher = new EventLogWatcher(logquery);
+                watcher.EventRecordWritten += new EventHandler<EventRecordWrittenEventArgs>(watcher_EventRecordWritten);
+                watcher.Enabled = true;
+            }
         }
 
         /// <summary>
@@ -447,58 +183,30 @@ namespace Utilities
         {
             try
             {
-#if OLD_1
-                ManagementObjectSearcher mos = null;
-                mos = new ManagementObjectSearcher(@"SELECT * FROM   Win32_NetworkAdapter WHERE  Manufacturer != 'Microsoft'");
-                IList<ManagementObject> managementObjectList = mos.Get()
-                                                                  .Cast<ManagementObject>()
-                                                                  .Where(p => (p.Properties["ServiceName"].Value != null && p.Properties["ServiceName"].Value.ToString().ToLower() == NicService.ToLower()))
-                                                                  .OrderBy(p => Convert.ToUInt32(p.Properties["Index"].Value))
-                                                                  .ToList();
-                
-                LogManager.GetCurrentClassLogger().Info("SearchForPhysicalDevices {0}", managementObjectList.Count);
-
-                int nLan = 0;
-                foreach (ManagementObject mo in managementObjectList)
-                {
-                    string LanDevice = mo.Properties["MACAddress"].Value.ToString().Replace(":","");
-#if OLD
-                    Lan1Device = nLan == 0 ? LanDevice : Lan1Device;
-                    Lan1Status = nLan == 0 ? LanStatus.Down : Lan1Status;
-
-                    Lan2Device = nLan == 1 ? LanDevice : Lan2Device;
-                    Lan2Status = nLan == 1 ? LanStatus.Down : Lan2Status;
-                    LogManager.GetCurrentClassLogger().Info("SearchForPhysicalDevices. Device {0}: {1}", nLan, LanDevice);
-#else
-                    NICList.Add(new NICItem() { DeviceId = LanDevice, Status = LanStatus.Down });
-#endif
-                    nLan++;
-                }
-#else
-                int Index = 0;
                 NICList.Clear();
                 foreach (EventRecord evento in _LogEntries)
                 {
                     if (evento.Properties.Count > 0)
                     {
-                        string idDevice = Team == TeamType.Marvell ? evento.Properties[0].Value.ToString() :
-                        Team == TeamType.Intel ? evento.Properties[1].Value.ToString() : "";
-#if DEBUG
+                        string idDevice = evento.Properties.Count > Cfg.PropertyIndex ? evento.Properties[Cfg.PropertyIndex].Value.ToString() : "Unknow";
+#if DEBUG1
                         if (NICList.Contains(new NICItem() { DeviceId = idDevice }) == false)
 #else
                         if (NICList.Count < 2 && NICList.Contains(new NICItem() { DeviceId = idDevice }) == false)
 #endif
                         {
-                            NICList.Add(new NICItem() { DeviceId = idDevice, Status = LanStatus.Down, Index = Index++ });
+                            NICList.Add(new NICItem() { DeviceId = idDevice, Status = LanStatus.Down/*, Index = Index++*/ });
                         }
                     }
                 }
+
+                int Index = 0;
                 NICList = NICList.OrderBy(lan => lan.DeviceId).ToList();
-#endif
+                NICList.ForEach(i => { i.Index = Index++; });
             }
             catch (Exception x)
             {
-                RaiseMessageError(x.Message);
+                RaiseMessageError(x);
             }
         }
 
@@ -512,7 +220,7 @@ namespace Utilities
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(xml);
             XmlNode node = doc.DocumentElement.SelectSingleNode(".EventData");
-            return node != null ? node.InnerText : "Not Found";
+            return node != null ? node.InnerText : "No encontrado";
         }
 
         /// <summary>
@@ -523,61 +231,26 @@ namespace Utilities
             try
             {
                 /** Leer la lista de eventos */
-#if OLD_1
-                EventLogQuery logquery = new EventLogQuery(LogName, FileInsteadLog ? PathType.FilePath : PathType.LogName);
-
-                List<EventRecord> Entries = new List<EventRecord>();
-                EventLogReader elr = new EventLogReader(logquery);
-                EventRecord entry;
-                while ((entry = elr.ReadEvent()) != null)
-                {
-                    if (entry.Id == DownEventId || entry.Id == UpEventId)
-                        Entries.Add(entry);
-                }
-#endif
-#if OLD
-                /** Separarlos */
-                List<EventRecord> last_lan1_ev_down = Entries.Where(e => DownEventId == (e.Id) && e.ToXml().Contains(Lan1Device)).OrderByDescending(e => e.TimeCreated).ToList();
-                List<EventRecord> last_lan2_ev_down = Entries.Where(e => DownEventId == (e.Id) && e.ToXml().Contains(Lan2Device)).OrderByDescending(e => e.TimeCreated).ToList();
-                List<EventRecord> last_lan1_ev_up = Entries.Where(e => UpEventId == (e.Id) && e.ToXml().Contains(Lan1Device)).OrderByDescending(e => e.TimeCreated).ToList();
-                List<EventRecord> last_lan2_ev_up = Entries.Where(e => UpEventId == (e.Id) && e.ToXml().Contains(Lan2Device)).OrderByDescending(e => e.TimeCreated).ToList();
-
-                long last_lan1_down = last_lan1_ev_down.Count == 0 ? DateTime.MinValue.Ticks : last_lan1_ev_down[0].TimeCreated.Value.Ticks;
-                long last_lan2_down = last_lan2_ev_down.Count == 0 ? DateTime.MinValue.Ticks : last_lan2_ev_down[0].TimeCreated.Value.Ticks;
-                long last_lan1_up = last_lan1_ev_up.Count == 0 ? DateTime.MinValue.Ticks : last_lan1_ev_up[0].TimeCreated.Value.Ticks;
-                long last_lan2_up = last_lan2_ev_up.Count == 0 ? DateTime.MinValue.Ticks : last_lan2_ev_up[0].TimeCreated.Value.Ticks;
-
-                Lan1Status = last_lan1_up > last_lan1_down ? LanStatus.Up : LanStatus.Down;
-                Lan2Status = last_lan2_up > last_lan2_down ? LanStatus.Up : LanStatus.Down; 
-#elif OLD_1
                 for (int lan = 0; lan < NICList.Count; lan++)
                 {
                     string LanDevice = NICList[lan].DeviceId;
-                    List<EventRecord> last_lan_ev_down = Entries.Where(e => DownEventId == (e.Id) && e.ToXml().Contains(LanDevice)).OrderByDescending(e => e.TimeCreated).ToList();
-                    List<EventRecord> last_lan_ev_up = Entries.Where(e => UpEventId == (e.Id) && e.ToXml().Contains(LanDevice)).OrderByDescending(e => e.TimeCreated).ToList();
+
+                    //List<EventRecord> last_lan_ev_down = _LogEntries.Where(e => Cfg.DownEventId == (e.Id) && e.ToXml().Contains(LanDevice)).OrderByDescending(e => e.TimeCreated).ToList();
+                    //List<EventRecord> last_lan_ev_up = _LogEntries.Where(e => Cfg.UpEventId == (e.Id) && e.ToXml().Contains(LanDevice)).OrderByDescending(e => e.TimeCreated).ToList();
+
+                    List<EventRecord> last_lan_ev_down = _LogEntries.Where(e => Cfg.DownEventId.Contains(e.Id) && e.ToXml().Contains(LanDevice)).OrderByDescending(e => e.TimeCreated).ToList();
+                    List<EventRecord> last_lan_ev_up = _LogEntries.Where(e => Cfg.UpEventId.Contains(e.Id) && e.ToXml().Contains(LanDevice)).OrderByDescending(e => e.TimeCreated).ToList();
 
                     long last_lan_down = last_lan_ev_down.Count == 0 ? DateTime.MinValue.Ticks : last_lan_ev_down[0].TimeCreated.Value.Ticks;
                     long last_lan_up = last_lan_ev_up.Count == 0 ? DateTime.MinValue.Ticks : last_lan_ev_up[0].TimeCreated.Value.Ticks;
 
                     NICList[lan].Status = last_lan_up > last_lan_down ? LanStatus.Up : LanStatus.Down;
+                    RaiseStatusChanged(lan);
                 }
-#else
-                for (int lan = 0; lan < NICList.Count; lan++)
-                {
-                    string LanDevice = NICList[lan].DeviceId;
-                    List<EventRecord> last_lan_ev_down = _LogEntries.Where(e => DownEventId == (e.Id) && e.ToXml().Contains(LanDevice)).OrderByDescending(e => e.TimeCreated).ToList();
-                    List<EventRecord> last_lan_ev_up = _LogEntries.Where(e => UpEventId == (e.Id) && e.ToXml().Contains(LanDevice)).OrderByDescending(e => e.TimeCreated).ToList();
-
-                    long last_lan_down = last_lan_ev_down.Count == 0 ? DateTime.MinValue.Ticks : last_lan_ev_down[0].TimeCreated.Value.Ticks;
-                    long last_lan_up = last_lan_ev_up.Count == 0 ? DateTime.MinValue.Ticks : last_lan_ev_up[0].TimeCreated.Value.Ticks;
-
-                    NICList[lan].Status = last_lan_up > last_lan_down ? LanStatus.Up : LanStatus.Down;
-                }
-#endif
             }
             catch (Exception x)
             {
-                RaiseMessageError(x.Message);
+                RaiseMessageError(x);
             }
         }
 
@@ -586,56 +259,97 @@ namespace Utilities
         /// </summary>
         protected void LogEntriesGet()
         {
-            string evtQuery = String.Format("*[System[(Provider/@Name=\"{0}\") and ((EventID={1}) or (EventID={2}) )]]", NicService, DownEventId, UpEventId);
-#if DEBUG
-            //string base_path = System.AppDomain.CurrentDomain.BaseDirectory;
-            //string strQuery = Team == TeamType.Intel ? "d:\\Datos\\Empresa\\_SharedPrj\\UlisesV5000i-trunk-Unificada\\ulises-man\\seguimientos\\servidores.evtx" :
-            //    "d:\\Datos\\Empresa\\_SharedPrj\\UlisesV5000i-MN\\Incidencias\\20161004. Misma MAC en ambos NIC Marvell\\eventos-basico.evtx";
-            string strQuery = Team == TeamType.Intel ? "..\\..\\..\\DebugData\\servidores.evtx" :
-                "..\\..\\..\\DebugData\\eventos-basico.evtx";
-            EventLogQuery logquery = new EventLogQuery(strQuery, PathType.FilePath, evtQuery);
-#else
-            EventLogQuery logquery = new EventLogQuery(LogName, FileInsteadLog ? PathType.FilePath : PathType.LogName, evtQuery);
-#endif
+            //string evtQuery = String.Format("*[System[(Provider/@Name=\"{0}\") and ((EventID={1}) or (EventID={2}) )]]", Cfg.EventSource, Cfg.DownEventId, Cfg.UpEventId);
+            string evtQuery = String.Format("*[System[(Provider/@Name=\"{0}\")]]", Cfg.EventSource);
+            EventLogQuery logquery = FilePath == "" ? new EventLogQuery(Cfg.WindowsLog, PathType.LogName, evtQuery) :
+                new EventLogQuery(FilePath, PathType.FilePath, evtQuery);
 
             EventLogReader elr = new EventLogReader(logquery);
-            EventRecord entry;
 
+            EventRecord entry;
             _LogEntries.Clear();
             while ((entry = elr.ReadEvent()) != null)
             {
-                //if (entry.ProviderName==NicService && ( entry.Id == DownEventId || entry.Id == UpEventId))
+                if (Cfg.UpEventId.Contains(entry.Id)||Cfg.DownEventId.Contains(entry.Id))
                     _LogEntries.Add(entry);
             }
-            _LogEntries = _LogEntries.OrderByDescending(e => e.TimeCreated).ToList();  
+            _LogEntries = _LogEntries.OrderByDescending(e => e.TimeCreated).ToList();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected void watcher_EventRecordWritten(object sender, EventRecordWrittenEventArgs e)
+        {
+            if (e.EventRecord.LogName == Cfg.WindowsLog && e.EventRecord.ProviderName == Cfg.EventSource &&
+                //( e.EventRecord.Id == Cfg.UpEventId || e.EventRecord.Id == Cfg.DownEventId))
+                (Cfg.UpEventId.Contains(e.EventRecord.Id) || Cfg.DownEventId.Contains(e.EventRecord.Id)))
+            {
+                lock (NICList)
+                {
+                    // 20181106. Configurar los eventos e ID de las LAN's
+                    if (e.EventRecord.Properties.Count > Cfg.PropertyIndex)
+                    {
+                        string idLan = e.EventRecord.Properties[Cfg.PropertyIndex/*0*/].Value.ToString();
+                        NICItem lan = NICList.Where(nic => nic.DeviceId == idLan).FirstOrDefault();
+                        if (lan != null)
+                        {
+                            //lan.Status = e.EventRecord.Id == Cfg.UpEventId ? LanStatus.Up : LanStatus.Down;
+                            lan.Status = Cfg.UpEventId.Contains(e.EventRecord.Id) ? LanStatus.Up : LanStatus.Down;
+                            RaiseStatusChanged(lan.Index);
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="mensaje"></param>
-        private void RaiseMessageError(string mensaje)
+        private void RaiseMessageError(Exception x,
+        [System.Runtime.CompilerServices.CallerMemberName] string memberName = "",
+        [System.Runtime.CompilerServices.CallerFilePath] string sourceFilePath = "",
+        [System.Runtime.CompilerServices.CallerLineNumber] int sourceLineNumber = 0)
         {
-            if (MessageError != null) MessageError(mensaje);            
+            MessageError?.Invoke(String.Format("[{0},{1},{2}]: {3}",
+                    System.IO.Path.GetFileName(sourceFilePath), sourceLineNumber,x.Message, memberName), x);
         }
+
         /// <summary>
         /// 
         /// </summary>
         /// <param name="lan"></param>
         private void RaiseStatusChanged(int lan)
         {
-            if (StatusChanged != null) StatusChanged(lan);
+            if (lan < NICList.Count)
+            {
+#if DEBUG
+                Debug.WriteLine("Notificando evento de LAN.", NICList[lan].DeviceId);
+#endif
+                StatusChanged?.Invoke(lan, NICList[lan].Status);
+            }
         }
+
         /// <summary>
         /// 
         /// </summary>
-        private EventLogWatcher watcher = null;
-        private bool FileInsteadLog { get; set; }
-        private string LogName { get; set; }
-        private string NicService { get; set; }
-        private int UpEventId { get; set; }
-        private int DownEventId { get; set; }
+        private string FilePath { get; set; }
+        private NicEventMonitorConfig Cfg { get; set; }
         private List<EventRecord> _LogEntries = new List<EventRecord>();
-        private TeamType Team { get; set; }
+        private class NICItem : IEquatable<NICItem>
+        {
+            public int Index { get; set; }
+            public string DeviceId { get; set; }
+            public LanStatus Status { get; set; }
+            public bool Equals(NICItem other)
+            {
+                return other.DeviceId == DeviceId;
+            }
+        }
+        private List<NICItem> NICList = new List<NICItem>();
+        private EventLogWatcher watcher = null;
     }
 }

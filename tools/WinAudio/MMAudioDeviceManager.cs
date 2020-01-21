@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 using System.Globalization;
 
@@ -47,9 +48,21 @@ namespace WinAudio  // HMI.CD40.Module.BusinessEntities
         /// </summary>
         public virtual void Init()
         {
+#if DEBUG
+            Debug.Write($"IN: {Process.GetCurrentProcess().PrivateMemorySize64}, ");
+#endif
             DevCol = MMDE.EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active);
+#if DEBUG
+            Debug.WriteLine($"OUT: {Process.GetCurrentProcess().PrivateMemorySize64} bytes");
+#endif
+        }
+        public void Dispose()
+        {
+            foreach (var dev in DevCol)
+                dev.Dispose();
         }
 
+#if _NOUTILIZADOS_
         /// <summary>
         /// 
         /// </summary>
@@ -134,7 +147,7 @@ namespace WinAudio  // HMI.CD40.Module.BusinessEntities
             logger.Error("MMAudioDeviceManager.VolumeSet({0},{1},{2}) Error. No existe el dispositivo", device_id, volume, isDeviceOut);
             return false;
         }
-
+#endif
         /// <summary>
         /// 
         /// </summary>
@@ -150,12 +163,24 @@ namespace WinAudio  // HMI.CD40.Module.BusinessEntities
                 MMDevice dev = DeviceGet(device_id, isDeviceOut ? DataFlow.Render : DataFlow.Capture);
                 if (dev != null)
                 {
+#if _ANTERIOR_
                     if (dev.AudioEndpointVolume.Channels.Count > channel)
                     {
                         dev.AudioEndpointVolume.Channels[channel].VolumeLevel = volume;
                         System.Threading.Thread.Sleep(100);
                         dev.AudioEndpointVolume.Channels[channel].VolumeLevel = volume;
                         return true;
+                    }
+#endif
+                    using (var enpv = dev.AudioEndpointVolume)
+                    {
+                        if (enpv.Channels.Count > channel)
+                        {
+                            enpv.Channels[channel].VolumeLevel = volume;
+                            System.Threading.Thread.Sleep(100);
+                            enpv.Channels[channel].VolumeLevel = volume;
+                            return true;
+                        }
                     }
                 }
             }
@@ -198,14 +223,16 @@ namespace WinAudio  // HMI.CD40.Module.BusinessEntities
     /// </summary>
     class CMedia_MMAudioDeviceManager : MMAudioDeviceManager
     {
+        long MemoryOnInit = 0;
         /// <summary>
         /// 
         /// </summary>
         public override void Init()
         {
             logger.Info("CMedia_MMAudioDeviceManager INIT");
-            readINI();
-            setDevs();
+            ReadINI();
+            SetDevs();
+            MemoryOnInit = Process.GetCurrentProcess().PrivateMemorySize64;
         }
 
         /// <summary>
@@ -217,9 +244,9 @@ namespace WinAudio  // HMI.CD40.Module.BusinessEntities
             {
                 if (--current_sup <= 0)
                 {
-                    setDevs();
+                    SetDevs();
                     current_sup = val_tsup;
-                    logger.Info("CMedia_MMAudioDeviceManager TICK");
+                    logger.Info($"CMedia_MMAudioDeviceManager TICK. MEM-INC = { Process.GetCurrentProcess().PrivateMemorySize64 - MemoryOnInit}");
                 }
             }
         }
@@ -227,7 +254,7 @@ namespace WinAudio  // HMI.CD40.Module.BusinessEntities
         /// <summary>
         /// 
         /// </summary>
-        void setDevs()
+        void SetDevs()
         {
             base.Init();
             foreach (CMediaDevsTableItem dev in devTable.Values)
@@ -235,6 +262,7 @@ namespace WinAudio  // HMI.CD40.Module.BusinessEntities
                 if (!dev.Error)
                     dev.Error = VolumeSet(dev.idDev, dev.channel, dev.def_val, dev.isDevOut) == false;
             }
+            base.Dispose();
         }
 
         /// <summary>
@@ -243,7 +271,7 @@ namespace WinAudio  // HMI.CD40.Module.BusinessEntities
         int current_sup = 0;
         int val_tsup = 0;
         Dictionary<string, CMediaDevsTableItem> devTable = new Dictionary<string, CMediaDevsTableItem>();
-        void readINI()
+        void ReadINI()
         {
             try
             {
@@ -255,8 +283,10 @@ namespace WinAudio  // HMI.CD40.Module.BusinessEntities
                 culture.NumberFormat.NumberDecimalSeparator = ",";
 
                 val_tsup = int.Parse(ini_data["GENERAL"]["TSUP"]);
+#if DEBUG
+                val_tsup = 1;
+#endif
                 current_sup = val_tsup;
-
                 devTable.Add("GrabacionEjecutivo", new CMediaDevsTableItem()
                 {
                     idDev = "CWP USB Device # 01",
@@ -369,6 +399,22 @@ namespace WinAudio  // HMI.CD40.Module.BusinessEntities
                     isDevOut = false,
                     def_val = float.Parse(ini_data["ENTRADAS"]["RetornoAltavozLC"], culture)
                 });
+#if DEBUG
+                    devTable.Add("Testing-1", new CMediaDevsTableItem()
+                    {
+                        idDev = "Realtek",
+                        channel = 0,
+                        isDevOut = true,
+                        def_val = -8
+                    });
+                devTable.Add("Testing-2", new CMediaDevsTableItem()
+                {
+                    idDev = "Realtek",
+                    channel = 1,
+                    isDevOut = true,
+                    def_val = -5
+                });
+#endif
             }
             catch (Exception x)
             {
