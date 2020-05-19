@@ -585,11 +585,16 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
+#if DEBUG1
+                var data = File.ReadAllText(".\\appweb\\simulate\\rddata.json");
+                sb.Append(data);
+#else
                 Services.CentralServicesMonitor.Monitor.GetRadioData((data) =>
                 {
                     var strData = U5kManWebAppData.JSerialize(data);
                     sb.Append(strData);
                 });
+#endif
             }
             else
             {
@@ -611,10 +616,10 @@ namespace U5kManServer.WebAppServer
                 using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
                 {
                     var data = JsonConvert.DeserializeObject(reader.ReadToEnd()) as JObject;
-                    if (JsonHelper.JObjectPropertyExist(data, "id"))
+                    if (JsonHelper.JObjectPropertyExist(data, "id") && JsonHelper.JObjectPropertyExist(data, "command"))
                     {
-                        var idEquipo = (string)data["id"];
-                        Services.CentralServicesMonitor.Monitor.RdUnoMasUnoSelect(idEquipo, (success, msg) =>
+                        // var idEquipo = (string)data["id"];
+                        Services.CentralServicesMonitor.Monitor.RdUnoMasUnoCommand(data, (success, msg) =>
                         {
                             if (success)
                             {
