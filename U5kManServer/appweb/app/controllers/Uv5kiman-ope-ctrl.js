@@ -447,7 +447,7 @@ angular.module("Uv5kiman")
                         selected_site_qidx: session.selected_site_qidx,
                         selected_tx: session.selected_tx,
                         // 20200525
-                        selected_rx: session.resource_selected,
+                        selected_rx: session.selected_resource,
                         fp_unomasuno: session.UnoMasUno,
                         fp_bss_mod: session.selected_BSS_method,
                         fp_tx_mod: session.ftipo == 2 ? (session.selected_tx == "CLX" ? "Climax" : "BTS") : "",
