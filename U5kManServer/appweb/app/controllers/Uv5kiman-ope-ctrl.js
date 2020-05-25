@@ -52,7 +52,7 @@ angular.module("Uv5kiman")
                         tp == frec_tipos.EM ? $lserv.translate("ME") : "ERR";
             var txtPrio = pr == frec_prio.Normal ? $lserv.translate("Normal") :
                 pr == frec_prio.Emergencia ? $lserv.translate("Emergencia") : $lserv.translate("Error");
-            return txtTipo + "/" + txtPrio;
+            return { txtTipo, txtPrio };
         };
         ctrl.colorEstadoSesion = function (std) {
             return std == session_stdcodes.Desconectado ? "bg-warning text-danger" :
@@ -64,7 +64,7 @@ angular.module("Uv5kiman")
                 md == frec_cclimax.Realtivo ? "R" : "?";
         };
         ctrl.enableOnFD = function (tp) {
-            return tp == frec_tipos.FD ? true : false;
+            return { FD: tp == frec_tipos.FD ? true : false, UnoMasUno: true };
         };
         ctrl.showOnTx = function (tp) {
             return (tp == session_types.TX || tp == session_types.RXTX);
@@ -97,7 +97,7 @@ angular.module("Uv5kiman")
             }
             if (item.selected_site == "")
                 return "";
-            return item.selected_site + "/" + item.selected_site_qidx.toString();
+            return StringCut(item.selected_site, 40) + " // " + StringCut(item.selected_rx, 40) + " // " + item.selected_site_qidx.toString();
         };
         ctrl.TxSelected = function (item) {
             switch (item.ftipo) {
@@ -446,6 +446,11 @@ angular.module("Uv5kiman")
                         selected_site: session.selected_site,
                         selected_site_qidx: session.selected_site_qidx,
                         selected_tx: session.selected_tx,
+                        // 20200525
+                        selected_rx: session.resource_selected,
+                        fp_unomasuno: session.UnoMasUno,
+                        fp_bss_mod: session.selected_BSS_method,
+                        fp_tx_mod: session.ftipo == 2 ? (session.selected_tx == "CLX" ? "Climax" : "BTS") : "",
                         ses: new Object()
                     };
                 }
