@@ -238,7 +238,7 @@ namespace U5kManServer
             try
             {
                 snmpAgent.Close();
-                _mib.Dispose();
+                _mib?.Dispose();
                 _mib = null;
                 LogInfo<U5kSnmpSystemAgent>("Agente SNMP. Detenido...");
             }
