@@ -36,6 +36,12 @@ namespace Utilities
                     etiqueta,                
                     watch.ElapsedMilliseconds));
         }
+        public void PrintAndGo(Action<string> cb)
+        {
+            watch.Stop();
+            cb?.Invoke($"{watch.ElapsedMilliseconds,6}");
+            watch.Restart();
+        }
         public void Tick(Action<long, long, long> cb)
         {
             watch.Stop();
