@@ -213,14 +213,17 @@ namespace U5kManServer
 
             Decimal interval = Properties.u5kManServer.Default.SpvInterval;     // Tiempo de Polling,
             Decimal threadTimeout = 2 * interval / 3;                           // Tiempo de proceso individual.
-            Decimal poolTimeout = 3 * interval / 4;                             // Tiempo máximo del Pool de Procesos.
-
+            Decimal poolTimeout = 3 * interval / 4;                             // Tiempo máximo del Pool de Procesos.            
+            
+            // 20200805. Control del Polling a pasarelas.
+            var taskControl = new PollingHelper();
             using (timer = new TaskTimer(TimeSpan.FromMilliseconds((double)interval), this.Cancel))
             {
                 while (IsRunning())
                 {
                     if (U5kManService._Master == true)
                     {
+#if POOL_METHOD_0
                         List<stdGw> localgws = null;        // new List<stdGw>();
                         try
                         {
@@ -248,6 +251,7 @@ namespace U5kManServer
 
                             // Espero que acaben todos los procesos.
                             Task.WaitAll(task.ToArray(), TimeSpan.FromMilliseconds((double)poolTimeout));
+                            tm.StopAndPrint((msg) => LogTrace<GwExplorer>(msg));
                         }
                         catch (Exception x)
                         {
@@ -269,12 +273,58 @@ namespace U5kManServer
                             }
                         }
 
-                        tm.StopAndPrint((msg) => LogTrace<GwExplorer>(msg));
                         /// Copio los datos obtenidos a la tabla...
                         if (localgws != null)
                         {
                             GlobalServices.GetWriteAccess((gdata) => gdata.GWSDIC = localgws.Select(gw => gw).ToDictionary(gw => gw.name, gw => gw));
                         }
+#else
+                        GlobalServices.GetWriteAccess((gdata) =>
+                        {
+                            // limpiar pollingControl con las Pasarelas que puedan desaparecer de la configuracion.
+                            taskControl.DeleteNotPresent(gdata.STDGWS.Select(g => g.name).ToList());
+
+                            // Relleno los datos...
+                            gdata.STDGWS.ForEach(gw =>
+                            {
+                                if (taskControl.IsTaskActive(gw.name) == false)
+                                {
+                                    var newGw = new stdGw(gw);
+                                    var task = Task.Factory.StartNew(() =>
+                                    {
+                                        try
+                                        {
+                                            LogTrace<GwExplorer>($"Exploracion {newGw.name} iniciada.");
+                                            ExploraGw(newGw);
+                                            /// Copio los datos obtenidos a la tabla...
+                                            GlobalServices.GetWriteAccess((gdata1) =>
+                                            {
+                                                if (gdata1.GWSDIC.ContainsKey(newGw.name))
+                                                {
+                                                    gdata1.GWSDIC[newGw.name].CopyFrom(newGw);
+                                                }
+                                            });
+                                        }
+                                        catch (Exception x)
+                                        {
+                                            LogException<GwExplorer>("Supervisando Pasarela " + newGw.name, x);
+                                        }
+                                        finally
+                                        {
+                                            LogTrace<GwExplorer>($"Exploracion de {newGw.name} finalizada.");
+                                        }
+                                    }, TaskCreationOptions.LongRunning);
+                                    taskControl.SetTask(gw.name, task);
+                                }
+                                else
+                                {
+                                    // todo. Algun tipo de supervision si nunca vuelve...
+                                    LogWarn<GwExplorer>($"Exploracion de Pasarela {gw.name} no finalizada en Tiempo ...");
+                                }
+                            });
+                        });
+
+#endif
                     }
                     GoToSleepInTimer();
                 }
@@ -549,7 +599,7 @@ namespace U5kManServer
             pgw.lan2 = bond == 0 ? std.NoInfo : eth1 == 1 ? std.Ok : std.Error;
         }
 
-        #region Threads de Exploracion en Paralelo.
+#region Threads de Exploracion en Paralelo.
 
         /// <summary>
         /// Explora una pasarela logica.
@@ -592,7 +642,7 @@ namespace U5kManServer
             }
         }
 
-        #region Exploracion de GW Unificada
+#region Exploracion de GW Unificada
 
         /// <summary>
         /// 
@@ -883,9 +933,9 @@ namespace U5kManServer
             }
         }
 
-        #endregion //
+#endregion //
 
-        #region GW_STD_V1
+#region GW_STD_V1
         /// <summary>
         /// 
         /// </summary>
@@ -1144,7 +1194,7 @@ namespace U5kManServer
         }
 
 
-        #endregion
+#endregion
 
         /// <summary>
         /// 
@@ -1158,7 +1208,7 @@ namespace U5kManServer
             // String slots = String.Format("{0},[{1}{2}{3}{4}] 
         }
 
-        #endregion
+#endregion
     }   // clase
 
     /** */
