@@ -1852,6 +1852,10 @@ namespace U5kManServer
                                 {
                                     LogTrace<stdGw>($"Pasarela {gw.name}: Error en carga de memoria...");
                                 }
+                                /** 20200810. Historico que marca que se reinician estados por Cambio de Configuracion */
+                                RecordEvent<stdGw>(DateTime.Now, 
+                                    eIncidencias.IGW_ENTRADA, eTiposInci.TEH_TIFX, 
+                                    gw.name, Params(idiomas.strings.GW_NEW_CONFIG));
                             }
                             else 
                             {
