@@ -1012,6 +1012,14 @@ namespace U5kManServer
                                 }
                             });
                         }
+                        else
+                        {
+                            // No se ha Respondido al SIP...
+                        }
+                    }
+                    else
+                    {
+                        // No se ha respondido al PING...
                     }
                 }
                 else
@@ -1177,6 +1185,11 @@ namespace U5kManServer
 
                     if (current.presente == false)
                     {
+                        /** 20200811 Reset de los estados de Módulos */
+                        current.SipMod.Std = std.NoInfo;
+                        current.CfgMod.Std = std.NoInfo;
+                        current.SipMod.Std = std.NoInfo;
+
                         /** Reset Estado GW fisica */
                         GwHelper.SetToOutOfOrder(current);
                     }
