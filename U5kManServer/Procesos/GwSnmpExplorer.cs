@@ -296,12 +296,28 @@ namespace U5kManServer
                                         {
                                             LogTrace<GwExplorer>($"Exploracion {newGw.name} iniciada.");
                                             ExploraGw(newGw);
+#if DEBUG1
+                                            // Para asegurar un tiempo de ejecucion.
+                                            Task.Delay(TimeSpan.FromMilliseconds(500)).Wait();
+#endif
                                             /// Copio los datos obtenidos a la tabla...
                                             GlobalServices.GetWriteAccess((gdata1) =>
                                             {
                                                 if (gdata1.GWSDIC.ContainsKey(newGw.name))
                                                 {
-                                                    gdata1.GWSDIC[newGw.name].CopyFrom(newGw);
+                                                    /** 20200813. Solo actualiza el estado si no se ha cambiado en medio la configuracion */
+                                                    if (gdata1.GWSDIC[newGw.name].Equals(newGw))
+                                                    {
+                                                        gdata1.GWSDIC[newGw.name].CopyFrom(newGw);
+                                                    }
+                                                    else
+                                                    {
+                                                        LogWarn<GwExplorer>($"Exploracion {newGw.name}. Resultado Exploracion ignorado. Cambio de configuracion.");
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    LogWarn<GwExplorer>($"Exploracion {newGw.name}. Resultado Exploracion ignorado.  Pasarela Eliminada");
                                                 }
                                             });
                                         }
@@ -323,6 +339,32 @@ namespace U5kManServer
                                 }
                             });
                         });
+#if DEBUG1
+                        /** Para simular Sectorizaciones con cambios 'problematicos' */
+                        tm.FromCreation(TimeSpan.FromMinutes(1), () =>
+                        {
+                            GlobalServices.GetWriteAccess((gdata) =>
+                            {
+                                //gdata.GWSDIC.Remove("CGW3");
+                                gdata.GWSDIC["CGW1"] = new stdGw(null)
+                                {
+                                    name = "CGW1",
+                                    ip = "192.168.0.51",
+                                    Dual = true,
+                                    gwA = new stdPhGw()
+                                    {
+                                        name = "CGW01-A",
+                                        ip = "192.168.0.50"
+                                    },
+                                    gwB = new stdPhGw()
+                                    {
+                                        name = "CGW01-B",
+                                        ip = "192.168.0.59"
+                                    }
+                                };
+                            });
+                        });
+#endif
 
 #endif
                     }

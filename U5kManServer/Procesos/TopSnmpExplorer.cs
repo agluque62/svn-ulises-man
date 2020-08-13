@@ -308,12 +308,28 @@ namespace U5kManServer
                                             LogTrace<TopSnmpExplorer>($"Exploracion Puesto {newPsto.name} iniciada.");
 
                                             ExploraTop(newPsto);
+#if DEBUG1
+                                            // Para asegurar un tiempo de ejecucion.
+                                            Task.Delay(TimeSpan.FromMilliseconds(500)).Wait();
+#endif
                                             /// Copio los datos obtenidos a la tabla...
                                             GlobalServices.GetWriteAccess((gdata1) =>
                                             {
                                                 if (gdata1.POSDIC.ContainsKey(newPsto.name))
                                                 {
-                                                    gdata1.POSDIC[newPsto.name].CopyFrom(newPsto);
+                                                    /** 20200813. Solo actualiza el estado si no se ha cambiado en medio la configuracion */
+                                                    if (gdata1.POSDIC[newPsto.name].Equals(newPsto))
+                                                    {
+                                                        gdata1.POSDIC[newPsto.name].CopyFrom(newPsto);
+                                                    }
+                                                    else
+                                                    {
+                                                        LogWarn<GwExplorer>($"Exploracion {newPsto.name}. Resultado Exploracion ignorado. El Puesto ha cambiado de Configuracion.");
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    LogWarn<GwExplorer>($"Exploracion {newPsto.name}. Resultado Exploracion ignorado. El puesto ha sido eliminado.");
                                                 }
                                             });
                                         }
@@ -335,6 +351,18 @@ namespace U5kManServer
                                 }
                             });
                         });
+#if DEBUG1
+                        /** Para simular Sectorizaciones con cambios 'problematicos' */
+                        tm.FromCreation(TimeSpan.FromMinutes(1), () =>
+                        {
+                            GlobalServices.GetWriteAccess((gdata) =>
+                            {
+                                //gdata.POSDIC.Remove("PICT01");
+                                gdata.POSDIC["PICT01"] = new stdPos() { name = "PICT01", ip = "127.0.0.1" };
+                            });
+                        });
+#endif
+
 #endif
                     }
                     GoToSleepInTimer();
