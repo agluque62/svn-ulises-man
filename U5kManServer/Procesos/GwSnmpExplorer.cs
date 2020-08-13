@@ -865,6 +865,186 @@ namespace U5kManServer
                 LogException<GwExplorer>(String.Format(" Explorando recurso en {0}: Rec:{1}-{2}", gw.ip, nres, rec.name), x);
             }
         }
+
+        /** 20200813. Version para solo generar un GET */
+        List<Variable> vInAll = new List<Variable>()
+        {
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.1.2.0")),    // 0 => Estado Hw.
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.1.6.0")),    // 1 => Estado LAN1
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.1.7.0")),    // 2 => Estado LAN2
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.1.8.0")),    // 3 => Estado P/R,
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.1.4.0")),    // 4 => Estado FA,
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.1.1.0")),    // 5 => Identificador. Habilita el envio de TRAPS
+                                                                                    // 6 => Slot 0
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.2.1")),   // Tipo. 0: Error, 1: IA4, 2: IQ1
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.3.1")),   // Status,
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.4.1")),   // Canal-0
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.5.1")),   // Canal-1
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.6.1")),   // Canal-2
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.7.1")),   // Canal-3
+                                                                                    // 12 => Slot 1
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.2.2")),   // Tipo. 0: Error, 1: IA4, 2: IQ1
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.3.2")),   // Status,
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.4.2")),   // Canal-0
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.5.2")),   // Canal-1
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.6.2")),   // Canal-2
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.7.2")),   // Canal-3
+                                                                                    // 18 => Slot 2
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.2.3")),   // Tipo. 0: Error, 1: IA4, 2: IQ1
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.3.3")),   // Status,
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.4.3")),   // Canal-0
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.5.3")),   // Canal-1
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.6.3")),   // Canal-2
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.7.3")),   // Canal-3
+                                                                                    // 24 => Slot 3
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.2.4")),   // Tipo. 0: Error, 1: IA4, 2: IQ1
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.3.4")),   // Status,
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.4.4")),   // Canal-0
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.5.4")),   // Canal-1
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.6.4")),   // Canal-2
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.3.2.1.7.4")),   // Canal-3
+                                                                                    // 30 => Recurso 0
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.1")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.1")),  // Status Interfaz.
+                                                                                    // 32 => Recurso 1
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.2")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.2")),  // Status Interfaz.
+                                                                                    // 34 => Recurso 2
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.3")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.3")),  // Status Interfaz.
+                                                                                    // 36 => Recurso 3
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.4")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.4")),  // Status Interfaz.
+                                                                                    // 38 => Recurso 5
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.5")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.5")),  // Status Interfaz.
+                                                                                    // 40 => Recurso 6
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.7")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.7")),  // Status Interfaz.
+                                                                                    // 42 => Recurso 7
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.8")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.8")),  // Status Interfaz.
+                                                                                    // 44 => Recurso 8
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.9")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.9")),  // Status Interfaz.
+                                                                                    // 46 => Recurso 9
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.10")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.10")),  // Status Interfaz.
+                                                                                    // 48 => Recurso 10
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.11")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.11")),  // Status Interfaz.
+                                                                                    // 50 => Recurso 11
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.12")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.12")),  // Status Interfaz.
+                                                                                    // 52 => Recurso 12
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.13")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.13")),  // Status Interfaz.
+                                                                                    // 54 => Recurso 13
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.14")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.14")),  // Status Interfaz.
+                                                                                    // 56 => Recurso 14
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.15")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.15")),  // Status Interfaz.
+                                                                                    // 58 => Recurso 15
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.16")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.16")),  // Status Interfaz.
+        };
+        protected void ExploreEverythingAtOnce(stdPhGw pgw)
+        {
+            IPEndPoint gwep = new IPEndPoint(IPAddress.Parse(pgw.ip), pgw.snmpport);
+            OctetString community = new OctetString("public");
+            SnmpClient snmpc = new SnmpClient();
+
+            IList<Variable> vOut = snmpc.Get(VersionCode.V2, gwep, community, vInAll, pgw.SnmpTimeout, pgw.SnmpReintentos);
+
+            // Análisis de Parámetros Generales.
+            // estadoGeneral. 0: No Inicializado, 1: Ok, 2: Fallo, 3: Aviso.
+            int stdGeneral = snmpc.Integer(vOut[0].Data);
+            // stdLAN1. 0: No Presente, 1: Ok, 2: Error.
+            int stdLan1 = snmpc.Integer(vOut[1].Data);
+            // stdLAN2. 0: No Presente, 1: Ok, 2: Error.
+            int stdLan2 = snmpc.Integer(vOut[2].Data);
+            // stdCpuLocal. 0: No Presente. 1: Principal, 2: Reserva, 3: Arrancando
+            int stdPR = snmpc.Integer(vOut[3].Data);
+            // stdFA. 0: No Presente. 1: Ok, 2: Error
+            int stdFA = snmpc.Integer(vOut[4].Data);
+            pgw.std = stdGeneral == 0 ? std.NoInfo : stdGeneral == 1 ? std.Ok : std.Error;
+
+            int stdLan = (stdLan1 == 1 ? 0x01 : 0x00) | (stdLan2 == 1 ? 0x02 : 0x00);
+            PhGwLanStatusSet(pgw, (0x04 | stdLan));                 // En este tipo de Pasarelas BOND configurado...
+
+            PhGwPrincipalReservaSet(pgw, stdPR == 1 ? 1 : 0);       // Solo se marca PPAL si está en PPAL en cualquier otro caso se marca RSVA
+
+            pgw.stdFA = stdFA == 0 ? std.NoInfo : stdFA == 1 ? std.Ok : stdFA == 2 ? std.Error : std.NoExiste;
+
+            // Análisis de Slots
+            for (int slot = 0; slot<4; slot++)
+            {
+                int ibase = 6 + slot * 6;
+                int stipo = snmpc.Integer(vOut[ibase+0].Data);                            // 0: Error, 1: IA4, 2: IQ1
+                int status = snmpc.Integer(vOut[ibase+1].Data);                           // 0: No presente, 1: Presente
+
+                stipo = status == 0 ? 0 : (stipo == 1 ? 2 : 0);
+
+                int can0 = snmpc.Integer(vOut[ibase + 2].Data);                             // 0: Desconectada. 1: Conectada
+                int can1 = snmpc.Integer(vOut[ibase + 3].Data);                             // 0: Desconectada. 1: Conectada
+                int can2 = snmpc.Integer(vOut[ibase + 4].Data);                             // 0: Desconectada. 1: Conectada
+                int can3 = snmpc.Integer(vOut[ibase + 5].Data);                             // 0: Desconectada. 1: Conectada
+
+                int std = (can0 << 1) | (can1 << 2) | (can2 << 3) | (can3 << 4);
+
+                SlotTypeSet(pgw, slot, pgw.slots[slot], stipo, std);
+                SlotStateSet(pgw, slot, pgw.slots[slot], std);
+            }
+
+            // Análisis de Recursos.
+            for (int nres=0; nres<16; nres++)
+            {
+                int ibase = 30 + nres * 2;
+                int nslot = nres / 4;
+                int ires = nres % 4;
+                stdRec rec = pgw.slots[nslot].rec[ires];
+                int ntipo = snmpc.Integer(vOut[ibase+0].Data);   // 0: RD, 1: LC, 2: BC, 3: BL, 4: AB, 5: R2, 6: N5, 7: QS, 9: NP, 13: PPEM 
+                if (ntipo == 9)
+                {
+                    // 20170630. El código 9 no es no presente sino NO CONFIGURADO
+                    // Reset_ExploraRecurso(gw, nslot, ires);
+                    // rec.presente = false;
+                    rec.tipo_itf = itf.rcNotipo;
+                    rec.tipo_online = trc.rcNotipo;
+                    rec.std_online = std.NoInfo;
+                }
+                else if ((ntipo >= 0 && ntipo < 9) || ntipo == 13)
+                {
+                    int TipoNotificado = ntipo == 0 ? RadioResource_AgentType :
+                        ntipo == 1 ? IntercommResource_AgentType :
+                        (ntipo < 5 || ntipo == 13) ? LegacyPhoneResource_AgentType : ATSPhoneResource_AgentType;
+
+                    SlotRecursoTipoAgenteSet(pgw, rec, TipoNotificado);
+                    /*
+                            rcRadio = 0, 
+                            rcLCE = 1, 
+                            rcPpBC = 2, 
+                            rcPpBL = 3, 
+                            rcPpAB = 4, 
+                            rcAtsR2 = 5, 
+                            rcAtsN5 = 6, 
+                            rcPpEM = 13, 
+                            rcPpEMM = 51, 
+                            rcNotipo = -1 
+                     * */
+                    SlotRecursoTipoInterfazSet(pgw, rec, ntipo);
+
+                    int estado = snmpc.Integer(vOut[ibase+2].Data);   // 0: NP, 1: OK, 2: Fallo, 3: Degradado
+                    SlotRecursoEstadoSet(pgw, rec, estado, (trc)TipoNotificado);
+                }
+                else if (ntipo != 9 && ntipo != -1)
+                {
+                    LogWarn<GwExplorer>(String.Format("Error Explorando Recurso {0}:{1}: Tipo Notificado <{2}> Erroneo.",
+                                pgw.ip, nres, ntipo));
+                }
+            }
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -1174,11 +1354,15 @@ namespace U5kManServer
         {
             try
             {
+#if !_EXPLORE_ALL_AT_ONCE_
                 ExploraGwStdGen_unificada(phgw);
                 for (int slot = 0; slot < 4; slot++)
                 {
                     ExploraSlot_unificada(new KeyValuePair<stdPhGw, int>(phgw, slot));
                 }
+#else
+                ExploreEverythingAtOnce(phgw);
+#endif
                 response(true);
             }
             catch (Exception x)
