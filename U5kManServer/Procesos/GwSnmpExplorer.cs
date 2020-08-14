@@ -915,37 +915,40 @@ namespace U5kManServer
                                                                                     // 36 => Recurso 3
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.4")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.4")),  // Status Interfaz.
-                                                                                    // 38 => Recurso 5
+                                                                                    // 38 => Recurso 4
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.5")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.5")),  // Status Interfaz.
-                                                                                    // 40 => Recurso 6
+                                                                                    // 40 => Recurso 5
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.6")),   // Tipo
+            new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.6")),  // Status Interfaz.
+                                                                                    // 42 => Recurso 6
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.7")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.7")),  // Status Interfaz.
-                                                                                    // 42 => Recurso 7
+                                                                                    // 44 => Recurso 7
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.8")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.8")),  // Status Interfaz.
-                                                                                    // 44 => Recurso 8
+                                                                                    // 46 => Recurso 8
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.9")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.9")),  // Status Interfaz.
-                                                                                    // 46 => Recurso 9
+                                                                                    // 48 => Recurso 9
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.10")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.10")),  // Status Interfaz.
-                                                                                    // 48 => Recurso 10
+                                                                                    // 50 => Recurso 10
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.11")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.11")),  // Status Interfaz.
-                                                                                    // 50 => Recurso 11
+                                                                                    // 52 => Recurso 11
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.12")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.12")),  // Status Interfaz.
-                                                                                    // 52 => Recurso 12
+                                                                                    // 54 => Recurso 12
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.13")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.13")),  // Status Interfaz.
-                                                                                    // 54 => Recurso 13
+                                                                                    // 56 => Recurso 13
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.14")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.14")),  // Status Interfaz.
-                                                                                    // 56 => Recurso 14
+                                                                                    // 58 => Recurso 14
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.15")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.15")),  // Status Interfaz.
-                                                                                    // 58 => Recurso 15
+                                                                                    // 60 => Recurso 15
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.16")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.16")),  // Status Interfaz.
         };
@@ -1035,7 +1038,7 @@ namespace U5kManServer
                      * */
                     SlotRecursoTipoInterfazSet(pgw, rec, ntipo);
 
-                    int estado = snmpc.Integer(vOut[ibase+2].Data);   // 0: NP, 1: OK, 2: Fallo, 3: Degradado
+                    int estado = snmpc.Integer(vOut[ibase+1].Data);   // 0: NP, 1: OK, 2: Fallo, 3: Degradado
                     SlotRecursoEstadoSet(pgw, rec, estado, (trc)TipoNotificado);
                 }
                 else if (ntipo != 9 && ntipo != -1)
@@ -1361,7 +1364,13 @@ namespace U5kManServer
                     ExploraSlot_unificada(new KeyValuePair<stdPhGw, int>(phgw, slot));
                 }
 #else
+#if DEBUG
+                var itm = new TimeMeasurement();
+#endif
                 ExploreEverythingAtOnce(phgw);
+#if DEBUG
+                itm.StopAndPrint((msg) => LogTrace<GwExplorer>(msg));
+#endif
 #endif
                 response(true);
             }
