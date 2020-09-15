@@ -1332,3 +1332,17 @@ a.disabled {
     cursor: default;
     color: gray;
 }
+
+/** Colores para las Frecuencias */
+.freqAvailable {
+/*    background-color: white;*/
+    color: #31708f;
+}
+.freqDegraded {
+    background-color: #ffc266;
+    color: #663d00;
+}
+.freqNotAvailable {
+    background-color: #ff8080;
+    color: #800000;
+}

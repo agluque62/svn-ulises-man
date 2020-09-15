@@ -40,10 +40,15 @@ angular.module("Uv5kiman")
 
         /** Servicios Pagina de Sesiones*/
         //** Version 1 */ 
+        //ctrl.colorEstadoFrecuencia = function (std) {
+        //    return (std == frec_stdcodes.NoDisponible ? "bg-danger text-danger" :
+        //        std == frec_stdcodes.Disponible ? "text-info" :
+        //            std == frec_stdcodes.Degradada ? "bg-warning text-warning" : "text-danger bg-danger");
+        //};
         ctrl.colorEstadoFrecuencia = function (std) {
-            return (std == frec_stdcodes.NoDisponible ? "bg-warning text-danger" :
-                std == frec_stdcodes.Disponible ? "text-info" :
-                    std == frec_stdcodes.Degradada ? "bg-warning text-info" : "text-danger bg-danger");
+            return (std == frec_stdcodes.NoDisponible ? "freqNotAvailable" :
+                std == frec_stdcodes.Disponible ? "freqAvailable" :
+                    std == frec_stdcodes.Degradada ? "freqDegraded" : "text-danger bg-danger");
         };
         ctrl.textTipoPrio = function (tp, pr) {
             var txtTipo = tp == frec_tipos.Normal ? $lserv.translate("Simple") :
