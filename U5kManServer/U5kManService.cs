@@ -1110,8 +1110,9 @@ namespace U5kManServer
         {
             get
             {
+                // 20201008. RM4631. Incluir en el estado global de pasarela el estado de FA.
 #if GW_STD_V1
-                if (CfgMod.Std != std.Ok || SnmpMod.Std != std.Ok || SipMod.Std != std.Ok)
+                if (CfgMod.Std != std.Ok || SnmpMod.Std != std.Ok || SipMod.Std != std.Ok || stdFA != std.Ok)
                     return true;
 #endif
                 foreach (stdSlot slot in slots)
