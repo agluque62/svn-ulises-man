@@ -1312,7 +1312,7 @@ namespace U5kManServer
             try
             {
                 string page = "http://" + phgw.ip + ":8080/test";
-                var timeout = TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.SipOptionsTimeout);
+                var timeout = TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout);
                 HttpHelper.GetSync(page, timeout, (success, message) =>
                  {
                      if (success)
