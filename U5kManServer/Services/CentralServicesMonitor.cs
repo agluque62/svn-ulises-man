@@ -94,7 +94,7 @@ namespace U5kManServer.Services
                     ReleaseDataAccess();
                     return ret;
                 }
-                return "{}";
+                return "[]";
             }
             set => _radioMNDataString = value;
         }
@@ -136,7 +136,7 @@ namespace U5kManServer.Services
                     ReleaseDataAccess();
                     return ret;
                 }
-                return "{}";
+                return "[]";
             }
             set => _hFRadioDataString = value;
         }
@@ -150,7 +150,7 @@ namespace U5kManServer.Services
                     ReleaseDataAccess();
                     return ret;
                 }
-                return "{}";
+                return "[]";
             }
             set => _UnoMasUnoDataString = value;
         }
@@ -548,7 +548,7 @@ namespace U5kManServer.Services
 
                                 string LocalRadioSessionsString = HttpHelper.GetSync(master.ip, master.WebPort, "/rdsessions", Timeout, "[]");
                                 string LocalRadioMNDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/gestormn", Timeout, "[]");
-                                string LocalHFRadioDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/rdhf", Timeout, "{}");
+                                string LocalHFRadioDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/rdhf", Timeout, "[]");
                                 string LocalUnoMasUnoDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/rd11", Timeout, "[]");
 
                                 if (GetDataAccess())
