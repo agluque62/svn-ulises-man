@@ -335,5 +335,9 @@
   "LAN2": "LAN2",
   "Puerto": "Puerto",
 
+  "UV5K-SGM Gestor Cluster": "UV5K-SGM Gestor Cluster",
+  "UV5K-SGM Configuracion": "UV5K-SGM Configuracion",
+  "UV5K-SGM Mantenimiento": "UV5K-SGM Mantenimiento",
+
   "FINAL": "final"
 }

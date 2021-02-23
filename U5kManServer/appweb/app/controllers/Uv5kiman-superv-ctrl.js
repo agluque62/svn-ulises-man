@@ -4,6 +4,7 @@ angular.module("Uv5kiman")
     /** Inicializacion */
     var ctrl = this;    
     ctrl.lserv = $lserv;
+    ctrl.translate = $lserv.translate;
 
     ctrl.std = {};
 

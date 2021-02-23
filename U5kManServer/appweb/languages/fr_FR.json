@@ -348,5 +348,18 @@
   "LAN2": "LAN2",
   "Puerto": "Port",
 
+  "UV5K-SGM Gestor Cluster": "UV5K-SGM Gestor Cluster",
+  "UV5K-SGM Configuracion": "UV5K-SGM Configuracion",
+  "UV5K-SGM Mantenimiento": "UV5K-SGM Mantenimiento",
+
+  "UG5K Nucleo VoIP": "UG5K Nucleo VoIp",
+  "UG5K Modulo Gestor de Configuracion": "UG5K Modulo Gestor de Configuracion",
+  "UG5K Modulo Agente SNMP": "UG5K Modulo Agente SNMP",
+  "UG5K Modulo Gestor de Grabaciones": "UG5K Modulo Gestor de Grabaciones",
+
+  "UV5K-HMI Terminal de Audio": "UV5K-HMI Terminal de Audio",
+  "UV5K-HMI Gestor de Grabaciones ED137": "UV5K-HMI Gestor de Grabaciones ED137",
+  "Hardware de Audio": "Hardware de Audio",
+
   "FINAL": "final"
 }

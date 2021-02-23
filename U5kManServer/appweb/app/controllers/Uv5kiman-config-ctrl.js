@@ -2,6 +2,7 @@ angular.module("Uv5kiman")
 .controller("uv5kiConfigCtrl", function ($scope, $interval, $serv, $lserv) {
     /** Inicializacion */
     var ctrl = this;
+    ctrl.translate = $lserv.translate;
     ctrl.grupo = 0;
 
     /** */

@@ -298,7 +298,7 @@
                         <li class="list-group-item">
                             <ul class="list-group">
                                 <li class="list-group-item" data-ng_repeat="comp in ctrl.versiones[ctrl.versiones_index].Components">
-                                    <button type="button" class="btn btn-default ndf-ver-02" data-toggle="collapse" data-target="#comp-{{$index}}">{{comp.Name + " Ver " + ctrl.versiones[ctrl.versiones_index].Version}}</button>
+                                    <button type="button" class="btn btn-default ndf-ver-02" data-toggle="collapse" data-target="#comp-{{$index}}">{{ ctrl.translate(comp.Name) + " Ver " + ctrl.versiones[ctrl.versiones_index].Version}}</button>
                                     <div id="comp-{{$index}}" class="collapse in">
                                         <ul class="list-group">
                                             <li class="list-group-item  ndf-ver-03" data-ng_repeat="file in comp.Files">

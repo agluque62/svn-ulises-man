@@ -536,7 +536,7 @@
                             <ul class="list-group">
                                 <li class="list-group-item" data-ng_repeat="comp in ctrl.version.Components">
                                     <button type="button" class="btn btn-default ndf-ver-02" data-toggle="collapse" data-target="#comp-{{$index}}">
-                                        {{comp.Id + " Ver " + ctrl.version.Version}}
+                                        {{ctrl.translate(comp.Id) + " Ver " + ctrl.version.Version}}
                                     </button>
                                     <div id="comp-{{$index}}" class="collapse in">
                                         <ul class="list-group">
@@ -579,7 +579,7 @@
                             <ul class="list-group">
                                 <li class="list-group-item" data-ng_repeat="comp in ctrl.ope_version.Components">
                                     <button type="button" class="btn btn-default ndf-ver-02" data-toggle="collapse" data-target="#ocomp-{{$index}}">
-                                        {{comp.Name + " Ver " + ctrl.ope_version.Version}}
+                                        {{ctrl.translate(comp.Name) + " Ver " + ctrl.ope_version.Version}}
                                     </button>
                                     <div id="ocomp-{{$index}}" class="collapse in">
                                         <ul class="list-group">
