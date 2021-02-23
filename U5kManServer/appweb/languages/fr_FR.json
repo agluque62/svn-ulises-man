@@ -49,6 +49,12 @@
   "SPV_GWV_01": "Version software",
   "SPV_GWV_02": "Fermer",
   "Ir a...": "Aller à",
+  "Servicios Centralizados": "Centralized Services",
+  "Elementos con Servicios Centralizados": "Nodeboxes",
+  "Config": "Config",
+  "Radio": "Radio",
+  "Presencia": "Presence",
+  "Tifx": "Tifx",
 
   "HST_TITLE": "Historiques et statistiques",
   "HST_OPC_01": "Gestionnaire des historiques",
@@ -326,8 +332,15 @@
   "Alternativo": "Alternative",
   "No Disponible": "Non Disponible",
   "Recursos": "Ressources",
-  "Abonados": "Abonné",
-  "Abonado": "Abonnés",
+  "Abonados": "Abonnés",
+  "Abonado": "Abonné",
+
+  "Interno Principal": "Main Internal",
+  "Interno Alternativo": "Alternative Internal",
+  "SBC Principal": "Main SBC",
+  "SBC Alternativo": "Alternative SBC",
+  "Desconocido": "Unknow",
+
 
   "El cambio no es posible...": "La commutation n'est pas possible...",
 
@@ -360,6 +373,8 @@
   "UV5K-HMI Terminal de Audio": "UV5K-HMI Terminal de Audio",
   "UV5K-HMI Gestor de Grabaciones ED137": "UV5K-HMI Gestor de Grabaciones ED137",
   "Hardware de Audio": "Hardware de Audio",
+
+  "Cables de Grabacion": "Recording wires",
 
   "FINAL": "final"
 }

@@ -7,6 +7,7 @@ angular.module("Uv5kiman")
 
     /** Para que accedan el HTML a los valores del servicio */
     ctrl.ls = $lserv;
+    ctrl.translate = $lserv.translate;
 
     /** */
     ctrl.itemsPage=20;
@@ -182,7 +183,7 @@ angular.module("Uv5kiman")
             /** Filtro Cabecera */
             doc.setFontSize(8);
             doc.setTextColor(0, 0, 0);
-            doc.text(160, 20, $lserv.translate("Desde:")); doc.text(210, 20, $lserv.translate("Hasta:"));
+            doc.text(160, 20, $lserv.translate('Desde:')); doc.text(210, 20, $lserv.translate("Hasta:"));
             doc.text(160, 24, $lserv.translate("Grupo:")); doc.text(210, 24, $lserv.translate("Elemento:"));
             doc.text(160, 28, $lserv.translate("Incidencias:"));
             doc.text(160, 32, $lserv.translate("Contiene:"));

@@ -2,6 +2,8 @@ angular.module("Uv5kiman")
 .controller("uv5kiTlfCtrl", function ($scope, $interval, $serv, $lserv) {
     /** Inicializacion */
     var ctrl = this;
+    ctrl.translate = $lserv.translate;
+
     //ctrl.pagina = 0;
     ctrl.pagina = function (pagina) {
         var menu = $lserv.Submenu(pagina);

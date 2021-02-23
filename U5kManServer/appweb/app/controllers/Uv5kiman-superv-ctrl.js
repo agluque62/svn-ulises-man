@@ -124,8 +124,8 @@ angular.module("Uv5kiman")
     ctrl.nbx_mixed_info_services = function (item) {
         var info = sprintf(
             "<table class='nbxtb'>" +
-            "<tr><td>Config</td><td class='res'>%1$s</td><td>Radio</td><td class='res'>%2$s</td></tr>" +
-            "<tr><td>Presencia</td><td class='res'>%3$s</td><td>Tifx</td><td class='res'>%4$s</td></tr>" +
+            "<tr><td>" + ctrl.translate('Config') + "</td ><td class='res'>%1$s</td><td>"+ ctrl.translate('Radio') + "</td><td class='res'>%2$s</td></tr > " +
+            "<tr><td>" + ctrl.translate('Presencia') + "</td><td class='res'>%3$s</td><td>" + ctrl.translate('Tifx') + "</td><td class='res'>%4$s</td></tr>" +
             "</table>",
             item.CfgService, item.RadioService, item.PresenceService, item.TifxService);
         return info;

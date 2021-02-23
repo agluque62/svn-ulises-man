@@ -95,17 +95,18 @@
       <div class="text-left">
         <table class="table table-striped table-bordered">
           <tr ng-repeat="opt in ctrl.options.lconf">
-            <td class="text-primary"><label  class="form-control-static">{{opt.id}}</label></td>
+            <td class="text-primary"><label class="form-control-static">{{ctrl.translate(opt.id)}}</label></td>
             <td ng-switch on="opt.tp" >
               <span ng-switch-when="0">
                 <span class="error" ng-show="false" translate>CFG_ETQ_08</span>
                 <input class="form-control input-sm text-success" type="text" ng-model="opt.val" ng-blur="ctrl.autosave()" />
               </span>
               <select ng-switch-when="1" class="form-control input-sm text-success" ng-model="opt.val" ng-blur="vm.autosave()">
-                <option ng-repeat="valor in opt.opt" 
-                  ng-selected="{{$index==opt.val}}" 
-                  value="{{$index}}">{{valor}}
-                </option>
+                  <option ng-repeat="valor in opt.opt"
+                          ng-selected="{{$index==opt.val}}"
+                          value="{{$index}}">
+                      {{ctrl.translate(valor)}}
+                  </option>
               </select>
             </td>
           </tr>

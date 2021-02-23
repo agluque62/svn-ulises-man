@@ -48,6 +48,12 @@
   "SPV_GWV_01": "Software Version",
   "SPV_GWV_02": "Close",
   "Ir a...": "Go to...",
+  "Servicios Centralizados": "Centralized Services",
+  "Elementos con Servicios Centralizados": "Nodeboxes",
+  "Config": "Config",
+  "Radio": "Radio",
+  "Presencia": "Presence",
+  "Tifx": "Tifx",
 
   "HST_TITLE": "Logs and Statistics",
   "HST_OPC_01": "LOG Manager",
@@ -175,13 +181,13 @@
   "Equipos Externos": "External Equipments",
   "Todos": "Alls",
   "Error %1$d": "Error %1$d",
-  "Desde: ": "From: ",
-  "Hasta: ": "To: ",
-  "Grupo: ": "Group: ",
-  "Elemento: ": "Item: ",
-  "Incidencias: ": "Incidences: ",
-  "Contiene: ": "Contains: ",
-  "ULISES-5000 I. INFORME ESTADISTICO": "ULISES-5000 I. STATISTICAL REPORT",
+  "Desde:": "From:",
+  "Hasta:": "To:",
+  "Grupo:": "Group: ",
+  "Elemento:": "Item: ",
+  "Incidencias:": "Incidences: ",
+  "Contiene:": "Contains: ",
+  "ULISES-5000 I. INFORME ESTADISTICO": "ULISES-5000 I. Statistics Report",
   "Periodo Considerado": "Considered period",
   "Elementos Considerados": "Considered Items",
   "Valores Calculados": "Calculated Values",
@@ -322,8 +328,14 @@
   "Alternativo": "Alternative",
   "No Disponible": "Not Available",
   "Recursos": "Resources",
-  "Abonados": "Subscriber",
-  "Abonado": "Subscribers",
+  "Abonados": "Subscribers",
+  "Abonado": "Subscriber",
+
+  "Interno Principal": "Main Internal",
+  "Interno Alternativo": "Alternative Internal",
+  "SBC Principal": "Main SBC",
+  "SBC Alternativo": "Alternative SBC",
+  "Desconocido": "Unknow",
 
   "El cambio no es posible...": "M/S Switching is not possible...",
 
@@ -357,6 +369,8 @@
   "UV5K-HMI Terminal de Audio": "UV5K-HMI Audio Terminal",
   "UV5K-HMI Gestor de Grabaciones ED137": "UV5K-HMI ED137 Recording Manager",
   "Hardware de Audio": "Audio Hardware",
+
+  "Cables de Grabacion": "Recording wires",
 
   "FINAL": "final"
 }

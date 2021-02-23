@@ -1,0 +1,16 @@
+{
+	"res": {
+		"NumeroElementos": 18,
+		"HorasTotales": 23328,
+		"HorasOperativas": 4646,
+		"NumeroDeFallos": 85,
+		"NumeroDeActivaciones": 118,
+		"TasaFallosUnidades": 4.722222222222222,
+		"TasaFallosAnno": 574.5370370370371,
+		"MTBF": 274.4470588235294,
+		"MUT": 39.3728813559322,
+		"Disponibilidad": 19.915980795610424
+	},
+	"IamAlive": {},
+	"ServiceSite": "W10ARTUROGNCC"
+}

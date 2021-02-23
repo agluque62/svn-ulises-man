@@ -1,42 +1,125 @@
 {
-	"version": "1.5.0",
-	"bdt": "03/11/2015",
 	"lconf": [
 		{
-			"id": "Local Item 01",
-			"val": "valor 01",
-			"tp": 0,
-			"opt": ["Option 1", "Option 2", "Option 3"]
-		},{
-			"id": "Local Item 02",
+			"id": "Idioma",
 			"val": "0",
 			"tp": 1,
-			"opt": ["Option 1", "Option 2", "Option 3"]
-		},{
-			"id": "Local Item 03",
-			"val": "Valor 03",
-			"tp": 0,
-			"opt": ["Option 1", "Option 2", "Option 3"]
-		},{
-			"id": "Local Item 04",
-			"val": "Valor 04",
-			"tp": 0,
-			"opt": ["Option 1", "Option 2", "Option 3"]
-		},{
-			"id": "Local Item 05",
-			"val": "Valor 05",
-			"tp": 0,
-			"opt": ["Option 1", "Option 2", "Option 3"]
-		},{
-			"id": "Local Item 06",
+			"opt": [
+				"es",
+				"fr",
+				"en"
+			],
+			"key": "Idioma"
+		},
+		{
+			"id": "Servidor Dual",
 			"val": "1",
 			"tp": 1,
-			"opt": ["Option 1", "Option 2", "Option 3"]
-		},{
-			"id": "Local Item 07",
-			"val": "Valor 07",
-			"tp": 0,
-			"opt": ["Option 1", "Option 2", "Option 3"]
+			"opt": [
+				"False",
+				"True"
+			],
+			"key": "ServidorDual"
+		},
+		{
+			"id": "Patron de Reloj",
+			"val": "1",
+			"tp": 1,
+			"opt": [
+				"False",
+				"True"
+			],
+			"key": "HayReloj"
+		},
+		{
+			"id": "SACTA",
+			"val": "1",
+			"tp": 1,
+			"opt": [
+				"False",
+				"True"
+			],
+			"key": "HaySacta"
+		},
+		{
+			"id": "HF /Altavoz HF",
+			"val": "0",
+			"tp": 1,
+			"opt": [
+				"False",
+				"True"
+			],
+			"key": "HayAltavozHF"
+		},
+		{
+			"id": "Cables de Grabacion",
+			"val": "1",
+			"tp": 1,
+			"opt": [
+				"False",
+				"True"
+			],
+			"key": "OpcOpCableGrabacion"
+		},
+		{
+			"id": "Sonido",
+			"val": "0",
+			"tp": 1,
+			"opt": [
+				"False",
+				"True"
+			],
+			"key": "SonidoAlarmas"
+		},
+		{
+			"id": "Generar Historico",
+			"val": "1",
+			"tp": 1,
+			"opt": [
+				"False",
+				"True"
+			],
+			"key": "GenerarHistorico"
+		},
+		{
+			"id": "Almacenar Eventos PTT / SQH",
+			"val": "0",
+			"tp": 1,
+			"opt": [
+				"False",
+				"True"
+			],
+			"key": "PttAndSqhOnBdt"
+		},
+		{
+			"id": "Dias en Historico",
+			"val": "4",
+			"tp": 1,
+			"opt": [
+				"1 Semana",
+				"2 Semanas",
+				"1 Mes",
+				"3 Meses",
+				"6 Meses",
+				"1 Año"
+			],
+			"key": "DiasEnHistorico"
+		},
+		{
+			"id": "Incidencias sin Reconocer",
+			"val": "2",
+			"tp": 1,
+			"opt": [
+				"8",
+				"16",
+				"32",
+				"64"
+			],
+			"key": "LineasIncidencias"
 		}
-	]
+	],
+	"IamAlive": {},
+	"version": "2.6.0",
+	"bdt": "NONE (2021-02-18 08:39:15)",
+	"ServiceSite": "W10ARTUROGNCC"
 }
