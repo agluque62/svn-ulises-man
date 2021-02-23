@@ -17,6 +17,7 @@ using System.Net.Sockets;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Media;
+using System.Diagnostics;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -3089,6 +3090,7 @@ namespace U5kManServer
             {
                 DateTime EntryTime = DateTime.Now;
                 OccupiedBy = FromString(file, caller, lineNumber);
+                OccupiedByStack = new StackTrace().ToString();
                 try
                 {
                     setData(U5kManService.GlobalData);
@@ -3110,14 +3112,14 @@ namespace U5kManServer
             {
 #if DEBUG
                 NLog.LogManager.GetLogger("sem-hist").
-                    Error("Global Semaphore timeout for {0}. Occupied By {1}",
+                    Error("Global Semaphore timeout for {0}. Occupied By {1}. Stack: {2}",
                     FromString(file, caller, lineNumber),
-                    OccupiedBy);
+                    OccupiedBy, OccupiedByStack);
 #else
                 NLog.LogManager.GetLogger("sem-hist").
-                    Fatal("Global Semaphore timeout for {0}. Occupied By {1}",
+                    Fatal("Global Semaphore timeout for {0}. Occupied By {1}. Stack: {2}",
                     FromString(file, caller, lineNumber),
-                    OccupiedBy);
+                    OccupiedBy, OccupiedByStack);
 #endif
             }
         }
@@ -3185,7 +3187,8 @@ namespace U5kManServer
             return $"[{filename}--{routine}--{line}]";
         }
         protected static string OccupiedBy { get; set; }
+        protected static string OccupiedByStack { get; set; }
     }
 
 #endif
-            }
+}

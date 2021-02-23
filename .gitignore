@@ -344,3 +344,5 @@ healthchecksdb
 /Entorno de Pruebas/APP/logs
 /Entorno de Pruebas/SCV/logs
 /Entorno de Pruebas/TWR/logs
+/U5kManServer/appweb/mongoose-free-6.1.exe
+/U5kManServer/appweb/mongoose.conf

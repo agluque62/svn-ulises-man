@@ -2,6 +2,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Diagnostics;
 
+using System.Threading.Tasks;
+
 using Utilities;
 
 namespace UnitTesting
@@ -63,6 +65,56 @@ namespace UnitTesting
             });
 
             Debug.WriteLine($"{DateTime.Now.ToLongTimeString()}: Test END");
+        }
+        [TestMethod]
+        public void TestExceptionFlow()
+        {
+            try
+            {
+                var tmp = new TestingClass(() =>
+                {
+                    InnerFunction(() =>
+                    {
+                        Debug.WriteLine("Throwing primary exception...");
+                        throw new Exception("Primary Exception.");
+                    });
+                });
+            }
+            catch
+            {
+                StackTrace stack = new StackTrace(true);
+                Debug.WriteLine("Exception Catched: " + stack.ToString());
+            }
+            Task.Delay(TimeSpan.FromSeconds(10)).Wait();
+        }
+
+        void InnerFunction(Action execute)
+        {
+            try
+            {
+                execute();
+            }
+            catch (Exception x)
+            {
+                Debug.WriteLine("Primary Exception cached: ", x.Message);
+                throw x;
+            }
+            finally
+            {
+                Debug.WriteLine("Cierre de Bucle de Gestion de Excepcion.");
+            }
+        }
+
+        class TestingClass
+        {
+            public TestingClass(Action action)
+            {
+                //Task.Run(() =>
+                //{
+                    Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+                    action();
+                //});
+            }
         }
     }
 }

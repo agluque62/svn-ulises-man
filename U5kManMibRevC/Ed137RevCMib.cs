@@ -49,7 +49,7 @@ namespace U5kManMibRevC
         private static ObjectStore Store { get; set; }
         public static ScalarObject SnmpObjectGet(string oid)
         {
-            return Store.GetObject(new ObjectIdentifier(oid));
+            return Store?.GetObject(new ObjectIdentifier(oid));
         }
 
 #if DEBUG

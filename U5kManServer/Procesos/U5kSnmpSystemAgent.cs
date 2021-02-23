@@ -206,6 +206,7 @@ namespace U5kManServer
 #if _ED137_REVB_
                 _mib.Load();
 #else
+                bool errors = false;
                 _mib = new Ed137RevCMib(
                     new AgentDataGet((toma) =>
                     {
@@ -216,15 +217,23 @@ namespace U5kManServer
                     {
                         GlobalServices.GetWriteAccess((data) =>
                         {
-                            toma(data);
+                            try 
+                            { 
+                                toma(data); 
+                            }
+                            catch (Exception x) 
+                            {
+                                LogException<U5kSnmpSystemAgent>("", x);
+                                errors = true; 
+                            }
                         });
                     }), AgentData.OidBase);
                 _mib.StoreTo(SnmpAgent.Store);
                 //_mib = null;
 #endif
                 snmpAgent.Start();
-                LogInfo<U5kSnmpSystemAgent>("Agente SNMP. Arrancado");
-                return true;
+                LogInfo<U5kSnmpSystemAgent>($"Agente SNMP. Arrancado. Errors: {errors}");
+                return errors == false;
             }
             catch (Exception x)
             {
@@ -239,7 +248,7 @@ namespace U5kManServer
         {
             try
             {
-                snmpAgent.Close();
+                snmpAgent?.Close();
                 snmpAgent = null;
 
                 _mib?.Dispose();

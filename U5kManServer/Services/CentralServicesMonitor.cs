@@ -569,7 +569,11 @@ namespace U5kManServer.Services
                                 {
                                     RadioSessionsString = "[]";
                                     RadioMNDataString = "[]";
+#if DEBUG1
+                                    HFRadioDataString = "{}";
+#else
                                     HFRadioDataString = "[]";
+#endif
                                     UnoMasUnoDataString = "[]";
 
                                     TraceMsg(2, "OperationalRadioDataGet. Radio Data Cleared");

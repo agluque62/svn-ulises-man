@@ -96,7 +96,7 @@ namespace U5kManServer.WebAppServer
             try
             {
                 byte[] bData = (new byte[] { (byte)cmd }).Concat(Encoding.ASCII.GetBytes(data)).ToArray();
-                _listener.Send(_ip_grp, bData);
+                _listener?.Send(_ip_grp, bData);
             }
             catch (Exception x)
             {
