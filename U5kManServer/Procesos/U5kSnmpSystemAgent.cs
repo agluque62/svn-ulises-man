@@ -560,9 +560,14 @@ namespace U5kManServer
 
                 case eTopPar.EstadoPtt:                     // String... 'SECT_1 PTT-ON en Sector, SECT_0 PTT-OFF en Sector...
                     {
-                        string[] _str = ((OctetString)data).ToString().Split('_');
-                        if (_str.Length == 2)
-                            RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, eIncidencias.ITO_PTT, 0, pos.name, Params(pos.name, _str[0] == "0" ? "OFF" : "ON", _str[1]));
+                        var datain = ((OctetString)data).ToString();
+                        string[] _str = datain.Split('_');
+                        if (_str.Length > 1)
+                        {
+                            var std = _str[0] == "0" ? "OFF" : "ON";
+                            var sct = _str.Length == 2 ? _str[1] : datain.Substring(2);
+                            RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, eIncidencias.ITO_PTT, 0, pos.name, Params(pos.name, std, sct));
+                        }
                     }
                     break;
 
