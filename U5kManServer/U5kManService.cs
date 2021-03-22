@@ -975,7 +975,10 @@ namespace U5kManServer
         {
             get
             {
-                if (std_cfg != std_online)
+                // 20210322. RM4637....
+                //if (std_cfg != std_online)
+                //    return true;
+                if (std_cfg == std.Ok && std_online != std.Ok)
                     return true;
 
                 foreach (stdRec rc in rec)
