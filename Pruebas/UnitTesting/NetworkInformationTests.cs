@@ -12,6 +12,7 @@ using System.Management;
 using System.Dynamic;
 
 using U5kManMibRevC;
+using Utilities;
 
 namespace UnitTesting
 {
@@ -51,13 +52,13 @@ namespace UnitTesting
             //        {
             //            toma(ServiceData);
             //        }), "");
-        }       
+        }
 
         object SnmpStatatics
         {
             get
             {
-                return new 
+                return new
                 {
                     SnmpInPkts = 0,
                     SnmpOutPkts = 0,
@@ -122,23 +123,23 @@ namespace UnitTesting
                     ifType = mo["AdapterTypeID"],
                     ifMtu = 0,
                     ifSpeed = 0,
-                    ifPhysAddress="",
-                    ifAdminStatus=0,
-                    ifOperStatus=0,
-                    ifLastChange=0,
-                    ifInOctets=0,
-                    ifInUcastPkts=0,
-                    ifInNUcastPkts=0,
-                    ifInDiscards=0,
-                    ifInErrors=0,
-                    IfInUnknowProtos=0,
+                    ifPhysAddress = "",
+                    ifAdminStatus = 0,
+                    ifOperStatus = 0,
+                    ifLastChange = 0,
+                    ifInOctets = 0,
+                    ifInUcastPkts = 0,
+                    ifInNUcastPkts = 0,
+                    ifInDiscards = 0,
+                    ifInErrors = 0,
+                    IfInUnknowProtos = 0,
                     ifOutOctets = 0,
                     ifOutUcastPkts = 0,
                     ifOutNUcastPkts = 0,
                     ifOutDiscards = 0,
                     ifOutErrors = 0,
-                    ifOutQLen=0,
-                    ifSpecific=0
+                    ifOutQLen = 0,
+                    ifSpecific = 0
                 };
                 nicNames.Add(nicdata);
             }
@@ -163,7 +164,7 @@ namespace UnitTesting
                 {
                     ifIndex = 0,
                     ifDescr = networkAdapterProperties["Caption"].ToString(),
-                    ifType =0,
+                    ifType = 0,
                     ifTypeStr = networkAdapterProperties["Caption"].ToString(),
                     ifMtu = 0,
                     ifSpeed = 0,
@@ -216,6 +217,43 @@ namespace UnitTesting
                         row.bPhysAddr[5].ToString("X2") + '-';
                 Debug.WriteLine(desc ?? "null" + "\n");
             });
+        }
+
+        [TestMethod]
+        public void IpAvailableTest()
+        {
+            var ip = "10.12.60.34";
+            Assert.IsTrue(IPHelper.IsLocalIpV4Address(ip));
+        }
+
+        [TestMethod]
+        public void UnicastAddressTest()
+        {
+            var unicastadd = IPGlobalProperties.GetIPGlobalProperties().GetUnicastAddresses();
+            unicastadd.ToList().ForEach(a =>
+            {
+                Debug.WriteLine($"Add {a.Address}");
+            });
+        }
+
+        [TestMethod]
+        public /*static List<string>*/ void GetNicNames()
+        {
+            var nicNames = new List<string>();
+            var mc = new ManagementClass("Win32_NetworkAdapterConfiguration");
+            var moc = mc.GetInstances();
+
+            foreach (var mo in moc)
+            {
+                // if ((bool)mo["ipEnabled"])
+                {
+                    nicNames.Add(mo["Caption"].ToString());
+                }
+            }
+
+            var ipadds = NICS.GetAllIps();
+
+            //return nicNames;
         }
     }
 }

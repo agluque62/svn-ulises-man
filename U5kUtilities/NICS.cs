@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using System.Net;
 using System.Net.NetworkInformation;
+using System.Management;
 
 namespace Utilities
 {
@@ -82,6 +84,44 @@ namespace Utilities
             }
 
             return false;
+        }
+
+        public static IEnumerable<ManagementObject> GetAllAdapters()
+        {
+            var tempList = new List<ManagementObject>();
+
+            ManagementObjectCollection moc =
+                new ManagementClass("Win32_NetworkAdapterConfiguration").GetInstances();
+
+            foreach (ManagementObject obj in moc)
+            {
+                tempList.Add(obj);
+            }
+
+            return tempList;
+        }
+
+        public static IEnumerable<IPAddress> GetAllIps()
+        {
+            var address = new List<IPAddress>();
+            var adapters = GetAllAdapters();
+            
+            foreach (ManagementObject obj in adapters)
+            {
+                var add = (string[])obj["IPAddress"];
+                if (add != null)
+                {
+                    foreach(string ips in add)
+                    {
+                        if (IPHelper.IsIpv4(ips) == true)
+                        {
+                            address.Add(IPHelper.SafeParse(ips));
+                        }
+                    }
+                }
+            }
+
+            return address;
         }
     }
 }

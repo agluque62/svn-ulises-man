@@ -1,4 +1,10 @@
 ﻿using System;
+using System.IO;
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml;
+using System.Xml.Linq;
+using System.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Diagnostics;
 
@@ -86,6 +92,29 @@ namespace UnitTesting
                 Debug.WriteLine("Exception Catched: " + stack.ToString());
             }
             Task.Delay(TimeSpan.FromSeconds(10)).Wait();
+        }
+        [TestMethod]
+        public void LocatingClusterConfigTest()
+        {
+            var Is64 = Environment.Is64BitOperatingSystem;
+            var ProgramFolder = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            var CompanyFolder = "DF Nucleo";
+            var ProductFolder = "UlisesV5000Cluster";
+            var ConfigFile = "ClusterSrv.exe.Config";
+            var pathToConfig = $"{ProgramFolder}\\{CompanyFolder}\\{ProductFolder}\\{ConfigFile}";
+            if (File.Exists(pathToConfig))
+            {
+                ExeConfigurationFileMap fileMap = new ExeConfigurationFileMap() { ExeConfigFilename = pathToConfig };
+                Configuration config = ConfigurationManager.OpenMappedExeConfiguration(fileMap, ConfigurationUserLevel.None);
+                ConfigurationSection configSection = config.GetSection("userSettings/ClusterSrv.Properties.Settings");
+                string result = configSection.SectionInformation.GetRawXml();
+                Console.WriteLine(result);
+
+            }
+            else
+            {
+
+            }
         }
 
         void InnerFunction(Action execute)
