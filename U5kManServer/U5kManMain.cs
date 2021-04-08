@@ -436,7 +436,7 @@ namespace U5kManServer
                 bool _Master = false;
 
 #if DEBUG
-                bool ServidorDual = false;
+                bool ServidorDual = true;
 #else
                 bool ServidorDual = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual;
 #endif
@@ -579,13 +579,24 @@ namespace U5kManServer
                         StdServ serv1_anterior = new StdServ() { name = stdg.stdServ1.name, Estado = stdg.stdServ1.Estado, Seleccionado = stdg.stdServ1.Seleccionado };
                         StdServ serv2_anterior = new StdServ() { name = stdg.stdServ2.name, Estado = stdg.stdServ2.Estado, Seleccionado = stdg.stdServ2.Seleccionado };
 
+                        /** 2021048. RM-4513. Cuando se detecta que el CLUSTER no está activo, se supone que el Servidor Activo es el 1.*/
                         /** Servidor 1*/
-                        stdg.stdServ1.name = cluster.EstadoNode1.Name +
-                            (stdg.ClusterError == U5KStdGeneral.ClusterErrors.NoError ? "" :
-                             String.Format("\nCluster Error: {0}", stdg.ClusterError));
-                        stdg.stdServ1.Estado = cluster.EstadoNode1.Presencia == true ? std.Ok : std.NoInfo;
-                        stdg.stdServ1.Seleccionado = cluster.EstadoNode1.Estado == 0 || cluster.EstadoNode1.Estado == 1 ? sel.NoInfo :
-                                cluster.EstadoNode1.Estado == 2 ? sel.Seleccionado : sel.NoSeleccionado;
+                        if (stdg.ClusterError == U5KStdGeneral.ClusterErrors.NoLocalServerNameDetected)
+                        {
+                            stdg.stdServ1.name = MyName + String.Format("\nCluster Error: {0}", stdg.ClusterError);
+                            stdg.stdServ1.Estado = std.Ok;
+                            stdg.stdServ1.Seleccionado = sel.Seleccionado;
+                        }
+                        else
+                        {
+                            stdg.stdServ1.name = cluster.EstadoNode1.Name +
+                                (stdg.ClusterError == U5KStdGeneral.ClusterErrors.NoError ? "" :
+                                 String.Format("\nCluster Error: {0}", stdg.ClusterError));
+                            stdg.stdServ1.Estado = cluster.EstadoNode1.Presencia == true ? std.Ok : std.NoInfo;
+                            stdg.stdServ1.Seleccionado = cluster.EstadoNode1.Estado == 0 || cluster.EstadoNode1.Estado == 1 ? sel.NoInfo :
+                                    cluster.EstadoNode1.Estado == 2 ? sel.Seleccionado : sel.NoSeleccionado;
+                        }
+
                         /** Servidor 2*/
                         stdg.stdServ2.name = cluster.EstadoNode2.Name +
                             (stdg.ClusterError == U5KStdGeneral.ClusterErrors.NoError ? "" :
@@ -1205,7 +1216,11 @@ namespace U5kManServer
                 /// <param name="serv"></param>
                 public OnCLusterServerData(int serv)
                 {
+#if DEBUG
+                    string WebConfigPath = "./web.config";
+#else
                     string WebConfigPath = "c:\\inetpub\\wwwroot\\NucleoDF\\u5kcfg\\web.config";
+#endif
 
                     System.Configuration.ExeConfigurationFileMap configFile = new System.Configuration.ExeConfigurationFileMap() { ExeConfigFilename = WebConfigPath };
                     System.Configuration.Configuration config = System.Configuration.ConfigurationManager.OpenMappedExeConfiguration(configFile, System.Configuration.ConfigurationUserLevel.None);
@@ -1224,7 +1239,7 @@ namespace U5kManServer
                         ip = "127.0.0.1";
                         port = 6666;
                     }
-#if DEBUG
+#if DEBUG1
                     IsLocal = (serv == 1);
 #else
                     IsLocal = U5kGenericos.IsLocalIpExt(ip);
@@ -1309,6 +1324,8 @@ namespace U5kManServer
                     }
 
                 }
+
+
             };
 
             public OnLineCluster()
@@ -1334,7 +1351,6 @@ namespace U5kManServer
 
                 return cluster;
             }
-
 
             List<OnCLusterServerData> servers = new List<OnCLusterServerData>();
         };
