@@ -413,48 +413,50 @@ angular.module("Uv5kiman")
 
     //** Abre y Gestiona la ventana de Detalle de la Pasarela */
     ctrl.gw_open = function (gw) {
-        $serv.gw_detail_get(gw).then(function (response) {
-            ctrl.gwdata = response.data;
-            ctrl.itfs = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].recs :
-                ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].recs : ctrl.gwdata.cpus[1].recs;
-            ctrl.tars = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].tars :
-                ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].tars : ctrl.gwdata.cpus[1].tars;
+    //    $serv.gw_detail_get(gw).then(function (response) {
+    //        ctrl.gwdata = response.data;
+    //        ctrl.itfs = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].recs :
+    //            ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].recs : ctrl.gwdata.cpus[1].recs;
+    //        ctrl.tars = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].tars :
+    //            ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].tars : ctrl.gwdata.cpus[1].tars;
 
-            ctrl.gwgen = [];
-            ctrl.gwgen[0] = {
-                tipo: ctrl.gwdata.tipo,
-                fa: ctrl.gwdata.cpus[0].fa,            // ctrl.gwdata.fa,
-                cpu: 0,
-                ip: ctrl.gwdata.cpus[0].ip,
-                lan1: ctrl.gwdata.cpus[0].lan1,
-                lan2: ctrl.gwdata.cpus[0].lan2,
-                sipMod: ctrl.gwdata.cpus[0].sipMod,
-                cfgMod: ctrl.gwdata.cpus[0].cfgMod,
-                snmpMod: ctrl.gwdata.cpus[0].snmpMod
-            };
-            if (ctrl.gwdata.tipo != 0) {
-                ctrl.gwgen[1] = {
-                    tipo: "",
-                    fa: ctrl.gwdata.cpus[1].fa,    // "",
-                    cpu: 1,
-                    ip: ctrl.gwdata.cpus[1].ip,
-                    lan1: ctrl.gwdata.cpus[1].lan1,
-                    lan2: ctrl.gwdata.cpus[1].lan2,
-                    sipMod: ctrl.gwdata.cpus[1].sipMod,
-                    cfgMod: ctrl.gwdata.cpus[1].cfgMod,
-                    snmpMod: ctrl.gwdata.cpus[1].snmpMod
+    //        ctrl.gwgen = [];
+    //        ctrl.gwgen[0] = {
+    //            tipo: ctrl.gwdata.tipo,
+    //            fa: ctrl.gwdata.cpus[0].fa,            // ctrl.gwdata.fa,
+    //            cpu: 0,
+    //            ip: ctrl.gwdata.cpus[0].ip,
+    //            lan1: ctrl.gwdata.cpus[0].lan1,
+    //            lan2: ctrl.gwdata.cpus[0].lan2,
+    //            sipMod: ctrl.gwdata.cpus[0].sipMod,
+    //            cfgMod: ctrl.gwdata.cpus[0].cfgMod,
+    //            snmpMod: ctrl.gwdata.cpus[0].snmpMod
+    //        };
+    //        if (ctrl.gwdata.tipo != 0) {
+    //            ctrl.gwgen[1] = {
+    //                tipo: "",
+    //                fa: ctrl.gwdata.cpus[1].fa,    // "",
+    //                cpu: 1,
+    //                ip: ctrl.gwdata.cpus[1].ip,
+    //                lan1: ctrl.gwdata.cpus[1].lan1,
+    //                lan2: ctrl.gwdata.cpus[1].lan2,
+    //                sipMod: ctrl.gwdata.cpus[1].sipMod,
+    //                cfgMod: ctrl.gwdata.cpus[1].cfgMod,
+    //                snmpMod: ctrl.gwdata.cpus[1].snmpMod
 
-                };
-            }
+    //            };
+    //        }
 
-            // console.log(response.data);
-            $("#gwDataModal").modal('show');
-        }
-            , function (response) {
-                console.log(response);
-                alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
-            });
+    //        // console.log(response.data);
+    //        $("#gwDataModal").modal('show');
+    //    }
+    //        , function (response) {
+    //            console.log(response);
+    //            alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
+    //        });
+        get_gwdata(gw, () => $("#gwDataModal").modal('show'));
     };
+    ctrl.gwdata_refresh = () => get_gwdata(ctrl.MonitoredGw);
 
     //** */
     ctrl.gw_ir = function (gw) {
@@ -653,6 +655,51 @@ angular.module("Uv5kiman")
         , function (response) {
             console.log(response);
         });        
+    }
+
+    function get_gwdata(gw, notifyOk) {
+        ctrl.MonitoredGw = gw;
+        $serv.gw_detail_get(gw).then(function (response) {
+            ctrl.gwdata = response.data;
+            ctrl.itfs = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].recs :
+                ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].recs : ctrl.gwdata.cpus[1].recs;
+            ctrl.tars = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].tars :
+                ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].tars : ctrl.gwdata.cpus[1].tars;
+
+            ctrl.gwgen = [];
+            ctrl.gwgen[0] = {
+                tipo: ctrl.gwdata.tipo,
+                fa: ctrl.gwdata.cpus[0].fa,            // ctrl.gwdata.fa,
+                cpu: 0,
+                ip: ctrl.gwdata.cpus[0].ip,
+                lan1: ctrl.gwdata.cpus[0].lan1,
+                lan2: ctrl.gwdata.cpus[0].lan2,
+                sipMod: ctrl.gwdata.cpus[0].sipMod,
+                cfgMod: ctrl.gwdata.cpus[0].cfgMod,
+                snmpMod: ctrl.gwdata.cpus[0].snmpMod
+            };
+            if (ctrl.gwdata.tipo != 0) {
+                ctrl.gwgen[1] = {
+                    tipo: "",
+                    fa: ctrl.gwdata.cpus[1].fa,    // "",
+                    cpu: 1,
+                    ip: ctrl.gwdata.cpus[1].ip,
+                    lan1: ctrl.gwdata.cpus[1].lan1,
+                    lan2: ctrl.gwdata.cpus[1].lan2,
+                    sipMod: ctrl.gwdata.cpus[1].sipMod,
+                    cfgMod: ctrl.gwdata.cpus[1].cfgMod,
+                    snmpMod: ctrl.gwdata.cpus[1].snmpMod
+
+                };
+            }
+            if (notifyOk) notifyOk();
+            // console.log(response.data);
+        }
+            , function (response) {
+                console.log(response);
+                alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
+            });
+
     }
 
     /** */
