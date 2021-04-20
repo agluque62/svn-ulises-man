@@ -1319,7 +1319,8 @@ namespace U5kManServer
                     if (name==String.Empty || (online_status != 0 && ++FailuresCounter >= FailuresLimit))
                     {
                         online_status = 0;
-                        name = String.Format(idiomas.strings.CLUSTER_ERROR_03/*"Nodo en ({0}:{1}) Error Solicitando Info"*/, ip, port);
+                        //name = String.Format(idiomas.strings.CLUSTER_ERROR_03/*"Nodo en ({0}:{1}) Error Solicitando Info"*/, ip, port);
+                        name = strError;
                         FailuresCounter = 0;
                     }
 
