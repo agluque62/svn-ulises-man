@@ -35,6 +35,25 @@ namespace U5kManServer
         /// </summary>
         Queue<U5kIncidencia> _incidencias = new Queue<U5kIncidencia>();        //
         static List<U5kIncidenciaDescr> _inciDescr = new List<U5kIncidenciaDescr>();
+        public static string SqlFilterForAlarms
+        {
+            get
+            {
+                var alarmsIds = _inciDescr.Where(r => r.alarm).Select(a => a.id);
+                if (alarmsIds.Count() > 0)
+                {
+                    string filtro = " AND (";
+                    foreach (var id in alarmsIds)
+                    {
+                        filtro += string.Format("IDINCIDENCIA = {0} OR ", id);
+                    }
+                    filtro = filtro.Substring(0, filtro.Length - 3) + ")";
+                    return filtro;
+                }
+                // Por defecto o Error las retorna todas...
+                return " AND ( (IDINCIDENCIA < 5000) )";
+            }
+        }
 
         // DateTime _hoy = DateTime.MinValue;
         DateTime _hoy = DateTime.Now;

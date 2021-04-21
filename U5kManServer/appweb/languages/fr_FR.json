@@ -6,7 +6,7 @@
   "INDEX_OPC_HISTORICOS": "Historique/Estadistica",
   "INDEX_OPC_CONFIGURACION": "Service",
   "INDEX_OPC_VOLVER": "Démarrer",
-  "INDEX_INCI": "Incidents en cours",
+  "INDEX_INCI": "Alarmes en cours",
   "INDEX_INCI_FECHA": "Date/heure",
   "INDEX_INCI_DESCRIPCION": "Description",
   "INDEX_INCI_RECONOCER": "Acquitter",
@@ -376,6 +376,9 @@
 
   "Cables de Grabacion": "Recording wires",
   "Refrescar": "Refresh",
+  "Alarmas": "Alarms",
+  "Eventos": "Events",
+  "Evento": "Event",
 
 
   "FINAL": "final"

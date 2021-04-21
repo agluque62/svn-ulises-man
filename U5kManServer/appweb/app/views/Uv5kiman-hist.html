@@ -17,7 +17,7 @@
                 <div class="col-md-1 bg-info" translate>HST_TB1_02</div>
                 <div class="col-md-2 bg-info" translate>HST_TB1_03</div>
                 <div class="col-md-2 bg-info" translate>HST_TB1_04</div>
-                <div class="col-md-3 bg-info" translate>HST_TB1_05</div>
+                <div class="col-md-3 bg-info" translate>Eventos</div>
                 <div class="col-md-2 bg-info" translate>Contiene</div>
                 <div class="col-md-1 bg-info" translate>...</div>
             </div>
@@ -285,10 +285,11 @@
                             <i translate>HST_TB1_03</i>
                             <div class="input-group">
                                 <select name="tpMat"
-                                    ng-model="ctrl.ls.LogFilter().tpMat"
-                                    class="form-control"
-                                    ng-change="ctrl.OnTpMatChange()">
-                                    <option value="6" translate>HST_TB2_07</option>
+                                        ng-model="ctrl.ls.LogFilter().tpMat"
+                                        class="form-control"
+                                        ng-change="ctrl.OnTpMatChange()">
+                                    <option value="7" translate>HST_TB2_07</option>
+                                    <option value="6" translate>Alarmas</option>
                                     <option value="0" translate>HST_TB2_01</option>
                                     <option value="1" translate>HST_TB2_02</option>
                                     <option value="2" translate>HST_TB2_03</option>
@@ -316,7 +317,7 @@
                     </div>
                     <div class="row">
                         <div class="col-md-7">
-                            <i translate>HST_TB1_05</i>
+                            <i translate>Eventos</i>
                             <div class="input-group">
                                 <select id="list_inci" name="Inci" ng-model="ctrl.ls.LogFilter().Inci" class="form-control"
                                     ng-options="obj.id as obj.desc for obj in ctrl.inci" multiple>

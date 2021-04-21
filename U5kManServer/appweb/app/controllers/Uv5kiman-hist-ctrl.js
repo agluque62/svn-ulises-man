@@ -153,9 +153,10 @@ angular.module("Uv5kiman")
             $lserv.translate("Radio HF"),
             $lserv.translate("Radio M+N"),
             $lserv.translate("Equipos Externos"),
+            $lserv.translate("Alarmas"),
             $lserv.translate("Todos")
         ];
-        return ctrl.ls.LogFilter().tpMat < 7 ? txtGrupos[ctrl.ls.LogFilter().tpMat] : sprintf($lserv.translate("Error %1$d"), ctrl.ls.LogFilter().tpMat);
+        return ctrl.ls.LogFilter().tpMat < 8 ? txtGrupos[ctrl.ls.LogFilter().tpMat] : sprintf($lserv.translate("Error %1$d"), ctrl.ls.LogFilter().tpMat);
     };
 
     /** Generacion de Informe PDF de Historicos */
@@ -177,7 +178,7 @@ angular.module("Uv5kiman")
             doc.setFontSize(10);
             doc.setTextColor(0, 0, 0);
             doc.text(20, 32, $lserv.translate('HCT_MSG_03')/*"Fecha"*/);
-            doc.text(75, 32, $lserv.translate('HCT_MSG_04')/*"Incidencia"*/);
+            doc.text(75, 32, $lserv.translate('Evento')/*"Incidencia"*/);
             doc.line(20, 34, ctrl.portrait == true ? 190 : 290, 34);
 
             /** Filtro Cabecera */
@@ -185,7 +186,7 @@ angular.module("Uv5kiman")
             doc.setTextColor(0, 0, 0);
             doc.text(160, 20, $lserv.translate('Desde:')); doc.text(210, 20, $lserv.translate("Hasta:"));
             doc.text(160, 24, $lserv.translate("Grupo:")); doc.text(210, 24, $lserv.translate("Elemento:"));
-            doc.text(160, 28, $lserv.translate("Incidencias:"));
+            doc.text(160, 28, $lserv.translate("Eventos")+":");
             doc.text(160, 32, $lserv.translate("Contiene:"));
 
             /** Filtro Datos */
@@ -431,6 +432,12 @@ angular.module("Uv5kiman")
             if (reset === true) ctrl.ls.LogFilter().Inci = [];
             ctrl.inci = ctrl.linci.filter($lserv.inci_filter_all);
         }
+        else if (ctrl.ls.LogFilter().tpMat == 7) {
+            ctrl.mat = [];
+            if (reset === true) ctrl.ls.LogFilter().Mat = "";
+            if (reset === true) ctrl.ls.LogFilter().Inci = [];
+            ctrl.inci = ctrl.linci.filter($lserv.inci_filter_all);
+        }
         else {
             ctrl.mat = [];
             ctrl.ls.LogFilter().Mat = "";
@@ -481,7 +488,7 @@ angular.module("Uv5kiman")
 
             ctrl.ls.LogFilter().dtDesde = moment().startOf('day').millisecond(0).toDate();
             ctrl.ls.LogFilter().dtHasta = moment().endOf('day').millisecond(0).toDate();
-            ctrl.ls.LogFilter().tpMat = "6";
+            ctrl.ls.LogFilter().tpMat = "7";
             ctrl.ls.LogFilter().Mat = "";
             ctrl.ls.LogFilter().txt = "";
             ctrl.ls.LogFilter().limit = default_logs_limit;

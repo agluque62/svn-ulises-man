@@ -6,11 +6,11 @@
   "INDEX_OPC_HISTORICOS": "Log/Stats",
   "INDEX_OPC_CONFIGURACION": "Service",
   "INDEX_OPC_VOLVER": "Home",
-  "INDEX_INCI": "Pending Incidences",
+  "INDEX_INCI": "Pending Alarms",
   "INDEX_INCI_FECHA": "Date/Hour",
   "INDEX_INCI_DESCRIPCION": "Description",
   "INDEX_INCI_RECONOCER": "Acknowledge",
-  "INDEX_PIE": "Nucleo Copyright @ 2015-2020. All rights Reserved.",
+  "INDEX_PIE": "Nucleo Copyright @ 2015-2021. All rights Reserved.",
 
   "SPV_OPC_01": "Global Status",
   "SPV_OPC_02": "Control Working Positions",
@@ -372,6 +372,10 @@
 
   "Cables de Grabacion": "Recording wires",
   "Refrescar": "Refresh",
+
+  "Alarmas": "Alarms",
+  "Eventos": "Events",
+  "Evento": "Event",
 
   "FINAL": "final"
 }

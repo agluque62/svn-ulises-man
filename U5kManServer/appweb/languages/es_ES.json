@@ -6,11 +6,11 @@
   "INDEX_OPC_HISTORICOS": "Historico/Estadistica",
   "INDEX_OPC_CONFIGURACION": "Servicio",
   "INDEX_OPC_VOLVER": "Inicio",
-  "INDEX_INCI": "Incidencias Pendientes",
+  "INDEX_INCI": "Alarmas Pendientes",
   "INDEX_INCI_FECHA": "Fecha/Hora",
   "INDEX_INCI_DESCRIPCION": "Descripcion",
   "INDEX_INCI_RECONOCER": "Reconocer",
-  "INDEX_PIE": "Nucleo Copyright @ 2015-2020. Todos los Derechos Reservados.",
+  "INDEX_PIE": "Nucleo Copyright @ 2015-2021. Todos los Derechos Reservados.",
 
   "SPV_OPC_01": "Estado Global",
   "SPV_OPC_02": "Posiciones de Operador",

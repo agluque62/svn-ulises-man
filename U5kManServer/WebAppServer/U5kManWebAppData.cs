@@ -1309,6 +1309,9 @@ namespace U5kManServer.WebAppServer
                         case 5:           // Equipo Externos
                             strFiltro = " AND ( (IDINCIDENCIA >= 3000 AND IDINCIDENCIA < 3050) )";
                             break;
+                        case 6:             // Solo Incidencias que son alarmas.
+                            strFiltro = HistThread.SqlFilterForAlarms;
+                            break;
                         default:
                             strFiltro = " AND ( (IDINCIDENCIA < 5000) )";
                             break;
