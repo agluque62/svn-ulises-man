@@ -65,6 +65,12 @@ angular.module("Uv5kiman")
                 std == session_stdcodes.Conectado ? "text-info" :
                     std == session_stdcodes.Deshabilitado ? "text-muted" : "text-danger bg-danger";
         };
+        ctrl.colorBotonSesion = function (std, dis) {
+            return dis == true ? "btn-default" :
+                std == session_stdcodes.Desconectado ? "btn-danger" :
+                    std == session_stdcodes.Conectado ? "btn-success" :
+                        std == session_stdcodes.Deshabilitado ? "btn-default" : "btn-danger";
+        };
         ctrl.txtCClimax = function (md) {
             return md == frec_cclimax.Absoluto ? "A" :
                 md == frec_cclimax.Realtivo ? "R" : "?";
@@ -476,6 +482,7 @@ angular.module("Uv5kiman")
                     site: session.site,
                     tipo: session.tipo,
                     std: session.std,
+                    dis: session.UnoMasUnoDisabled,
                     tx_rtp: session.tx_rtp,
                     tx_cld: session.tx_cld,
                     tx_owd: session.tx_owd,

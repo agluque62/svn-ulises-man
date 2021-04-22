@@ -42,31 +42,31 @@
                                         </button>
                                         <div id="tpar-{{ifrec}}" class="collapse" style="margin-left: 10px;">
                                             <table class="table table-bordered">
-                                                <tr>
+                                                <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)">
                                                     <td translate>Tipo</td>
                                                     <td>{{ctrl.textTipoPrio(fr.ftipo,fr.prio).txtTipo}}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)">
                                                     <td translate>Modo</td>
                                                     <td>{{ctrl.textTipoPrio(fr.ftipo,fr.prio).txtPrio}}</td>
                                                 </tr>
-                                                <tr>
+                                                <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)">
                                                     <td translate>1+1</td>
                                                     <td>{{fr.fp_unomasuno==true ? "Si" : "No"}}</td>
                                                 </tr>
-                                                <tr ng-show="ctrl.enableOnFD(fr.ftipo).FD">
+                                                <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.enableOnFD(fr.ftipo).FD">
                                                     <td translate>Modo TX</td>
                                                     <td>{{fr.fp_tx_mod}}</td>
                                                 </tr>
-                                                <tr ng-show="ctrl.enableOnFD(fr.ftipo).FD">
+                                                <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.enableOnFD(fr.ftipo).FD">
                                                     <td translate>Climax</td>
                                                     <td>{{ctrl.txtCClimax(fr.fp_climax_mc)}}</td>
                                                 </tr>
-                                                <tr ng-show="ctrl.enableOnFD(fr.ftipo).FD || fr.fp_unomasuno==true"">
+                                                <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.enableOnFD(fr.ftipo).FD || fr.fp_unomasuno==true"">
                                                     <td translate>Mtdo Bss</td>
                                                     <td>{{fr.fp_bss_mod}}</td>
                                                 </tr>
-                                                <tr ng-show="ctrl.enableOnFD(fr.ftipo).FD || fr.fp_unomasuno==true"">
+                                                <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.enableOnFD(fr.ftipo).FD || fr.fp_unomasuno==true"">
                                                     <td translate>Vtna. Bss</td>
                                                     <td>{{fr.fp_bss_win + " ms"}}</td>
                                                 </tr>
@@ -85,36 +85,35 @@
                                     </button>
                                     <div id="tses-{{ifrec}}" class="collapse" style="margin-left: 15px;">
                                         <table class="table table-bordered">
-                                            <tr data-ng_repeat="ses in fr.ses"
-                                                data-ng-class="ctrl.colorEstadoSesion(ses.std)"
+                                            <tr data-ng_repeat="ses in fr.ses" data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)"
                                                 ng-init="ises = $index">
                                                 <td class="col-md-1">{{ses.tipo}}</td>
                                                 <td class="col-md-3">{{ses.site}}</td>
                                                 <td class="col-md-8 level-1">
-                                                    <button type="button" class="btn btn-default"
+                                                    <button type="button" class="btn btn-default" data-ng-class="ctrl.colorBotonSesion(ses.std, ses.dis)"
                                                             data-toggle="collapse"
                                                             data-target="#tpses-{{ifrec}}-{{ises}}">
                                                         {{ses.uri}}
                                                     </button>
                                                     <div id="tpses-{{ifrec}}-{{ises}}" class="collapse" style="margin-left: 15px;">
                                                         <table class="table table-bordered">
-                                                            <tr ng-show="ctrl.showOnTx(ses.tipo)">
+                                                            <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.showOnTx(ses.tipo)">
                                                                 <td>{{"RTPTx"}}</td>
                                                                 <td>{{ses.tx_rtp}}</td>
                                                             </tr>
-                                                            <tr ng-show="ctrl.showOnTx(ses.tipo)">
+                                                            <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.showOnTx(ses.tipo)">
                                                                 <td>{{"CLD"}}</td>
                                                                 <td>{{ses.tx_cld + " ms"}}</td>
                                                             </tr>
-                                                            <tr ng-show="ctrl.showOnTx(ses.tipo)">
+                                                            <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.showOnTx(ses.tipo)">
                                                                 <td>{{"OWD"}}</td>
                                                                 <td>{{ses.tx_owd + " ms"}}</td>
                                                             </tr>
-                                                            <tr ng-show="ctrl.showOnRx(ses.tipo)">
+                                                            <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.showOnRx(ses.tipo)">
                                                                 <td>{{"RTPRx"}}</td>
                                                                 <td>{{ses.rx_rtp}}</td>
                                                             </tr>
-                                                            <tr ng-show="ctrl.showOnRx(ses.tipo)">
+                                                            <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.showOnRx(ses.tipo)">
                                                                 <td>{{"QIDX"}}</td>
                                                                 <td>{{ses.rx_qidx}}</td>
                                                             </tr>

@@ -1339,10 +1339,10 @@ a.disabled {
     color: #31708f;
 }
 .freqDegraded {
-    background-color: #ffc266;
+    background-color: #fcf8a0;
     color: #663d00;
 }
 .freqNotAvailable {
-    background-color: #ff8080;
-    color: #800000;
+    background-color: #e4b9b9;
+    color: #663d00;
 }
