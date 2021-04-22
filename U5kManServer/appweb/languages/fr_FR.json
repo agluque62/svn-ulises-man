@@ -376,9 +376,20 @@
 
   "Cables de Grabacion": "Recording wires",
   "Refrescar": "Refresh",
-  "Alarmas": "Alarms",
-  "Eventos": "Events",
-  "Evento": "Event",
+
+  "Alarmas": "Alarmes",
+  "Eventos": "Événements",
+  "Evento": "Événement",
+
+  " ¿Desea Elegir el equipo como Seleccionado?": " Voulez-vous choisir l'équipe comme sélectionnée?",
+  " ¿Desea Habilitar el equipo?": " Voulez-vous activer l'équipe?",
+  " ¿Desea Deshabilitar el equipo?": " Voulez-vous désactiver l'ordinateur?",
+  "Seleccione la Frecuencia": "Sélectionnez la fréquence",
+  "Transmisores/Transceptores": "Émetteurs / émetteurs-récepteurs",
+  "Reserva=>Sel": "De Reserve=>Sel",
+  "Habilitar": "Activer",
+  "Deshabilitar": "Désactiver",
+  "No existen frecuencias con recursos 1+1": "Il n'y a pas de fréquences avec '1+1' ressources",
 
 
   "FINAL": "final"

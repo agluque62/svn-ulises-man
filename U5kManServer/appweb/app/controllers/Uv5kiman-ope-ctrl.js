@@ -12,6 +12,7 @@ angular.module("Uv5kiman")
 
         /** Inicializacion */
         var ctrl = this;
+        ctrl.translate = (str) => { return $lserv.translate(str); }
 
         /** Para borrar */
         /** Flags de Presentacion */
@@ -695,12 +696,12 @@ angular.module("Uv5kiman")
             return res.ses == 0;
         };
         ctrl.rdUnoMasUnoSelectMain = function (equ) {
-                var strQuestion = equ.id + $lserv.translate(" ¿Desea Seleccionar el equipo como Principal?");
+                var strQuestion = equ.id + $lserv.translate(" ¿Desea Elegir el equipo como Seleccionado?");
                 alertify.confirm(strQuestion,
                     function () {
                         $serv.radio_11_select(equ.id).then(function (response) {
                             console.log("RD1+1 Post Response => ", response.data);
-                            alertify.success($lserv.translate("Operacion Ejecutada."));
+                            alertify.success($lserv.translate("Operacion Efectuada"));
                         }, function (response) {
                             console.log("RD1+1 Post Error => ", response);
                             alertify.error($lserv.translate("Error: " + response.status + ", " + response.statusText));
@@ -719,7 +720,7 @@ angular.module("Uv5kiman")
                     function () {
                         $serv.radio_11_enable(equ.id, enable).then(function (response) {
                             console.log("RD1+1 Post Response => ", response.data);
-                            alertify.success($lserv.translate("Operacion Ejecutada."));
+                            alertify.success($lserv.translate("Operacion Efectuada"));
                         }, function (response) {
                             console.log("RD1+1 Post Error => ", response);
                             alertify.error($lserv.translate(response.data.res));

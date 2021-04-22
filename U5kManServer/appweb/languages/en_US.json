@@ -377,5 +377,15 @@
   "Eventos": "Events",
   "Evento": "Event",
 
+  " ¿Desea Elegir el equipo como Seleccionado?": " Do you want to choose the Equipments as Selected? ",
+  " ¿Desea Habilitar el equipo?": " Do you want to Enable the Equipment?",
+  " ¿Desea Deshabilitar el equipo?": " Do you want to Disable the Equipment?",
+  "Seleccione la Frecuencia": "Select Frequency",
+  "Transmisores/Transceptores": "Transmitters / Transceivers",
+  "Reserva=>Sel": "Standby=>Selected",
+  "Habilitar": "Enable",
+  "Deshabilitar": "Disable",
+  "No existen frecuencias con recursos 1+1": "There are no frequencies with '1+1' resources",
+
   "FINAL": "final"
 }
