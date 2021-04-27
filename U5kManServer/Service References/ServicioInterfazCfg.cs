@@ -77,7 +77,9 @@ public partial class InterfazSOAPConfiguracion : System.Web.Services.Protocols.S
     {
         /*this.Url = "http://localhost:54801/InterfazSOAPConfiguracion/InterfazSOAPConfiguracion.asmx";*/
         // this.Url = U5kManServer.Properties.u5kManServer.Default.CfgService;
-        this.Url = String.Format("http://{0}/nucleodf/u5kcfg/InterfazSOAPConfiguracion/InterfazSOAPConfiguracion.asmx", U5kManServer.Properties.u5kManServer.Default.MySqlServer);
+        //this.Url = String.Format("http://{0}/nucleodf/u5kcfg/InterfazSOAPConfiguracion/InterfazSOAPConfiguracion.asmx", U5kManServer.Properties.u5kManServer.Default.MySqlServer);
+        var Settings = U5kManServer.Properties.u5kManServer.Default;
+        this.Url = $"http://{Settings.MySqlServer}/{Settings.SoapServicesMain}/InterfazSOAPConfiguracion/InterfazSOAPConfiguracion.asmx";
     }
     
     /// <remarks/>

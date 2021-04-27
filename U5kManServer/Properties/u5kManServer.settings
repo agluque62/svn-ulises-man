@@ -334,5 +334,8 @@
     <Setting Name="HttpGetTimeout" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">1000</Value>
     </Setting>
+    <Setting Name="SoapServicesMain" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">UlisesV5000/u5kcfg</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
