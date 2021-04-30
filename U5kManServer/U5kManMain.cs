@@ -1219,7 +1219,7 @@ namespace U5kManServer
 #if DEBUG
                     string WebConfigPath = "./web.config";
 #else
-                    string WebConfigPath = "c:\\inetpub\\wwwroot\\NucleoDF\\u5kcfg\\web.config";
+                    string WebConfigPath = Properties.u5kManServer.Default.WebConfigPath; // "c:\\inetpub\\wwwroot\\NucleoDF\\u5kcfg\\web.config";
 #endif
 
                     System.Configuration.ExeConfigurationFileMap configFile = new System.Configuration.ExeConfigurationFileMap() { ExeConfigFilename = WebConfigPath };

@@ -881,5 +881,14 @@ namespace U5kManServer.Properties {
                 return ((string)(this["SoapServicesMain"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("c:\\\\inetpub\\\\wwwroot\\\\UlisesV5000\\\\u5kcfg\\\\web.config")]
+        public string WebConfigPath {
+            get {
+                return ((string)(this["WebConfigPath"]));
+            }
+        }
     }
 }
