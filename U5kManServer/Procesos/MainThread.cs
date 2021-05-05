@@ -298,12 +298,14 @@ namespace U5kManServer
                         ip = bgw.Ip1,
                         snmpport = bgw.SnmpPortA,
                         name = bgw.Id + "-A",
+                        ParentName = gw.name
                     };
                     gw.gwB = new stdPhGw()
                     {
                         ip = bgw.Ip2,
                         snmpport = bgw.SnmpPortB,
                         name = bgw.Id + "-B",
+                        ParentName = gw.name
                     };
 
                     // Mapea los Recursos en las Pasarelas...
@@ -342,6 +344,9 @@ namespace U5kManServer
                     stdgws.Add(gw);
                     /** */
                     U5kEstadisticaProc.Estadisticas.AddPasarela(bgw.Id);
+#if DEBUG
+                    JsonHelper.JsonSave($"GW-{gw.name}.json", gw.Data);
+#endif
                 }
             }
             gdata.CFGGWS = stdgws;

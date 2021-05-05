@@ -951,6 +951,21 @@ namespace U5kManServer
 #endif
             return retorno;
         }
+
+        public object Data => new
+        {
+            name,
+            tipo,
+            tipo_online,
+            tipo_itf,
+            bdt,
+            presente,
+            std_online,
+            bdt_name,
+            snmp_port,
+            snmp_trap_port,
+            Stpo
+        };
     }
 
     /// <summary>
@@ -1022,6 +1037,16 @@ namespace U5kManServer
 #endif
             return retorno;
         }
+
+        public object Data => new
+        {
+            std_cfg,
+            std_online,
+            recs = new List<object>()
+            {
+                rec[0].Data, rec[1].Data,rec[2].Data,rec[3].Data
+            }
+        };
     }
 
     /// <summary>
@@ -1075,6 +1100,7 @@ namespace U5kManServer
 #endif
             }
         }
+        public string ParentName { get; set; }
         /// <summary>
         /// 
         /// </summary>
@@ -1203,6 +1229,7 @@ namespace U5kManServer
             SnmpMod.CopyFrom(from.SnmpMod);
 #endif
             stdFA = from.stdFA;
+            ParentName = from.ParentName;
         }
 
         public bool Equals(stdPhGw other)
@@ -1219,6 +1246,27 @@ namespace U5kManServer
 #endif
             return retorno;
         }
+
+        public object Data => new
+        {
+            ParentName,
+            name,
+            ip,
+            presente,
+            std,
+            lan1,
+            lan2,
+            Seleccionada,
+            stdFA,
+            IpConn = IpConn.Std == std.Ok,
+            SipMod = SipMod.Std == std.Ok,
+            CfgMod = CfgMod.Std == std.Ok,
+            SnmpMod = SnmpMod.Std == std.Ok,
+            slots = new List<object>()
+            {
+                slots[0].Data, slots[1].Data, slots[2].Data, slots[3]
+            }
+        };
     }
 
     /// <summary>
@@ -1390,6 +1438,18 @@ namespace U5kManServer
 #endif
             return retorno;
         }
+
+        public object Data => new
+        {
+            name,
+            ip,
+            std,
+            presente,
+            Dual,
+            _ntp_client_status,
+            gwA = gwA.Data,
+            gwB = gwB.Data
+        };
     
     }
 
