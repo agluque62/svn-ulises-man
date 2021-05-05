@@ -77,7 +77,7 @@
       <Value Profile="(Default)">365</Value>
     </Setting>
     <Setting Name="MiDireccionIP" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">192.168.0.129</Value>
+      <Value Profile="(Default)">127.0.0.1</Value>
     </Setting>
     <Setting Name="FiltroPOS" Type="System.String" Scope="Application">
       <Value Profile="(Default)">None</Value>
@@ -183,7 +183,7 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="MySqlServer" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">192.168.0.212</Value>
+      <Value Profile="(Default)">127.0.0.1</Value>
     </Setting>
     <Setting Name="SQLitePath" Type="System.String" Scope="Application">
       <Value Profile="(Default)">d:\datos\Empresa\_SharedPrj\UlisesV5000i-MN\ulises-man\uv5ki-06-gwu.db3</Value>
@@ -305,7 +305,7 @@
 &lt;/ArrayOfString&gt;</Value>
     </Setting>
     <Setting Name="StatisticsActivityMonitoringTime" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">20</Value>
+      <Value Profile="(Default)">3</Value>
     </Setting>
     <Setting Name="OpcOpCableGrabacion" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>

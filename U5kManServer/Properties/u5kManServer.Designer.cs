@@ -189,7 +189,7 @@ namespace U5kManServer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("192.168.0.129")]
+        [global::System.Configuration.DefaultSettingValueAttribute("127.0.0.1")]
         public string MiDireccionIP {
             get {
                 return ((string)(this["MiDireccionIP"]));
@@ -418,7 +418,7 @@ namespace U5kManServer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("192.168.0.212")]
+        [global::System.Configuration.DefaultSettingValueAttribute("127.0.0.1")]
         public string MySqlServer {
             get {
                 return ((string)(this["MySqlServer"]));
@@ -779,7 +779,7 @@ namespace U5kManServer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("20")]
+        [global::System.Configuration.DefaultSettingValueAttribute("3")]
         public int StatisticsActivityMonitoringTime {
             get {
                 return ((int)(this["StatisticsActivityMonitoringTime"]));

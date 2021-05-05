@@ -161,7 +161,7 @@ namespace U5kManServer
 
 #if DEBUG
             _timer.Interval = 1000 * 1;
-            _timer_reg.Interval = 50;
+            _timer_reg.Interval = 1000;
 #else
             _timer.Interval = 1000 * 60;
             _timer_reg.Interval = 1000;
