@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 
 using Newtonsoft.Json;
@@ -69,6 +70,11 @@ namespace Utilities
         public static  bool JObjectPropertyExist(JObject obj, string prop)
         {
             return obj != null && obj[prop] != null;
+        }
+
+        public static void JsonSave(string filename, object data)
+        {
+            File.WriteAllText(filename, ToString(data));
         }
     }
 }
