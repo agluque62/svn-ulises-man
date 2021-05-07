@@ -127,6 +127,15 @@ namespace idiomas {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a CPU.
+        /// </summary>
+        public static string GW_CPU_MODULE {
+            get {
+                return ResourceManager.GetString("GW_CPU_MODULE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Pasarela.
         /// </summary>
         public static string GW_GLOBAL_MODULE {

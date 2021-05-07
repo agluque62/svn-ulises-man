@@ -77,6 +77,7 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="CustomBinaryFormatter.cs" />
+    <Compile Include="DebugHelper.cs" />
     <Compile Include="EncryptionHelper.cs" />
     <Compile Include="EventQueue.cs" />
     <Compile Include="FailuresFilterHelper.cs" />

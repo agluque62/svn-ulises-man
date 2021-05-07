@@ -336,4 +336,7 @@ Error Solicitando Info</value>
   <data name="GW_NEW_CONFIG" xml:space="preserve">
     <value>Nueva Configuracion</value>
   </data>
+  <data name="GW_CPU_MODULE" xml:space="preserve">
+    <value>CPU</value>
+  </data>
 </root>

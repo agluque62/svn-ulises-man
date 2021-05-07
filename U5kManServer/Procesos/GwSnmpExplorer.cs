@@ -10,6 +10,7 @@ using System.Net;
 
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 
 using Lextm.SharpSnmpLib;
 //using Lextm.SharpSnmpLib.Messaging;
@@ -118,7 +119,7 @@ namespace U5kManServer
         /// <summary>
         /// Polling a la Pasarela.
         /// </summary>
-        static List<Variable> _GwVarList = new List<Variable>()
+        List<Variable> _GwVarList = new List<Variable>()
         {
             new Variable(new ObjectIdentifier(_GwOids[eGwPar.GwStatus])),
             new Variable(new ObjectIdentifier(_GwOids[eGwPar.MainOrStandby])),
@@ -166,7 +167,7 @@ namespace U5kManServer
         /// <summary>
         /// Incidencias de Activacion Asociadas a los tipos de Recurso notificados.
         /// </summary>
-        static protected Dictionary<trc, eIncidencias> ResourceActivationEventsCodes = new Dictionary<trc, eIncidencias>()
+        protected Dictionary<trc, eIncidencias> ResourceActivationEventsCodes = new Dictionary<trc, eIncidencias>()
         {
             {trc.rcRadio, eIncidencias.IGW_CONEXION_RECURSO_RADIO},
             {trc.rcTLF, eIncidencias.IGW_CONEXION_RECURSO_TLF},
@@ -178,7 +179,7 @@ namespace U5kManServer
         /// <summary>
         /// Incidencias de Desactivacion Asociadas a los tipos de Recurso notificados...
         /// </summary>
-        static protected Dictionary<trc, eIncidencias> ResourceDeactivationEventsCodes = new Dictionary<trc, eIncidencias>()
+        protected Dictionary<trc, eIncidencias> ResourceDeactivationEventsCodes = new Dictionary<trc, eIncidencias>()
         {
             {trc.rcRadio, eIncidencias.IGW_DESCONEXION_RECURSO_RADIO},
             {trc.rcTLF, eIncidencias.IGW_DESCONEXION_RECURSO_TLF},
@@ -190,7 +191,7 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        public static event ChangeStatusDelegate ChangeStatus;
+        public event ChangeStatusDelegate ChangeStatus;
 
         /// <summary>
         /// 
@@ -381,26 +382,25 @@ namespace U5kManServer
         /// <param name="nslot"></param>
         /// <param name="slot"></param>
         /// <param name="tipo"></param>
-        static public void SlotTypeSet(/*stdGw gw, */stdPhGw pgw, int nslot, stdSlot slot, int tipo, int estado)
+        public void SlotTypeSet(/*stdGw gw, */stdPhGw pgw, int nslot, stdSlot slot, int tipo, int estado)
         {
             std current = tipo == 2 ? std.Ok : std.NoInfo;
             estado = tipo == 2 ? (estado | 0x01) : (estado & 0xFFFE);
-
-            //slot.std_online = ChangeStatus(slot.std_online,
-            //                               current, 0,
-            //                               current != std.Ok ? eIncidencias.IGW_DESCONEXION_IA4 : eIncidencias.IGW_CONEXION_IA4,
-            //                               eTiposInci.TEH_TIFX, pgw.name, /*nslot, */GwHelper.SlotStd2String(nslot, tipo, estado));
 
             if (slot.lastResMsc != estado || current != slot.std_online)
             {
                 if (current == std.Ok)
                 {
-                    RecordEvent<GwExplorer>(DateTime.Now, eIncidencias.IGW_CONEXION_IA4, eTiposInci.TEH_TIFX, pgw.name, /*nslot, */
+                    //RecordEvent<GwExplorer>(DateTime.Now, eIncidencias.IGW_CONEXION_IA4, eTiposInci.TEH_TIFX, pgw.name, /*nslot, */
+                    //    Params(GwHelper.SlotStd2String(nslot, 2, estado)));
+                    PushEvent(pgw, eIncidencias.IGW_CONEXION_IA4, eTiposInci.TEH_TIFX, pgw.name, /*nslot, */
                         Params(GwHelper.SlotStd2String(nslot, 2, estado)));
                 }
                 else
                 {
-                    RecordEvent<GwExplorer>(DateTime.Now, eIncidencias.IGW_DESCONEXION_IA4, eTiposInci.TEH_TIFX, pgw.name, /*nslot, */
+                    //RecordEvent<GwExplorer>(DateTime.Now, eIncidencias.IGW_DESCONEXION_IA4, eTiposInci.TEH_TIFX, pgw.name, /*nslot, */
+                    //    Params(GwHelper.SlotStd2String(nslot, 2, estado)));
+                    PushEvent(pgw, eIncidencias.IGW_DESCONEXION_IA4, eTiposInci.TEH_TIFX, pgw.name, /*nslot, */
                         Params(GwHelper.SlotStd2String(nslot, 2, estado)));
                     slot.Reset();
                 }
@@ -415,7 +415,7 @@ namespace U5kManServer
         /// <param name="nslot"></param>
         /// <param name="slot"></param>
         /// <param name="estado"></param>
-        static public void SlotStateSet(/*stdGw gw, */stdPhGw pgw, int nslot, stdSlot slot, int estado)
+        public void SlotStateSet(/*stdGw gw, */stdPhGw pgw, int nslot, stdSlot slot, int estado)
         {
             /** El primer bit es el estado de la tarjeta */
             estado = (estado >> 1);
@@ -499,7 +499,7 @@ namespace U5kManServer
         /// <param name="gwname"></param>
         /// <param name="rec"></param>
         /// <param name="tipo"></param>
-        public static void SlotRecursoTipoAgenteSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int tipo)
+        public void SlotRecursoTipoAgenteSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int tipo)
         {
             rec.tipo_online = (trc)tipo;              // Todo. Generar Incidencia si procede. Esta Incidencia no Existe.
         }
@@ -507,7 +507,7 @@ namespace U5kManServer
         /// 
         /// </summary>
         /// <param name="gwname"></param>
-        public static void SlotRecursoTipoInterfazSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int tipo)
+        public void SlotRecursoTipoInterfazSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int tipo)
         {
             rec.tipo_itf = (itf)tipo;               // Todo. Generar Incidencia si procede. Esta Incidencia no Existe.
         }
@@ -517,7 +517,7 @@ namespace U5kManServer
         /// <param name="gwname"></param>
         /// <param name="rec"></param>
         /// <param name="estado">0: NP, 1: OK, 2: Fallo, 3: Degradado.</param>
-        public static void SlotRecursoEstadoSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int estado, trc tipo)
+        public void SlotRecursoEstadoSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int estado, trc tipo)
         {
             if (rec.presente)
             {
@@ -528,16 +528,26 @@ namespace U5kManServer
                     if (rec.std_online != current)
                     {
                         rec.std_online = current;
-                        RecordEvent<GwExplorer>(DateTime.Now, estado != 0 ? ResourceActivationEventsCodes[tipo] : ResourceDeactivationEventsCodes[tipo],
-                                                  eTiposInci.TEH_TIFX, pgw.name, Params(rec.name));
+                        //RecordEvent<GwExplorer>(DateTime.Now, estado != 0 ? ResourceActivationEventsCodes[tipo] : ResourceDeactivationEventsCodes[tipo],
+                        //                          eTiposInci.TEH_TIFX, pgw.name, Params(rec.name));
+                        PushEvent(pgw, estado != 0 ? ResourceActivationEventsCodes[tipo] : ResourceDeactivationEventsCodes[tipo],
+                              eTiposInci.TEH_TIFX, pgw.name, Params(rec.name));
                     }
                 }
                 else
                 {
-                    rec.std_online = ChangeStatus(rec.std_online,
-                                                  estado == 1 ? std.Ok : std.Error, 0,
-                                                  estado == 1 ? ResourceActivationEventsCodes[tipo] : ResourceDeactivationEventsCodes[tipo],
-                                                  eTiposInci.TEH_TIFX, pgw.name, rec.name);
+                    var newstd = estado == 1 ? std.Ok : std.Error;
+                    if (rec.std_online != newstd)
+                    {
+                        PushEvent(pgw,
+                            estado == 1 ? ResourceActivationEventsCodes[tipo] : ResourceDeactivationEventsCodes[tipo],
+                            eTiposInci.TEH_TIFX, pgw.name, Params(rec.name));
+                        rec.std_online = newstd;
+                    }
+                    //rec.std_online = ChangeStatus(rec.std_online,
+                    //                              estado == 1 ? std.Ok : std.Error, 0,
+                    //                              estado == 1 ? ResourceActivationEventsCodes[tipo] : ResourceDeactivationEventsCodes[tipo],
+                    //                              eTiposInci.TEH_TIFX, pgw.name, rec.name);
                 }
             }
             else
@@ -562,32 +572,34 @@ namespace U5kManServer
         /// 
         /// </summary>
         /// <param name="gw"></param>
-        public static void GwActualizaEstado(stdGw gw)
+        public void GwActualizaEstado(stdGw gw)
         {
-            //std std_old = gw.std;
+            std std_old = gw.std;
 
             gw.presente = gw.Dual == false ? gw.gwA.presente : (gw.gwA.presente == true || gw.gwB.presente == true) ? true : false;
             if (gw.presente == false)
                 gw.Reset();
             gw.std = gw.presente == false ? std.NoInfo : gw.Errores == true ? std.Error : std.Ok;
 
-            //if (std_old != gw.std)
-            //{
-            //    switch (gw.std)           // Ha habido un cambio de estado global...
-            //    {
-            //        case std.NoInfo:        // Desconectado o No Operativo.
-            //            U5kEstadisticaProc.Estadisticas.EventoPasarela(gw.name, false);
-            //            break;
+            if (std_old != gw.std)
+            {
+                switch (gw.std)           // Ha habido un cambio de estado global...
+                {
+                    case std.NoInfo:        // Desconectado o No Operativo.
+                                            //U5kEstadisticaProc.Estadisticas.EventoPasarela(gw.name, false);
+                        RecordEvent<GwExplorer>(DateTime.Now, eIncidencias.IGW_CAIDA, eTiposInci.TEH_TIFX, gw.name, Params(idiomas.strings.GW_GLOBAL_MODULE));
+                        break;
 
-            //        case std.Error:         // Conectado pero en Fallo.
-            //        case std.Ok:            // Plenamente operativo.
-            //            U5kEstadisticaProc.Estadisticas.EventoPasarela(gw.name, true);
-            //            break;
+                    case std.Error:         // Conectado pero en Fallo.
+                    case std.Ok:            // Plenamente operativo.
+                        //U5kEstadisticaProc.Estadisticas.EventoPasarela(gw.name, true);
+                        RecordEvent<GwExplorer>(DateTime.Now, eIncidencias.IGW_ENTRADA, eTiposInci.TEH_TIFX, gw.name, Params(idiomas.strings.GW_GLOBAL_MODULE));
+                        break;
 
-            //        default:
-            //            break;
-            //    }
-            //}
+                    default:
+                        break;
+                }
+            }
         }
         /// <summary>
         /// 
@@ -595,7 +607,7 @@ namespace U5kManServer
         /// <param name="gwp"></param>
         /// <param name="pgw"></param>
         /// <param name="estado"></param>
-        public static void PhGwCambioEstado(/*stdGw gw, */stdPhGw pgw, int estado)
+        public void PhGwCambioEstado(/*stdGw gw, */stdPhGw pgw, int estado)
         {
             /* Actualizo el estado de la pasarela fisica **/
             bool nuevo_estado = estado == 1 ? true : false;
@@ -605,7 +617,12 @@ namespace U5kManServer
                 std std_new = pgw.presente == false ? std.NoInfo : pgw.Errores == true ? std.Error : std.Ok;
                 eIncidencias inci = std_new == std.NoInfo ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
 
-                pgw.std = ChangeStatus(pgw.std, std_new, 0, inci, eTiposInci.TEH_TIFX, pgw.name);
+                //pgw.std = ChangeStatus(pgw.std, std_new, 0, inci, eTiposInci.TEH_TIFX, pgw.name);
+                if (std_new != pgw.std)
+                {
+                    pgw.std = std_new;
+                    PushEvent(pgw, inci, eTiposInci.TEH_TIFX, pgw.name, Params(""));
+                }
 
                 if (pgw.presente == false)
                 {
@@ -619,19 +636,26 @@ namespace U5kManServer
         /// </summary>
         /// <param name="pgw"></param>
         /// <param name="estado"></param>
-        public static void PhGwPrincipalReservaSet(/*stdGw gw, */stdPhGw pgw, int estado)
+        public void PhGwPrincipalReservaSet(/*stdGw gw, */stdPhGw pgw, int estado)
         {
-            pgw.Seleccionada = ChangeStatus(pgw.Seleccionada == true ? std.Ok : std.NoInfo,
-                estado == 0 ? std.NoInfo : std.Ok, 0, eIncidencias.IGW_PRINCIPAL_RESERVA, eTiposInci.TEH_TIFX, pgw.name,
-                pgw.name,
-                estado == 0 ? idiomas.strings.GWS_Reserva : idiomas.strings.GWS_Principal/* "Reserva" : "Principal"*/) == std.Ok ? true : false;
+            //pgw.Seleccionada = ChangeStatus(pgw.Seleccionada == true ? std.Ok : std.NoInfo,
+            //    estado == 0 ? std.NoInfo : std.Ok, 0, eIncidencias.IGW_PRINCIPAL_RESERVA, eTiposInci.TEH_TIFX, pgw.name,
+            //    pgw.name,
+            //    estado == 0 ? idiomas.strings.GWS_Reserva : idiomas.strings.GWS_Principal/* "Reserva" : "Principal"*/) == std.Ok ? true : false;
+            var newSel = estado == 1;
+            if (pgw.Seleccionada != newSel)
+            {
+                PushEvent(pgw, eIncidencias.IGW_PRINCIPAL_RESERVA, eTiposInci.TEH_TIFX, pgw.name,
+                    Params(pgw.name, estado == 0 ? idiomas.strings.GWS_Reserva : idiomas.strings.GWS_Principal));
+                pgw.Seleccionada = newSel;
+            }
         }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="pwg"></param>
         /// <param name="status"></param>
-        public static void PhGwLanStatusSet(/*stdGw gw, */stdPhGw pgw, int status)
+        public void PhGwLanStatusSet(/*stdGw gw, */stdPhGw pgw, int status)
         {
             int bond = (status & 0x4) >> 2;
             int eth1 = (status & 0x2) >> 1;
@@ -739,6 +763,30 @@ namespace U5kManServer
             IPEndPoint gwep = new IPEndPoint(IPAddress.Parse(gw.ip), gw.snmpport);
             OctetString community = new OctetString("public");
 
+#if DEBUG
+            if (DebuggingHelper.Simulating)
+            {
+                DebuggingHelper.SimulatedGw.SnmpSlotGet(gw.ParentName, gw.name, nslot,
+                    (tipo, status) =>
+                    {
+                        SlotTypeSet(gw, nslot, gw.slots[nslot], tipo, status);
+                        SlotStateSet(gw, nslot, gw.slots[nslot], status);
+
+                        for (int rec = 0; rec < 4; rec++)
+                        {
+                            if (slot.rec[rec].presente == true)
+                            {
+                                ExploraRecurso_unificada(new KeyValuePair<stdPhGw, int>(gw, nslot * 4 + rec));
+                            }
+                            else
+                            {
+                                Reset_ExploraRecurso(gw, nslot, rec);
+                            }
+                        }
+                    });
+            }
+            else
+#endif
             try
             {
                 string oidbase = ".1.3.6.1.4.1.7916.8.3.1.3.2.1.";
@@ -807,8 +855,22 @@ namespace U5kManServer
             if (gw.name == "" && nslot == 0 && ires == 1)
                 LogTrace<GwExplorer>(String.Format("Presencia (1) Slot 0, Recurso 1: {0}", gw.slots[0].rec[1].presente));
 
-            try
+#if DEBUG
+            if (DebuggingHelper.Simulating)
             {
+                DebuggingHelper.SimulatedGw.SnmpRecursoGet(gw.ParentName, gw.name, nslot, ires,
+                    (tipo, status) =>
+                    {
+                        int AgentType = NotifiedAgentType(tipo);
+                        SlotRecursoTipoAgenteSet(gw, rec, AgentType);
+                        SlotRecursoTipoInterfazSet(gw, rec, tipo);
+                        SlotRecursoEstadoSet(gw, rec, status, (trc)AgentType);
+                    });
+            }
+            else
+#endif
+                try
+                {
                 string oidbase = ".1.3.6.1.4.1.7916.8.3.1.4.2.1.";
                 List<Variable> vIn = new List<Variable>()
                 {
@@ -832,11 +894,9 @@ namespace U5kManServer
                 }
                 else if ((ntipo >= 0 && ntipo < 9) || ntipo == 13)
                 {
-                    int TipoNotificado = ntipo == 0 ? RadioResource_AgentType :
-                        ntipo == 1 ? IntercommResource_AgentType :
-                        (ntipo < 5 || ntipo == 13) ? LegacyPhoneResource_AgentType : ATSPhoneResource_AgentType;
+                    int AgentType = NotifiedAgentType(ntipo);
 
-                    SlotRecursoTipoAgenteSet(gw, rec, TipoNotificado);
+                    SlotRecursoTipoAgenteSet(gw, rec, AgentType);
                     /*
                             rcRadio = 0, 
                             rcLCE = 1, 
@@ -852,7 +912,7 @@ namespace U5kManServer
                     SlotRecursoTipoInterfazSet(gw, rec, ntipo);
 
                     int estado = snmpc.Integer(vOut[2].Data);   // 0: NP, 1: OK, 2: Fallo, 3: Degradado
-                    SlotRecursoEstadoSet(gw, rec, estado, (trc)TipoNotificado);
+                    SlotRecursoEstadoSet(gw, rec, estado, (trc)AgentType);
                 }
                 else if (ntipo != 9 && ntipo != -1)
                 {
@@ -1169,11 +1229,18 @@ namespace U5kManServer
         {
             // Obtengo una copia del estado de la pasarela.
             stdPhGw phgw = new stdPhGw((stdPhGw)obj);
+            phgw.events = new Queue<object>();
 
             try
             {
                 // Ping para la conectividad....
+#if DEBUG
+                var resPing = DebuggingHelper.Simulating ? 
+                    DebuggingHelper.SimulatedGw.Ping2Cpu(phgw.ParentName, phgw.name) : 
+                    U5kGenericos.Ping(phgw.ip, phgw.presente);
+#else
                 var resPing = U5kGenericos.Ping(phgw.ip, phgw.presente);
+#endif
                 if (phgw.IpConn.ProcessResult(resPing))
                 {
                     phgw.IpConn.Std = resPing ? std.Ok : std.NoInfo;
@@ -1263,6 +1330,7 @@ namespace U5kManServer
             finally
             {
                 ConsolidateData((stdPhGw)obj, phgw);
+                phgw.events.Clear();
             }
         }
         /// <summary>
@@ -1271,6 +1339,14 @@ namespace U5kManServer
         /// <param name="phgw"></param>
         protected void SipModuleTest(stdPhGw phgw, Action<bool, std> response)
         {
+#if DEBUG
+            if (DebuggingHelper.Simulating)
+            {
+                var res = DebuggingHelper.SimulatedGw.SipPing2Cpu(phgw.ParentName, phgw.name);
+                response(res, res ? std.Ok : std.NoInfo);
+            }
+            else
+#endif
             try
             {
                 int timeout = Properties.u5kManServer.Default.SipOptionsTimeout;
@@ -1309,6 +1385,14 @@ namespace U5kManServer
         {
             std stdRes = std.NoInfo;
             var mensaje = "";
+#if DEBUG
+            if (DebuggingHelper.Simulating)
+            {
+                var res = DebuggingHelper.SimulatedGw.CfgPing2Cpu(phgw.ParentName, phgw.name);
+                response(res, res ? std.Ok : std.NoInfo, mensaje);
+            }
+            else
+#endif
             try
             {
                 string page = "http://" + phgw.ip + ":8080/test";
@@ -1355,8 +1439,31 @@ namespace U5kManServer
         /// <param name="phgw"></param>
         protected void SnmpModuleExplore(stdPhGw phgw, Action<bool> response)
         {
-            try
+#if DEBUG
+            if (DebuggingHelper.Simulating)
             {
+                var res = DebuggingHelper.SimulatedGw.SnmpPing2Cpu(phgw.ParentName, phgw.name,
+                    (status, lan1, lan2, mss, fa) =>
+                    {
+                        phgw.std = status == 0 ? std.NoInfo : status == 1 ? std.Ok : std.Error;
+                        int stdLan = (lan1 == 1 ? 0x01 : 0x00) | (lan2 == 1 ? 0x02 : 0x00);
+                        PhGwLanStatusSet(phgw, (0x04 | stdLan));                 // En este tipo de Pasarelas BOND configurado...
+
+                        PhGwPrincipalReservaSet(phgw, mss ? 1 : 0);       // Solo se marca PPAL si está en PPAL en cualquier otro caso se marca RSVA
+
+                        phgw.stdFA = fa == 0 ? std.NoInfo : fa == 1 ? std.Ok : fa == 2 ? std.Error : std.NoExiste;
+
+                        for (int slot = 0; slot < 4; slot++)
+                        {
+                            ExploraSlot_unificada(new KeyValuePair<stdPhGw, int>(phgw, slot));
+                        }
+                    });
+                response(res);
+            }
+            else
+#endif
+                try
+                {
 #if !_EXPLORE_ALL_AT_ONCE_
                 ExploraGwStdGen_unificada(phgw);
                 for (int slot = 0; slot < 4; slot++)
@@ -1411,19 +1518,22 @@ namespace U5kManServer
                     eIncidencias inci = current.SnmpMod.Std == std.NoInfo ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
                     RecordEvent<GwExplorer>(DateTime.Now, inci, eTiposInci.TEH_TIFX, current.name, Params(idiomas.strings.GW_SNMP_MODULE));
                 }
+                /** Habilita el registro de los eventos surgidos en los Pollings */
+                PopEvents(current);
 
                 // Genera historicos de activacion / desactivacion de la pasarela...
                 if (current.presente != last.presente)
                 {
+                    var who = idiomas.strings.GW_CPU_MODULE + (current.Seleccionada ? " Activa " : " Reserva ");
                     eIncidencias inci = current.presente == false ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
-                    RecordEvent<GwExplorer>(DateTime.Now, inci, eTiposInci.TEH_TIFX, current.name, Params(idiomas.strings.GW_GLOBAL_MODULE));
+                    RecordEvent<GwExplorer>(DateTime.Now, inci, eTiposInci.TEH_TIFX, current.name, Params(who));
 
                     if (current.presente == false)
                     {
                         /** 20200811 Reset de los estados de Módulos */
                         current.SipMod.Std = std.NoInfo;
                         current.CfgMod.Std = std.NoInfo;
-                        current.SipMod.Std = std.NoInfo;
+                        current.SnmpMod.Std = std.NoInfo;
 
                         /** Reset Estado GW fisica */
                         GwHelper.SetToOutOfOrder(current);
@@ -1441,14 +1551,37 @@ namespace U5kManServer
             }
         }
 
+        void PushEvent(stdPhGw cpu, eIncidencias inci, eTiposInci thw, string idhw, object[] parametros,
+            [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string caller = null)
+        {
+            var itemEvent = new Tuple<eIncidencias, eTiposInci, string, object[], int, string>(inci, thw, idhw, parametros, lineNumber, caller);
+            cpu.events.Enqueue(itemEvent);
+        }
 
-#endregion
+        void PopEvents(stdPhGw cpu)
+        {
+            while (cpu.events.Count() > 0)
+            {
+                var itemEvent = (Tuple<eIncidencias, eTiposInci, string, object[], int, string>)cpu.events.Dequeue();
+                RecordEvent<GwExplorer>(DateTime.Now, itemEvent.Item1, itemEvent.Item2, itemEvent.Item3, itemEvent.Item4, itemEvent.Item5, itemEvent.Item6);
+            }
+        }
+
+        int NotifiedAgentType(int ntipo)
+        {
+            int TipoNotificado = ntipo == 0 ? RadioResource_AgentType :
+                ntipo == 1 ? IntercommResource_AgentType  :    
+                (ntipo < 5 || ntipo == 13) ? LegacyPhoneResource_AgentType : ATSPhoneResource_AgentType;
+            return TipoNotificado;
+        }
+
+        #endregion
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="gw"></param>
-        static protected void GwTrace(stdGw gw)
+        protected void GwTrace(stdGw gw)
         {
             NLog.LogLevel level = NLog.LogLevel.Info;
 

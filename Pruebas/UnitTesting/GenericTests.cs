@@ -8,6 +8,7 @@ using System.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Diagnostics;
 
+using System.Threading;
 using System.Threading.Tasks;
 
 using Utilities;
@@ -116,7 +117,43 @@ namespace UnitTesting
 
             }
         }
+        [TestMethod]
+        public void ControlledDelayTest()
+        {
+            ManualResetEvent control = new ManualResetEvent(false);
 
+            Action<ManualResetEvent, string> Delay = (ctrl, msg) =>
+            {
+                Task.Run(() =>
+                {
+                    if (ctrl.WaitOne(500))
+                    {
+                        Debug.WriteLine($"OK => {msg}");
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"ERROR => {msg}");
+                    }
+                });
+            };
+
+            Delay(control, "Mensaje 1");
+            Delay(control, "Mensaje 2");
+            Task.Delay(300).Wait();
+            Debug.WriteLine($"Fin Bloque 1");
+            control.Set();
+
+            Task.Delay(100).Wait();
+            control.Reset();
+            
+            Delay(control, "Mensaje 3");
+            Delay(control, "Mensaje 4");
+            Task.Delay(700).Wait();
+            Debug.WriteLine($"Fin Bloque 2");
+            control.Set();
+
+            Task.Delay(200).Wait();
+        }
         void InnerFunction(Action execute)
         {
             try

@@ -1,0 +1,493 @@
+{
+	"name": "CGW-01",
+	"ip": "10.68.60.21",
+	"std": 0,
+	"presente": false,
+	"Dual": true,
+	"_ntp_client_status": [],
+	"gwA": {
+		"name": "CGW-01-A",
+		"ip": "10.68.60.1",
+		"presente": false,
+		"std": 1,
+		"lan1": 1,
+		"lan2": 0,
+		"Seleccionada": false,
+		"stdFA": 0,
+		"IpConn": true,
+		"SipMod": true,
+		"CfgMod": true,
+		"SnmpMod": true,
+		"slots": [
+			{
+				"comentario_simulador": "std_cfg=> 2 (IA4), std_online=>B1,Canal1; B2,Canal2; B3,Canal3; B4,Canal4",
+				"std_cfg": 2,
+				"std_online": 30,
+				"recs": [
+					{
+						"name": "LC-2",
+						"tipo": 1,
+						"tipo_online": -1,
+						"comentario_simulador": "rcRadio=0,rcLCE=1,rcPpBL=3,rcPpBC=2,rcPpAB=4,rcPpEM=13,rcPpEMM=51,rcAtsR2=5,rcAtsN5=6,rcNotipo=-1", 
+						"tipo_itf": 1,
+						"bdt": true,
+						"presente": false,
+						"comentario_simulador1": "std_online=> 0:error, 1:ok",  
+						"std_online": 1,
+						"bdt_name": "LC-2",
+						"snmp_port": 16111,
+						"snmp_trap_port": 16211,
+						"Stpo": 2
+					},
+					{
+						"name": "LTXRX-04",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "LTXRX-04",
+						"snmp_port": 16112,
+						"snmp_trap_port": 16212,
+						"Stpo": 2
+					},
+					{
+						"name": "N5-2",
+						"tipo": 6,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "N5-2",
+						"snmp_port": 16113,
+						"snmp_trap_port": 16213,
+						"Stpo": 2
+					},
+					{
+						"name": "",
+						"tipo": -1,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": false,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "",
+						"snmp_port": 16114,
+						"snmp_trap_port": 162,
+						"Stpo": 0
+					}
+				]
+			},
+			{
+				"std_cfg": 2,
+				"std_online": 30,
+				"recs": [
+					{
+						"name": "",
+						"tipo": -1,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": false,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "",
+						"snmp_port": 16121,
+						"snmp_trap_port": 162,
+						"Stpo": 0
+					},
+					{
+						"name": "R2-2",
+						"tipo": 5,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "R2-2",
+						"snmp_port": 16122,
+						"snmp_trap_port": 16222,
+						"Stpo": 2
+					},
+					{
+						"name": "_RXGW_a_E2",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "_RXGW_a_E2",
+						"snmp_port": 16123,
+						"snmp_trap_port": 16223,
+						"Stpo": 0
+					},
+					{
+						"name": "",
+						"tipo": -1,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": false,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "",
+						"snmp_port": 16124,
+						"snmp_trap_port": 162,
+						"Stpo": 0
+					}
+				]
+			},
+			{
+				"std_cfg": 1,
+				"std_online": 0,
+				"recs": [
+					{
+						"name": "LRX_02",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "LRX_02",
+						"snmp_port": 16131,
+						"snmp_trap_port": 16231,
+						"Stpo": 0
+					},
+					{
+						"name": "LTXRX-03",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "LTXRX-03",
+						"snmp_port": 16132,
+						"snmp_trap_port": 16232,
+						"Stpo": 2
+					},
+					{
+						"name": "",
+						"tipo": -1,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": false,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "",
+						"snmp_port": 16133,
+						"snmp_trap_port": 162,
+						"Stpo": 0
+					},
+					{
+						"name": "LineaBL",
+						"tipo": 3,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "LineaBL",
+						"snmp_port": 16134,
+						"snmp_trap_port": 16234,
+						"Stpo": 2
+					}
+				]
+			},
+			{
+				"std_cfg": 1,
+				"std_online": 0,
+				"rec": [
+					{
+						"name": "LRX_03",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "LRX_03",
+						"Stpo": 0
+					},
+					{
+						"name": "R2-1",
+						"tipo": 5,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "R2-1",
+						"Stpo": 2
+					},
+					{
+						"name": "_TXGW_a_E2",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "_TXGW_a_E2",
+						"Stpo": 1
+					},
+					{
+						"name": "",
+						"tipo": -1,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": false,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "",
+						"Stpo": 0
+					}
+				],
+				"lastResMsc": 0
+			}
+		]
+	},
+	"gwB": {
+		"name": "CGW-01-B",
+		"ip": "10.68.60.11",
+		"presente": false,
+		"std": 1,
+		"lan1": 0,
+		"lan2": 2,
+		"Seleccionada": true,
+		"stdFA": 1,
+		"IpConn": true,
+		"SipMod": true,
+		"CfgMod": true,
+		"SnmpMod": true,
+		"slots": [
+			{
+				"std_cfg": 1,
+				"std_online": 0,
+				"recs": [
+					{
+						"name": "LC-2",
+						"tipo": 1,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "LC-2",
+						"snmp_port": 16111,
+						"snmp_trap_port": 162,
+						"Stpo": 2
+					},
+					{
+						"name": "LTXRX-04",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "LTXRX-04",
+						"snmp_port": 16112,
+						"snmp_trap_port": 162,
+						"Stpo": 2
+					},
+					{
+						"name": "N5-2",
+						"tipo": 6,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "N5-2",
+						"snmp_port": 16113,
+						"snmp_trap_port": 162,
+						"Stpo": 2
+					},
+					{
+						"name": "",
+						"tipo": -1,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": false,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "",
+						"snmp_port": 16114,
+						"snmp_trap_port": 162,
+						"Stpo": 0
+					}
+				]
+			},
+			{
+				"std_cfg": 1,
+				"std_online": 0,
+				"recs": [
+					{
+						"name": "",
+						"tipo": -1,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": false,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "",
+						"snmp_port": 16121,
+						"snmp_trap_port": 162,
+						"Stpo": 0
+					},
+					{
+						"name": "R2-2",
+						"tipo": 5,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "R2-2",
+						"snmp_port": 16122,
+						"snmp_trap_port": 162,
+						"Stpo": 2
+					},
+					{
+						"name": "_RXGW_a_E2",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "_RXGW_a_E2",
+						"snmp_port": 16123,
+						"snmp_trap_port": 162,
+						"Stpo": 0
+					},
+					{
+						"name": "",
+						"tipo": -1,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": false,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "",
+						"snmp_port": 16124,
+						"snmp_trap_port": 162,
+						"Stpo": 0
+					}
+				]
+			},
+			{
+				"std_cfg": 1,
+				"std_online": 0,
+				"recs": [
+					{
+						"name": "LRX_02",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "LRX_02",
+						"snmp_port": 16131,
+						"snmp_trap_port": 162,
+						"Stpo": 0
+					},
+					{
+						"name": "LTXRX-03",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "LTXRX-03",
+						"snmp_port": 16132,
+						"snmp_trap_port": 162,
+						"Stpo": 2
+					},
+					{
+						"name": "",
+						"tipo": -1,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": false,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "",
+						"snmp_port": 16133,
+						"snmp_trap_port": 162,
+						"Stpo": 0
+					},
+					{
+						"name": "LineaBL",
+						"tipo": 3,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "LineaBL",
+						"snmp_port": 16134,
+						"snmp_trap_port": 162,
+						"Stpo": 2
+					}
+				]
+			},
+			{
+				"std_cfg": 1,
+				"std_online": 0,
+				"rec": [
+					{
+						"name": "LRX_03",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "LRX_03",
+						"Stpo": 0
+					},
+					{
+						"name": "R2-1",
+						"tipo": 5,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "R2-1",
+						"Stpo": 2
+					},
+					{
+						"name": "_TXGW_a_E2",
+						"tipo": 0,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": true,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "_TXGW_a_E2",
+						"Stpo": 1
+					},
+					{
+						"name": "",
+						"tipo": -1,
+						"tipo_online": -1,
+						"tipo_itf": -1,
+						"bdt": false,
+						"presente": false,
+						"std_online": 0,
+						"bdt_name": "",
+						"Stpo": 0
+					}
+				],
+				"lastResMsc": 0
+			}
+		]
+	}
+}

@@ -1267,6 +1267,8 @@ namespace U5kManServer
                 slots[0].Data, slots[1].Data, slots[2].Data, slots[3]
             }
         };
+
+        public Queue<Object> events = new Queue<object>();
     }
 
     /// <summary>
@@ -2508,20 +2510,24 @@ namespace U5kManServer
         {
             lock (_last_inci)
             {
-                U5kManLastInciList.eListaInci inci = new U5kManLastInciList.eListaInci();
-                inci._fecha = dt;
-                inci._desc = str;
+                //U5kManLastInciList.eListaInci inci = new U5kManLastInciList.eListaInci();
+                //inci._fecha = dt;
+                //inci._desc = str;
 
-                _last_inci._lista.Add(inci);
+                //_last_inci._lista.Add(inci);
 
-                /** Ordeno Descendente */
-                var result = _last_inci._lista.OrderByDescending(x => x._fecha).ToList();
-                _last_inci._lista = result;
+                ///** Ordeno Descendente */
+                //var result = _last_inci._lista.OrderByDescending(x => x._fecha).ToList();
+                //_last_inci._lista = result;
 
+                ///** Elimino la ultima si procede */
+                //if (_last_inci._lista.Count > Properties.u5kManServer.Default.LineasIncidencias)
+                //    _last_inci._lista.Remove(_last_inci._lista[Properties.u5kManServer.Default.LineasIncidencias - 1]);
+                var inci = new U5kManLastInciList.eListaInci() { _fecha = dt, _desc = str };
+                _last_inci._lista.Insert(0, inci);
                 /** Elimino la ultima si procede */
                 if (_last_inci._lista.Count > Properties.u5kManServer.Default.LineasIncidencias)
                     _last_inci._lista.Remove(_last_inci._lista[Properties.u5kManServer.Default.LineasIncidencias - 1]);
-
             }
         }
 

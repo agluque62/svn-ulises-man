@@ -342,4 +342,7 @@ Error requesting data</value>
   <data name="GW_NEW_CONFIG" xml:space="preserve">
     <value>New Configuration</value>
   </data>
+  <data name="GW_CPU_MODULE" xml:space="preserve">
+    <value>CPU</value>
+  </data>
 </root>
