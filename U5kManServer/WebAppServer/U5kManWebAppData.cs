@@ -1451,6 +1451,9 @@ namespace U5kManServer.WebAppServer
 
             public void Normalize()
             {
+                desde = desde.ToLocalTime();
+                hasta = hasta.ToLocalTime();
+
                 if (hasta < desde)
                     hasta = desde;
             }
