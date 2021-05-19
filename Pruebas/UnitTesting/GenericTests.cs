@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Utilities;
+using U5kBaseDatos;
 
 namespace UnitTesting
 {
@@ -183,7 +184,6 @@ namespace UnitTesting
                 Debug.WriteLine("Cierre de Bucle de Gestion de Excepcion.");
             }
         }
-
         class TestingClass
         {
             public TestingClass(Action action)
@@ -193,6 +193,17 @@ namespace UnitTesting
                     Task.Delay(TimeSpan.FromSeconds(1)).Wait();
                     action();
                 //});
+            }
+        }
+        [TestMethod]
+        public void TestDbTableSistema()
+        {
+            using (var db = new U5kBdtService(Thread.CurrentThread.CurrentUICulture, eBdt.bdtMySql, "127.0.0.1", "root", "cd40"))
+            {
+                db.GetSystemParams("departamento", (group, port) =>
+                {
+                    Debug.WriteLine($"Grupo: {group}, Puerto: {port}");
+                });
             }
         }
     }

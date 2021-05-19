@@ -263,7 +263,7 @@ namespace U5kBaseDatos
     /// <summary>
     /// 
     /// </summary>
-    public class U5kBdtService
+    public class U5kBdtService : IDisposable
     {
         /// <summary>
         /// 
@@ -303,7 +303,10 @@ namespace U5kBaseDatos
                 ((SQLiteConnection)_DB).Close();
             }
         }
-
+        public void Dispose()
+        {
+            dbClose();
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -523,33 +526,41 @@ namespace U5kBaseDatos
                 DataTable tb = data.Tables[0];
                 foreach (DataRow row in tb.Rows)
                 {
+                    string id="", ip="", ip2="", iddestino="", idrecurso="";
+                    int tipo = 0, sip_port = 5060;
+                    long? modelo = null;
+                    ulong? rxortx = null;
                     try
                     {
-                        string id = row.Field<string>("IDEQUIPOS");
-                        string ip = row.Field<string>("IPRED1");
-                        string ip2 = row.Field<string>("IPRED2");
-                        uint tipo = row.Field<uint>("TIPOEQUIPO");
-                        long? modelo =  ver < 1 ? 0 : row.Field<long?>("MODELOEQUIPO");
-                        ulong? rxortx = ver < 1 ? 0 : row.Field<ulong?>("TIPORADIO");
-                        string iddestino = ver < 2 ? "" : row.Field<string>("IDDESTINO");
-                        string idrecurso = ver < 2 ? "" : row.Field<string>("IDRECURSO");
-                        int sip_port = ver < 2 ? 5060 : row.Field<int>("SIPPORT");
+                        id = row.Field<string>("IDEQUIPOS");
+                        ip = row.Field<string>("IPRED1");
+                        ip2 = row.Field<string>("IPRED2");
+                        iddestino = ver < 2 ? "" : row.Field<string>("IDDESTINO");
+                        idrecurso = ver < 2 ? "" : row.Field<string>("IDRECURSO");
+                        tipo = (int)row.Field<uint>("TIPOEQUIPO");
+                        sip_port = ver < 2 ? 5060 : row.Field<int>("SIPPORT");
+                        modelo = ver < 1 ? 0 : row.Field<long?>("MODELOEQUIPO");
+                        rxortx = ver < 1 ? 0 : row.Field<ulong?>("TIPORADIO");
+                    }
+                    catch (Exception x)
+                    {
+                        _logger.Error<Exception>("U5kBdtService.ListaEquiposEurocae Exception.", x);
+                    }
+                    finally
+                    {
                         equipos.Add(new BdtEuEq()
                         {
                             Id = id,
                             Ip = ip,
                             Ip2 = ip2,
-                            Tipo = (int )tipo,
-                            Modelo = modelo==null ? 0 : (int )modelo,
-                            RxOrTx = rxortx==null ? 0 : (int )rxortx,
+                            Tipo = (int)tipo,
+                            Modelo = modelo == null ? 0 : (int)modelo,
+                            RxOrTx = rxortx == null ? 0 : (int)rxortx,
                             IdDestino = iddestino,
                             IdRecurso = idrecurso,
                             SipPort = sip_port
                         });
-                    }
-                    catch (Exception x)
-                    {
-                        _logger.Error<Exception>("U5kBdtService.ListaEquiposEurocae Exception.", x);
+
                     }
                 }
             }
@@ -997,87 +1008,84 @@ namespace U5kBaseDatos
         {
             List<Tuple<String, String>> users = new List<Tuple<string, string>>();
 
-            string cfg_id="", cfg_date="";
-            string mcast_ip = "";
-            long mcast_port = 0;
-            GetCfgActiva(sistema, ref cfg_id, ref cfg_date, ref mcast_ip, ref mcast_port);
-            string prefix = GetAtsPrefix(sistema);
-
-            string strsql = String.Format("SELECT s.IdTop, s.IdSector, a.IdAbonado " + 
-                 "FROM sectoressectorizacion s, usuariosabonados a " + 
-                 "WHERE s.Idsectorizacion=\"{0}\" AND a.IdAbonado LIKE \"{1}%\" AND a.IdSector = s.IdSector;", 
-                  cfg_id, prefix);
-            try
+            GetCfgActiva(sistema, (name, version) =>
             {
-                DataTable tb_users = GetDataSet(strsql).Tables[0];
-                foreach (System.Data.DataRow tb_user in tb_users.Rows)
+                string prefix = GetAtsPrefix(sistema);
+
+                string strsql = String.Format("SELECT s.IdTop, s.IdSector, a.IdAbonado " +
+                     "FROM sectoressectorizacion s, usuariosabonados a " +
+                     "WHERE s.Idsectorizacion=\"{0}\" AND a.IdAbonado LIKE \"{1}%\" AND a.IdSector = s.IdSector;",
+                      name, prefix);
+                try
                 {
-                    try
+                    DataTable tb_users = GetDataSet(strsql).Tables[0];
+                    foreach (System.Data.DataRow tb_user in tb_users.Rows)
                     {
-                        string idTop = tb_user.Field<string>("IDTOP");
-                        string idAbn = tb_user.Field<string>("IDABONADO");
-                        users.Add(new Tuple<string, string>(idTop, idAbn));
-                    }
-                    catch (Exception x)
-                    {
-                        _logger.Error(x, String.Format("GetUsersOnTop. Excepcion en Fila {0}", tb_user));
+                        try
+                        {
+                            string idTop = tb_user.Field<string>("IDTOP");
+                            string idAbn = tb_user.Field<string>("IDABONADO");
+                            users.Add(new Tuple<string, string>(idTop, idAbn));
+                        }
+                        catch (Exception x)
+                        {
+                            _logger.Error(x, String.Format("GetUsersOnTop. Excepcion en Fila {0}", tb_user));
+                        }
                     }
                 }
-            }
-            catch (Exception x)
-            {
-                throw x;
-            }
+                catch (Exception x)
+                {
+                    throw x;
+                }
+            });
 
             return users;
         }
-
-        /// <summary>
-        /// 20170309. AGL. Para Obtener el ID de configuracion activa.
-        /// </summary>
-        /// 20180220. AGL. Tambien retorna el grupo y puerto mcast de configuracion...
-        /// <param name="sistema"></param>
-        /// <returns></returns>
-        public string GetCfgActiva(string sistema, ref string id, ref string date, ref string mcastip, ref long mcastport)
-        {            
-            //string strsql = String.Format("SELECT * " +
-            //     "FROM sectorizaciones " +
-            //     "WHERE IdSistema=\"{0}\" AND Activa=1;",
-            //     sistema);
-            string strsql = String.Format(
-                "select idsectorizacion as c1, 0 as c2, fechaactivacion as c3 "+
-                "from sectorizaciones where idsistema='{0}' and activa=1 " +
-                "union select grupomulticastconfiguracion, puertomulticastconfiguracion, 0 from sistema;", sistema);
+        public void GetCfgActiva(string sistema, Action<string, string> notify)
+        {
             try
             {
-                DataTable tb_cfg = GetDataSet(strsql).Tables[0];
-                // if (tb_cfg.Rows.Count > 0)
-                if (tb_cfg.Rows.Count > 1)
+                var ds = GetDataSet($"select idsectorizacion, fechaactivacion FROM sectorizaciones WHERE idsistema=\"{sistema}\" and activa=1;");
+                if (ds.Tables.Count == 1 && ds.Tables[0].Rows.Count == 1)
                 {
-                    //id   = tb_cfg.Rows[0].Field<string>("IDSECTORIZACION");
-                    //date = (tb_cfg.Rows[0].Field<DateTime>("FECHAACTIVACION")).ToString();
-                    id = tb_cfg.Rows[0].Field<string>("c1");
-                    date = tb_cfg.Rows[0].Field<string>("c3");
-                    mcastip = tb_cfg.Rows[1].Field<string>("c1");
-                    mcastport = tb_cfg.Rows[1].Field<long>("c2");
+                    var row = ds.Tables[0].Rows[0];
+                    var name = row.Field<string>("idsectorizacion");
+                    var version = row.Field<DateTime>("fechaactivacion").ToString();
+                    notify(name, version);
                 }
                 else
                 {
-                    id = "NONE";
-                    date = DateTime.MinValue.ToString();
-                    mcastip = "";
-                    mcastport = -1;
+                    _logger.Error($"GetSystemParams. No data get..");
                 }
             }
             catch (Exception x)
             {
-                id = "NONE";
-                _logger.Error(x, String.Format("GetCfgActiva. Excepcion"));
+                _logger.Error(x, "");
             }
 
-            return id;
         }
-
+        public void GetSystemParams(string systemid, Action<string, uint> notify)
+        {
+            try
+            {
+                var ds = GetDataSet($"SELECT GrupoMulticastConfiguracion as grupo, PuertoMulticastConfiguracion as puerto FROM sistema WHERE idsistema=\"{systemid}\";");
+                if (ds.Tables.Count == 1 && ds.Tables[0].Rows.Count == 1)
+                {
+                    var row = ds.Tables[0].Rows[0];
+                    var group = row.Field<string>("grupo");
+                    var port = row.Field<uint>("puerto");
+                    notify(group, port);
+                }
+                else
+                {
+                    _logger.Error($"GetSystemParams. No data get..");
+                }
+            }
+            catch (Exception x)
+            {
+                _logger.Error(x, "");
+            }
+        }
         /// <summary>
         /// Para obtener el Prefijo de Red ATS.
         /// </summary>
@@ -1552,6 +1560,8 @@ namespace U5kBaseDatos
 
             throw new Exception("U5kBdtService.BdtStrConn: Tipo de Base de Datos no Soportado ");
         }
+
+
         /// <summary>
         /// Para sincronizar los accesos de los diferentes thread's.
         /// </summary>

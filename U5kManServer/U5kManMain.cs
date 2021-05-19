@@ -724,15 +724,22 @@ namespace U5kManServer
                     else
                     {
                         string strVersion = "", strCfgName = "";
-                        string mcast_ip = "";
-                        long mcast_port = -1;
+                        //string mcast_ip = "";
+                        //long mcast_port = -1;
 #if _IF_SOAP_
                         InterfazSOAPConfiguracion client = new InterfazSOAPConfiguracion();
                         strVersion = client.GetVersionConfiguracion("departamento");                        
 #else
-                        U5kManService.Database.GetCfgActiva("departamento", ref strCfgName, ref strVersion, ref mcast_ip, ref mcast_port);
-                        U5kManService.st_config.mcast_conf_grp = mcast_ip;
-                        U5kManService.st_config.mcast_conf_port_base = mcast_port;
+                        //U5kManService.Database.GetCfgActiva("departamento", ref strCfgName, ref strVersion, ref mcast_ip, ref mcast_port);
+                        //U5kManService.st_config.mcast_conf_grp = mcast_ip;
+                        //U5kManService.st_config.Mcast_conf_port_base = mcast_port;
+
+                        U5kManService.Database.GetCfgActiva("departamento", (name, version) =>
+                        {
+                            strCfgName = name;
+                            strVersion = version;
+                        });
+
 #endif
                         GlobalServices.GetWriteAccess((data) =>
                         {
@@ -840,6 +847,11 @@ namespace U5kManServer
                     if (U5kManService.Database != null)
                         U5kManService.cfgSettings = new CfgSettings(U5kManService.Database);
 #endif
+                    U5kManService.Database.GetSystemParams("departamento", (mcastgrp, mcastport) =>
+                    {
+                        U5kManService.st_config.Mcast_conf_grp = mcastgrp;
+                        U5kManService.st_config.Mcast_conf_port_base = mcastport;
+                    });
                     LogInfo<U5kServiceMain>("CONECTADO A BASE DE DATOS");
                 }
             }

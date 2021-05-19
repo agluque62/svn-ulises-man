@@ -2261,7 +2261,6 @@ namespace U5kManServer
         /// 
         /// </summary>
         static public U5kBdtService Database { get; set; }
-
         /** */
         static public CfgSettings cfgSettings = new CfgSettings();
         /// <summary>
@@ -2311,10 +2310,10 @@ namespace U5kManServer
         /// </summary>
         public class Config
         {
-            public string mcast_conf_grp { get; set; }
-            public long mcast_conf_port_base { get; set; }
+            public string Mcast_conf_grp { get; set; }
+            public uint Mcast_conf_port_base { get; set; }
         };
-        public static Config st_config = new Config() { mcast_conf_grp = "", mcast_conf_port_base = -1 };
+        public static Config st_config = new Config() { Mcast_conf_grp = "", Mcast_conf_port_base = 0 };
 #region Servicio Radio
         /// <summary>
         /// 
