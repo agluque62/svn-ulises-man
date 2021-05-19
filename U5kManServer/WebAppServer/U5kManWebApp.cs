@@ -85,7 +85,7 @@ namespace U5kManServer.WebAppServer
                 //U5kGenericos.SetCurrentCulture();
 
                 _sync_server.Start(Properties.u5kManServer.Default.MiDireccionIP, 
-                    Properties.u5kManServer.Default.MainStanbyMcastAdd, 
+                    U5kManService.st_config.Mcast_conf_grp, 
                     Properties.u5kManServer.Default.SyncserverPort);
 
                 base.Start(Properties.u5kManServer.Default.WebserverPort, cfg);

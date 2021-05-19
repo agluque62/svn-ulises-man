@@ -2603,8 +2603,8 @@ namespace U5kManServer
             try
             {
                 Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                IPAddress ip = IPAddress.Parse(Properties.u5kManServer.Default.MainStanbyMcastAdd);
-                IPEndPoint ipep = new IPEndPoint(ip, Properties.u5kManServer.Default.MainStandByMcastPort);
+                IPAddress ip = IPAddress.Parse(U5kManService.st_config.Mcast_conf_grp);
+                IPEndPoint ipep = new IPEndPoint(ip, (int)U5kManService.st_config.Mcast_conf_port_base);
 
                 s.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, new MulticastOption(ip));
                 s.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 2);
