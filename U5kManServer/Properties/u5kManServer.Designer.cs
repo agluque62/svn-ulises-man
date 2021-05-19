@@ -872,5 +872,14 @@ namespace U5kManServer.Properties {
                 return ((string)(this["WebConfigPath"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int StatsVersion {
+            get {
+                return ((int)(this["StatsVersion"]));
+            }
+        }
     }
 }

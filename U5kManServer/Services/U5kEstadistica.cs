@@ -40,8 +40,11 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 using U5kBaseDatos;
+using Utilities;
 
 namespace U5kManServer
 {
@@ -150,7 +153,7 @@ namespace U5kManServer
         public static U5kEstadisticaProc Estadisticas = null;
         //public event RecordingEventDelegate Incidencia;
         public event BdtServiceAcces dbService;
-
+        public StatsManager Manager = null;
         /// <summary>
         /// 
         /// </summary>
@@ -166,11 +169,17 @@ namespace U5kManServer
             _timer.Interval = 1000 * 60;
             _timer_reg.Interval = 1000;
 #endif
-            _timer.Elapsed += new System.Timers.ElapsedEventHandler(Timer_Elapsed);
-            _last_inc = _last_reg = DateTime.Now;
+            if (StatsVersion == 0)
+            {
+                _timer.Elapsed += new System.Timers.ElapsedEventHandler(Timer_Elapsed);
+                _last_inc = _last_reg = DateTime.Now;
 
-            _timer_reg.Elapsed += new System.Timers.ElapsedEventHandler(Timer_Reg_Elapsed);
-
+                _timer_reg.Elapsed += new System.Timers.ElapsedEventHandler(Timer_Reg_Elapsed);
+            }
+            else
+            {
+                Manager = new StatsManager();
+            }
         }
         /// <summary>
         /// Debe venir con el SMP Global Adquirido...
@@ -238,8 +247,15 @@ namespace U5kManServer
             lock (_locker)
 #endif
             {
-                _timer.Start();
-                _timer_reg.Start();
+                if (StatsVersion == 0)
+                {
+                    _timer.Start();
+                    _timer_reg.Start();
+                }
+                else
+                {
+                    Manager.Start();
+                }
             }
         }
 
@@ -252,25 +268,32 @@ namespace U5kManServer
             lock (_locker)
 #endif
             {
-                _timer_reg.Stop();
-                _timer.Stop();
-
-                if (U5kManService._Master == true)
+                if (StatsVersion == 0)
                 {
-#if _STATS_INTERNAL_LOCK_    
+
+                    _timer_reg.Stop();
+                    _timer.Stop();
+
+                    if (U5kManService._Master == true)
+                    {
+#if _STATS_INTERNAL_LOCK_
                     DeactivateAll();
 #else
-                    GlobalServices.GetWriteAccess(data =>
-                    {
-                        DeactivateAll();
-                    });
+                        GlobalServices.GetWriteAccess(data =>
+                        {
+                            DeactivateAll();
+                        });
 #endif
-                    /** Para grabar los ultimos eventos.. */
-                    Timer_Reg_Elapsed(null, null);
+                        /** Para grabar los ultimos eventos.. */
+                        Timer_Reg_Elapsed(null, null);
+                    }
+
+                    _Contadores.Clear();
                 }
-
-                _Contadores.Clear();
-
+                else
+                {
+                    Manager.Stop();
+                }
 #if DEBUG1
                 Calcula(new DateTime(2016, 4, 1), DateTime.Today, U5kEstadisticaTiposElementos.Cwp, new List<string>());
 #endif
@@ -291,7 +314,7 @@ namespace U5kManServer
 #endif
                 {
                     U5kEstadisticaContador TOpe = Find(U5kEstadisticaTiposElementos.Cwp, nope);
-                    if (TOpe != null )
+                    if (TOpe != null)
                         Evento(TOpe, actividad);
                 }
             }
@@ -402,36 +425,36 @@ namespace U5kManServer
                 if (U5kManService._Master == true)
                 {
 #if !_STATS_INTERNAL_LOCK_
-                    GlobalServices.GetWriteAccess(data => 
+                    GlobalServices.GetWriteAccess(data =>
                     {
 #endif
-                    DateTime now = DateTime.Now;
-                    TimeSpan time_add = now - _last_inc;
-                    TimeSpan time2reg = now - _last_reg;
+                        DateTime now = DateTime.Now;
+                        TimeSpan time_add = now - _last_inc;
+                        TimeSpan time2reg = now - _last_reg;
 
-                    foreach (U5kEstadisticaContador contador in _Contadores)
-                    {
-                        if (contador.Estado == U5kEstadisticaEstadoContador.Activo)
+                        foreach (U5kEstadisticaContador contador in _Contadores)
                         {
-                            contador.Valor += time_add;
-                            if (time2reg >= _time2reg)
+                            if (contador.Estado == U5kEstadisticaEstadoContador.Activo)
                             {
-                                contador.Desactivar();
-                                contador.Activar();
+                                contador.Valor += time_add;
+                                if (time2reg >= _time2reg)
+                                {
+                                    contador.Desactivar();
+                                    contador.Activar();
+                                }
                             }
                         }
-                    }
 
-                    _last_inc = now;
-                    if (time2reg >= _time2reg)
-                        _last_reg = now;
+                        _last_inc = now;
+                        if (time2reg >= _time2reg)
+                            _last_reg = now;
 
-                    /** 201808. Se generaban cada 10 min, en vez de cada 10 seg. */
-                    //GenerateActivityEvents();
+                        /** 201808. Se generaban cada 10 min, en vez de cada 10 seg. */
+                        //GenerateActivityEvents();
 #if !_STATS_INTERNAL_LOCK_
-                });
+                    });
 #endif
-                }            
+                }
                 IamAlive1.Tick("Estadisticas-T1", () =>
                 {
                     IamAlive1.Message("Estadisticas-T1. Is Alive.");
@@ -459,11 +482,11 @@ namespace U5kManServer
                 GlobalServices.GetWriteAccess(data =>
                 {
 #endif
-                while (_registros.Count > 0 && nreg < maxreg)
-                {
-                    U5kEstadisticaContador contador = _registros.Dequeue();
-                    LogTrace<U5kEstadisticaProc>(
-                         String.Format("{0} Registrada Actividad de {1} segundos.", contador.Elemento, contador.Valor.TotalSeconds));
+                    while (_registros.Count > 0 && nreg < maxreg)
+                    {
+                        U5kEstadisticaContador contador = _registros.Dequeue();
+                        LogTrace<U5kEstadisticaProc>(
+                             String.Format("{0} Registrada Actividad de {1} segundos.", contador.Elemento, contador.Valor.TotalSeconds));
 #if DEBUG_01
                     using (StreamWriter fwriter =
                         new StreamWriter("Estadisticas.dat.txt", true))
@@ -471,28 +494,28 @@ namespace U5kManServer
                         fwriter.WriteLine(String.Format("{0}: {1}-{2}: {3} ", DateTime.Now.ToString(), contador.TipoElemento, contador.Elemento, contador.Valor.ToString()));
                     }
 #else
-                    eIncidencias ninci = eIncidencias.EST_INCI_TOPE;
-                    eTiposInci TpInci = TipoIncidencia(contador.TipoElemento);
-                    /** 20171218. Evita registros muy largos... */
-                    TimeSpan tsValor = contador.Valor > _time2reg ? _time2reg : contador.Valor;
-                    string valor = ((UInt32)tsValor.TotalSeconds).ToString();
-                    // string valor = ((UInt32)contador.Valor.TotalSeconds).ToString();
-                    RecordEvent<U5kEstadisticaProc>(DateTime.Now, ninci, TpInci, contador.Elemento, new List<string>() { valor }.ToArray());
+                        eIncidencias ninci = eIncidencias.EST_INCI_TOPE;
+                        eTiposInci TpInci = TipoIncidencia(contador.TipoElemento);
+                        /** 20171218. Evita registros muy largos... */
+                        TimeSpan tsValor = contador.Valor > _time2reg ? _time2reg : contador.Valor;
+                        string valor = ((UInt32)tsValor.TotalSeconds).ToString();
+                        // string valor = ((UInt32)contador.Valor.TotalSeconds).ToString();
+                        RecordEvent<U5kEstadisticaProc>(DateTime.Now, ninci, TpInci, contador.Elemento, new List<string>() { valor }.ToArray());
 #endif
-                    nreg++;
-                }
+                        nreg++;
+                    }
 
 #if _STATS_INTERNAL_LOCK_
                 /** 201808. Se generaban cada 10 min, en vez de cada 10 seg. */
                 if (U5kManService._Master == true)
                     GenerateActivityEvents();
 #endif
-                IamAlive2.Tick("Estadisticas-T2", () =>
-                {
-                    IamAlive2.Message("Estadisticas-T2. Is Alive.");
-                });
+                    IamAlive2.Tick("Estadisticas-T2", () =>
+                    {
+                        IamAlive2.Message("Estadisticas-T2. Is Alive.");
+                    });
 #if !_STATS_INTERNAL_LOCK_
-            });
+                });
                 if (U5kManService._Master == true)
                 {
                     GenerateActivityEvents();
@@ -528,7 +551,7 @@ namespace U5kManServer
                     contador.Activar();
 
                     LogTrace<U5kEstadisticaProc>(
-                        String.Format("EventoEstadistica: {0}({1}) => {2}", contador.Elemento, contador.TipoElemento, "Activo" ));
+                        String.Format("EventoEstadistica: {0}({1}) => {2}", contador.Elemento, contador.TipoElemento, "Activo"));
                 }
             }
             else
@@ -631,7 +654,7 @@ namespace U5kManServer
             string PbxIp = U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString();
             return Elementos.Count != 0 ? (UInt32)Elementos.Count :
                 tipo == U5kEstadisticaTiposElementos.Cwp ? ((U5kBdtService)dbService()).GetNumeroTop("departamento") :
-                tipo == U5kEstadisticaTiposElementos.Gateway ? ((U5kBdtService)dbService()).GetNumeroGw("departamento") : 
+                tipo == U5kEstadisticaTiposElementos.Gateway ? ((U5kBdtService)dbService()).GetNumeroGw("departamento") :
                 tipo == U5kEstadisticaTiposElementos.ExtRadio ? ((U5kBdtService)dbService()).ExternalRadioResourcesCount() :
                 tipo == U5kEstadisticaTiposElementos.ExtPhone ? ((U5kBdtService)dbService()).ExternalPhoneResourcesCount(PbxIp) :
                 tipo == U5kEstadisticaTiposElementos.Recorder ? ((U5kBdtService)dbService()).ExternalRecordersCount() : 0;
@@ -666,7 +689,7 @@ namespace U5kManServer
             }
             catch (Exception x)
             {
-                LogException<U5kEstadisticaProc>( "", x);
+                LogException<U5kEstadisticaProc>("", x);
             }
             return 0;
         }
@@ -684,7 +707,7 @@ namespace U5kManServer
             }
             catch (Exception x)
             {
-                LogException<U5kEstadisticaProc>( "", x);
+                LogException<U5kEstadisticaProc>("", x);
             }
             return 0;
         }
@@ -708,7 +731,7 @@ namespace U5kManServer
             }
             catch (Exception x)
             {
-                LogException<U5kEstadisticaProc>( "", x);
+                LogException<U5kEstadisticaProc>("", x);
             }
             return 0;
         }
@@ -851,5 +874,274 @@ namespace U5kManServer
         // private Logger _logger = LogManager.GetCurrentClassLogger();
         ImAliveTick IamAlive1 = new ImAliveTick(60);
         ImAliveTick IamAlive2 = new ImAliveTick(60);
+        int StatsVersion => Properties.u5kManServer.Default.StatsVersion;
+        public class StatsManager : NucleoGeneric.BaseCode
+        {
+            class StatCounter
+            {
+                public string Name { get; set; }
+                public U5kEstadisticaTiposElementos Type { get; set; }
+                public DateTime Active { get; set; }
+                public eTiposInci EventType
+                {
+                    get
+                    {
+                        return Type == U5kEstadisticaTiposElementos.Cwp ? eTiposInci.TEH_TOP :
+                            Type == U5kEstadisticaTiposElementos.Gateway ? eTiposInci.TEH_TIFX :
+                            Type == U5kEstadisticaTiposElementos.ExtRadio ? eTiposInci.TEH_EXTERNO_RADIO :
+                            Type == U5kEstadisticaTiposElementos.ExtPhone ? eTiposInci.TEH_EXTERNO_TELEFONIA :
+                            Type == U5kEstadisticaTiposElementos.Recorder ? eTiposInci.TEH_RECORDER : eTiposInci.TEH_SISTEMA;
+                    }
+                }
+                public bool IamExternal
+                {
+                    get
+                    {
+                        return Type == U5kEstadisticaTiposElementos.ExtRadio ||
+                            Type == U5kEstadisticaTiposElementos.ExtPhone ||
+                            Type == U5kEstadisticaTiposElementos.Recorder;
+                    }
+                }
+                public override string ToString()
+                {
+                    return $"{Type}:{Name}";
+                }
+            }
+            public StatsManager()
+            {
+                Master = false;
+                Counters = new List<StatCounter>();
+                IamAlive = new ImAliveTick(60);
+                NextRecord = DateTime.MaxValue;
+            }
+            public void Start()
+            {
+                lock (Locker)
+                {
+                    NextRecord = NewNextRecord;
+                    LogDebug<StatsManager>($"StatsManager Next Record => {NextRecord}.");
+
+                    Tick(TimeSpan.FromSeconds(5));
+                    GlobalEventsToken = EventBus.GlobalEvents.Subscribe((eventid) =>
+                    {
+                        LogDebug<StatsManager>($"Global Event => {eventid}");
+                        Task.Run(() =>
+                        {
+                            lock (Locker)
+                            {
+                                switch (eventid)
+                                {
+                                    case EventBus.GlobalEventsIds.Main:
+                                        Master = true;
+                                        LogDebug<StatsManager>($"StatsManager MASTER.");
+                                        break;
+                                    case EventBus.GlobalEventsIds.Standby:
+                                        Counters.Where(c => c.Active > DateTime.MinValue).ToList().ForEach(counter =>
+                                        {
+                                            Record(counter);
+                                            counter.Active = DateTime.MinValue;
+                                        });
+                                        //Counters.Clear();
+                                        Master = false;
+                                        LogDebug<StatsManager>($"StatsManager SLAVE.");
+                                        break;
+                                    case EventBus.GlobalEventsIds.CfgLoad:
+                                        LoadConfig();
+                                        LogDebug<StatsManager>($"StatsManager Configuration Loaded.");
+                                        break;
+                                }
+                            }
+                        });
+                    });
+                    LogDebug<StatsManager>($"StatsManager Started.");
+                }
+            }
+            public void Stop()
+            {
+                lock (Locker)
+                {
+                    // Registro los contadores activos.
+                    Counters.Where(c => c.Active > DateTime.MinValue).ToList().ForEach(counter =>
+                    {
+                        Record(counter);
+                        counter.Active = DateTime.MinValue;
+                    });
+                    Counters.Clear();
+                    LogDebug<StatsManager>($"StatsManagers Stopped");
+                }
+            }
+            private void Tick(TimeSpan interval)
+            {
+                TimerTick = new System.Threading.Timer(x =>
+                {
+                    lock (Locker)
+                    {
+                        LogDebug<StatsManager>($"Tick. Master: {Master}. TOPS: {SupervisedTops}, GWS: {SupervisedGws}, EXT: {SupervisedExtRadios+SupervisedExtPhones}, REC: {SupervisedExtRecorders}");
+                        if (Master)
+                        {
+                            // Testear la actividad de los contadores.
+                            GlobalServices.GetWriteAccess((data) =>
+                            {
+                            /** Los Puestos */
+                                data.STDTOPS.ForEach(p =>
+                                {
+                                    var counter = Counters.Where(c => c.Name == p.name && c.Type == U5kEstadisticaTiposElementos.Cwp).FirstOrDefault();
+                                    CounterEvent(counter, p.stdg != std.NoInfo);
+                                });
+
+                            /** Las Pasarelas */
+                                data.STDGWS.ForEach(g =>
+                                {
+                                    var counter = Counters.Where(c => c.Name == g.name && c.Type == U5kEstadisticaTiposElementos.Gateway).FirstOrDefault();
+                                    CounterEvent(counter, g.std != std.NoInfo);
+                                });
+
+                            /** Los Equipos Externos */
+                                data.STDEQS.ForEach(e =>
+                                {
+                                    var name = e.sip_user ?? e.Id;
+                                    var counter = Counters.Where(c => c.Name == name && c.IamExternal).FirstOrDefault();
+                                    //CounterEvent(counter, e.EstadoGeneral != std.NoInfo);
+                                    CounterEvent(counter, e.EstadoGeneral == std.Ok);
+                                });
+                            });
+
+                            // Testear Grabaciones Periodicas
+                            PeriodicRecord(() =>
+                            {
+                                LogDebug<StatsManager>($"StatsManager. Grabando Registros Activos.");
+                                Counters.Where(c => c.Active > DateTime.MinValue).ToList().ForEach(counter =>
+                                {
+                                    Record(counter);
+                                    counter.Active = DateTime.Now;
+                                });
+                            });
+                        }
+                        IamAlive.Tick("Statistics Manager", () => IamAlive.Message("Statistics Manager. Is Alive."));
+                        Tick(interval);
+                    }
+                }, null, interval, Timeout.InfiniteTimeSpan);
+            }
+            void PeriodicRecord(Action Notify)
+            {
+                if (NextRecord < DateTime.Now)
+                {
+                    Notify();
+                    NextRecord = NewNextRecord;
+                    LogDebug<StatsManager>($"StatsManager Next Record => {NextRecord}.");
+                }
+            }
+            void LoadConfig()
+            {
+                GlobalServices.GetWriteAccess((data) =>
+                {
+                    var currentCounter = Counters.Select(c => c).ToList();
+                    Counters.Clear();
+                    /** Los Puestos */
+                    data.STDTOPS.ForEach(p =>
+                    {
+                        var counter = currentCounter.Where(c => c.Name == p.name && c.Type == U5kEstadisticaTiposElementos.Cwp).FirstOrDefault();
+                        if (counter == null)
+                        {
+                            counter = new StatCounter() { Name = p.name, Type = U5kEstadisticaTiposElementos.Cwp, Active = DateTime.MinValue };
+                            LogDebug<StatsManager>($"StatsManager. Registro {counter} => Creado");
+                        }
+                        else
+                            currentCounter.Remove(counter);
+                        Counters.Add(counter);
+                    });
+
+                    /** Las Pasarelas */
+                    data.STDGWS.ForEach(g =>
+                    {
+                        var counter = currentCounter.Where(c => c.Name == g.name && c.Type == U5kEstadisticaTiposElementos.Gateway).FirstOrDefault();
+                        if (counter == null)
+                        {
+                            counter = new StatCounter() { Name = g.name, Type = U5kEstadisticaTiposElementos.Gateway, Active = DateTime.MinValue };
+                            LogDebug<StatsManager>($"StatsManager. Registro {counter} => Creado");
+                        }
+                        else
+                            currentCounter.Remove(counter);
+                        Counters.Add(counter);
+                    });
+
+                    /** Los Equipos Externos */
+                    data.STDEQS.ForEach(e =>
+                    {
+                        var name = e.sip_user ?? e.Id;
+                        var etype = e.Tipo == 2 ? U5kEstadisticaTiposElementos.ExtRadio :
+                                e.Tipo == 3 ? U5kEstadisticaTiposElementos.ExtPhone : U5kEstadisticaTiposElementos.Recorder;
+                        var counter = currentCounter.Where(c => c.Name == name && c.IamExternal).FirstOrDefault();
+                        if (counter == null)
+                        {
+                            counter = new StatCounter() { Name = name, Type = etype, Active = DateTime.MinValue };
+                            LogDebug<StatsManager>($"StatsManager. Registro {counter} => Creado");
+                        }
+                        else
+                            currentCounter.Remove(counter);
+                        Counters.Add(counter);
+                    });
+
+                    /** Cerrar lo que han desaparecido */
+                    currentCounter.ForEach(counter =>
+                    {
+                        if (counter.Active > DateTime.MinValue)
+                            Record(counter);
+                        LogDebug<StatsManager>($"StatsManager. Registro {counter} => Borrado");
+                    });
+                });
+            }
+            void Record(StatCounter counter)
+            {
+                var valor = ((UInt32)(DateTime.Now - counter.Active).TotalSeconds).ToString();
+                RecordEvent<U5kEstadisticaProc>(DateTime.Now, eIncidencias.EST_INCI_TOPE,
+                    counter.EventType, counter.Name, new List<string>() { valor }.ToArray());
+                LogDebug<StatsManager>($"StatsManager. Grabando Registro ({counter})=>{valor}");
+            }
+            void CounterEvent(StatCounter counter, bool active)
+            {
+                if (counter != null)
+                {
+                    if (counter.Active > DateTime.MinValue && active == false)
+                    {
+                        // Desactivacion.
+                        LogDebug<StatsManager>($"StatsManager. Registro {counter} => Inactivo");
+                        RecordEvent<U5kEstadisticaProc>(DateTime.Now, eIncidencias.EST_INCI_SOPE, counter.EventType, counter.Name, new List<string>().ToArray());
+                        Record(counter);
+                        counter.Active = DateTime.MinValue;
+                    }
+                    else if (counter.Active == DateTime.MinValue && active == true)
+                    {
+                        // Activacion.
+                        LogDebug<StatsManager>($"StatsManager. Registro {counter} => Activo");
+                        RecordEvent<U5kEstadisticaProc>(DateTime.Now, eIncidencias.EST_INCI_EOPE, counter.EventType, counter.Name, new List<string>().ToArray());
+                        counter.Active = DateTime.Now;
+                    }
+                }
+            }
+            DateTime NewNextRecord
+            {
+                get
+                {
+#if DEBUG1
+                    return DateTime.Now + TimeSpan.FromMinutes(1);
+#else
+                    var dt = DateTime.Now + TimeSpan.FromMinutes(1);
+                    return dt.RoundUp(TimeSpan.FromHours(12)) - TimeSpan.FromMinutes(1);
+#endif
+                }
+            }
+            private bool Master { get; set; }
+            private List<StatCounter> Counters { get; set; }
+            private int SupervisedTops => Counters.Where(c => c.Type == U5kEstadisticaTiposElementos.Cwp).Count();
+            private int SupervisedGws => Counters.Where(c => c.Type == U5kEstadisticaTiposElementos.Gateway).Count();
+            private int SupervisedExtRadios => Counters.Where(c => c.Type == U5kEstadisticaTiposElementos.ExtRadio).Count();
+            private int SupervisedExtPhones => Counters.Where(c => c.Type == U5kEstadisticaTiposElementos.ExtPhone).Count();
+            private int SupervisedExtRecorders => Counters.Where(c => c.Type == U5kEstadisticaTiposElementos.Recorder).Count();
+            private DateTime NextRecord { get; set; }
+            private System.Threading.Timer TimerTick { get; set; }
+            private Object GlobalEventsToken { get; set; }
+            private Object Locker { get; set; } = new object();
+        }
     }
 }

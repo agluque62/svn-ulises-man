@@ -75,47 +75,59 @@ namespace U5kManServer
                 {
                     ConfigCultureSet();
 #if DEBUG
-                    if (key == 'm')
+                    //if (key == 'm')
+                    //{
+                    //    ClusterSim.CambiaEstadoNodoCluster(0);
+                    //}
+                    //if (key == 'M')
+                    //{
+                    //    ClusterSim.CambiaPresenciaNodoCluster(0);
+                    //}
+                    //else if (key == 's')
+                    //{
+                    //    ClusterSim.CambiaEstadoNodoCluster(1);
+                    //}
+                    //else if (key == 'S')
+                    //{
+                    //    ClusterSim.CambiaPresenciaNodoCluster(1);
+                    //}
+                    //else if (key == 'c')
+                    //{
+                    //    ClusterSim.ConmutaConExcepcion();
+                    //}
+                    //else if (key == 'x')
+                    //{
+                    //    ClusterSim.ConmutaConExcepcion(true);
+                    //}
+                    //else if (key == 'i')
+                    //{
+                    //    HistThread.TestAddInci(1, true);
+                    //}
+                    //else if (key == 't')
+                    //{
+                    //    // Provocar la toma del semaforo durante mucho tiempo....
+                    //    LogInfo<uv5kSgmManProgram>("T Key Pressed...");
+                    //    Task.Factory.StartNew(() => GlobalServices.GetWriteAccess((gdata) => Task.Delay(TimeSpan.FromSeconds(60)).Wait()));
+                    //}
+                    //else if (key == 'n')
+                    //{
+                    //    Utilities.NICS.ShowInterfaceSummary();
+                    //}
+                    //else if (key == 'r')
+                    //{
+                    //    U5kGenericos.ResetService = true;
+                    //}
+                    switch (key)
                     {
-                        ClusterSim.CambiaEstadoNodoCluster(0);
-                    }
-                    if (key == 'M')
-                    {
-                        ClusterSim.CambiaPresenciaNodoCluster(0);
-                    }
-                    else if (key == 's')
-                    {
-                        ClusterSim.CambiaEstadoNodoCluster(1);
-                    }
-                    else if (key == 'S')
-                    {
-                        ClusterSim.CambiaPresenciaNodoCluster(1);
-                    }
-                    else if (key == 'c')
-                    {
-                        ClusterSim.ConmutaConExcepcion();
-                    }
-                    else if (key == 'x')
-                    {
-                        ClusterSim.ConmutaConExcepcion(true);
-                    }
-                    else if (key == 'i')
-                    {
-                        HistThread.TestAddInci(1, true);
-                    }
-                    else if (key == 't')
-                    {
-                        // Provocar la toma del semaforo durante mucho tiempo....
-                        LogInfo<uv5kSgmManProgram>("T Key Pressed...");
-                        Task.Factory.StartNew(() => GlobalServices.GetWriteAccess((gdata) => Task.Delay(TimeSpan.FromSeconds(60)).Wait()));
-                    }
-                    else if (key == 'n')
-                    {
-                        Utilities.NICS.ShowInterfaceSummary();
-                    }
-                    else if (key == 'r')
-                    {
-                        U5kGenericos.ResetService = true;
+                        case 'm':
+                            EventBus.GlobalEvents.Publish(EventBus.GlobalEventsIds.Main);
+                            break;
+                        case 's':
+                            EventBus.GlobalEvents.Publish(EventBus.GlobalEventsIds.Standby);
+                            break;
+                        case 'c':
+                            EventBus.GlobalEvents.Publish(EventBus.GlobalEventsIds.CfgLoad);
+                            break;
                     }
 #endif
                 }

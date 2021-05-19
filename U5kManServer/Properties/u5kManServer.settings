@@ -334,5 +334,8 @@
     <Setting Name="WebConfigPath" Type="System.String" Scope="Application">
       <Value Profile="(Default)">c:\\inetpub\\wwwroot\\UlisesV5000\\u5kcfg\\web.config</Value>
     </Setting>
+    <Setting Name="StatsVersion" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
