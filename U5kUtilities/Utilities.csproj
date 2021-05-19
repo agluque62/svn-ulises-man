@@ -97,6 +97,7 @@
     <Compile Include="RegistrySettingsProvider.cs" />
     <Compile Include="SimpleSipAgent.cs" />
     <Compile Include="TaskTimer.cs" />
+    <Compile Include="TinyMessenger.cs" />
     <Compile Include="UdpSocket.cs" />
     <Compile Include="Native.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

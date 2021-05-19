@@ -233,6 +233,10 @@ namespace U5kManServer
                 LogException<MainThread>("En BDT", x);
                 retorno = false;
             }
+            if (retorno)
+            {
+                EventBus.GlobalEvents.Publish(EventBus.GlobalEventsIds.CfgLoad);
+            }
             return retorno;
 
         }

@@ -550,6 +550,7 @@ namespace U5kManServer
                             stdg.cfgVersion = stdg.cfgName = string.Empty;
                             U5kManService._main.InvalidateConfig();
                             bMaster = true;
+                            EventBus.GlobalEvents.Publish(EventBus.GlobalEventsIds.Main);
                             LogInfo<U5kServiceMain>("Modo PRINCIPAL.");
                         }
                         else if (bMaster && !U5kManService._Master)
@@ -559,6 +560,7 @@ namespace U5kManServer
                             U5kEstadisticaProc.Estadisticas.FromMasterToSlave();
                             stdg.cfgVersion = stdg.cfgName = string.Empty;
                             bMaster = false;
+                            EventBus.GlobalEvents.Publish(EventBus.GlobalEventsIds.Standby);
                             LogInfo<U5kServiceMain>("Modo RESERVA...");
                         }
                         else if (U5kManService._Master && U5kManService._main.Running == false)
@@ -615,7 +617,7 @@ namespace U5kManServer
                 }
                 else
                 {
-                    // Servidor no dual...                    
+                    // Servidor no dual...
                     GlobalServices.GetWriteAccess((data) =>
                     {
                         U5KStdGeneral stdg = data.STDG;
@@ -627,6 +629,7 @@ namespace U5kManServer
                         if (!bMaster && U5kManService._Master)
                         {
                             bMaster = true;
+                            EventBus.GlobalEvents.Publish(EventBus.GlobalEventsIds.Main);
                             LogInfo<U5kServiceMain>("Modo No-DUAL");
                         }
                         /** Generar el Historico de Activacion del Servidor */

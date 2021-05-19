@@ -73,8 +73,10 @@
     <Compile Include="ExternalResourcesUnitTest.cs" />
     <Compile Include="GenericTests.cs" />
     <Compile Include="GwCallLogsParseTest.cs" />
+    <Compile Include="TinyMessengerTest.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="ps.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

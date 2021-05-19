@@ -154,6 +154,19 @@ namespace UnitTesting
 
             Task.Delay(200).Wait();
         }
+        [TestMethod]
+        public void TestDateToGo()
+        {
+            var alt1 = new TimeSpan(11, 59, 0);
+            var alt2 = new TimeSpan(23, 59, 0);
+            var dref = DateTime.Now - TimeSpan.FromHours(1);
+
+            var ttg1 = alt1 - dref.TimeOfDay;
+            var ttg2 = alt2 - dref.TimeOfDay;
+
+            var dalt = dref + (ttg1 > TimeSpan.FromSeconds(0) ? ttg1 : ttg2);
+
+        }
         void InnerFunction(Action execute)
         {
             try
