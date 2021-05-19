@@ -80,6 +80,7 @@
     <Compile Include="DebugHelper.cs" />
     <Compile Include="EncryptionHelper.cs" />
     <Compile Include="EventQueue.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="FailuresFilterHelper.cs" />
     <Compile Include="FSBindingList.cs" />
     <Compile Include="GeneralHelper.cs" />

@@ -206,5 +206,22 @@ namespace UnitTesting
                 });
             }
         }
+        [TestMethod]
+        public void TestRoundTest()
+        {
+            var d1 = DateRoundUp(DateTime.Parse("2011-08-11 16:59") + TimeSpan.FromMinutes(1), TimeSpan.FromHours(12)) - TimeSpan.FromMinutes(1);
+            Debug.WriteLine(d1.ToString());
+            var d2 = DateRoundUp(DateTime.Parse("2011-08-11 9:59") + TimeSpan.FromMinutes(1), TimeSpan.FromHours(12)) - TimeSpan.FromMinutes(1);
+            Debug.WriteLine(d2.ToString());
+            var d3 = DateRoundUp(DateTime.Parse("2011-08-11 23:59:01") + TimeSpan.FromMinutes(1), TimeSpan.FromHours(12)) - TimeSpan.FromMinutes(1);
+            Debug.WriteLine(d3.ToString());
+
+            var d4 = DateTime.Now + TimeSpan.FromMinutes(1);
+            Debug.WriteLine(d4.RoundUp(TimeSpan.FromHours(12)) - TimeSpan.FromMinutes(1));
+        }
+        DateTime DateRoundUp(DateTime dt, TimeSpan d)
+        {
+            return new DateTime((dt.Ticks + d.Ticks - 1) / d.Ticks * d.Ticks, dt.Kind);
+        }
     }
 }
