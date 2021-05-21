@@ -725,7 +725,7 @@ namespace U5kManServer
 
             lan1 = lan2 = panel = jack_exe = jack_ayu = alt_r = alt_t = alt_hf = rec_w = std.NoInfo;
             stdpos = std.NoInfo; 
-            stdg = stdGlobal();
+            stdg = StdGlobal;
             status_sync = "???";
             uris = new List<string>();
         }
@@ -748,39 +748,6 @@ namespace U5kManServer
         public void Reset()
         {
             lan1 = lan2 = panel = jack_exe = jack_ayu = alt_r = alt_t = alt_hf = rec_w = std.NoInfo;
-        }
-
-        /** Obsoleta */
-        /*public */std stdGlobal()
-        {
-            if (stdpos == std.NoInfo)
-                return std.NoInfo;
-#if !_TESTING_
-            else if (U5kManService.cfgSettings/*U5kManServer.Properties.u5kManServer.Default*/.HayAltavozHF)
-#else
-            else if (false)
-#endif
-            {
-                if (alt_r == std.NoInfo || 
-                    alt_t == std.NoInfo || 
-//                  panel == std.NoInfo || 
-                    lan1 != std.Ok || 
-                    lan2 != std.Ok || 
-                    rec_w == std.NoInfo || 
-                    alt_hf == std.NoInfo)
-                    return std.Error;
-            }
-            else
-            {
-                if (alt_r == std.NoInfo || 
-                    alt_t == std.NoInfo || 
-//                  panel == std.NoInfo || 
-                    lan1 != std.Ok || 
-                    lan2 != std.Ok || 
-                    rec_w == std.NoInfo )
-                    return std.Error;
-            }
-            return std.Ok;
         }
 
         /** 20181123. Calculo en funcion de Opciones */
@@ -823,7 +790,7 @@ namespace U5kManServer
             sw_version = from.sw_version;
 
             base.CopyFrom(from);
-            stdg = stdGlobal();
+            stdg = StdGlobal;
         }
 
         public bool Equals(stdPos other)
