@@ -219,7 +219,7 @@ namespace U5kManServer.WebAppServer
                         std = (int)stdg.stdServ1.Estado,
                         sel = (int)stdg.stdServ1.Seleccionado,
                         url = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual ?
-                                String.Format("http://{0}/NucleoDF/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : ""
+                                String.Format("http://{0}/UlisesV5000/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : ""
                     };
                     sv2 = new itemData()
                     {
@@ -228,7 +228,7 @@ namespace U5kManServer.WebAppServer
                         std = (int)stdg.stdServ2.Estado,
                         sel = (int)stdg.stdServ2.Seleccionado,
                         url = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual ?
-                                String.Format("http://{0}/NucleoDF/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : ""
+                                String.Format("http://{0}/UlisesV5000/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : ""
                     };
                     cwp = new itemData()
                     {
