@@ -83,6 +83,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="FailuresFilterHelper.cs" />
     <Compile Include="FSBindingList.cs" />
+    <Compile Include="FtpClient.cs" />
     <Compile Include="GeneralHelper.cs" />
     <Compile Include="HttpHelper.cs" />
     <Compile Include="IPHelper.cs" />

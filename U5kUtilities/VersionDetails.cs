@@ -138,11 +138,14 @@ namespace Utilities
                 if (prxversion != null)
                 {
                     var prxcomponents = prxversion["components"];
+                    var prxVersion = prxversion["BKKSipProxyPBXVersion"]?.ToString();
+                    var prxOsVersion = prxversion["CentosRelease"]?.ToString();
+                    var prxPresVersion = prxversion["PresenceServer"]?.ToString();
                     if (prxcomponents != null)
                     {
                         vbase.version.Components.Add(new VersionDetails.VersionDataComponent()
                         {
-                            Name = "UV5K-Sip Proxy",
+                            Name = $"UV5K-Sip Proxy {prxVersion}. UV5K Presence Server {prxPresVersion}. OS {prxOsVersion} ",
                             Files = prxcomponents.Select(c => new VersionDetails.VersionDataFileItem()
                             {
                                 Path = Path.GetFileName(c["path"].ToString()),

@@ -881,5 +881,41 @@ namespace U5kManServer.Properties {
                 return ((int)(this["StatsVersion"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("192.168.56.3")]
+        public string ProxyLocalAdd {
+            get {
+                return ((string)(this["ProxyLocalAdd"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("user")]
+        public string ProxyFtpUser {
+            get {
+                return ((string)(this["ProxyFtpUser"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("user")]
+        public string ProxyFtpPwd {
+            get {
+                return ((string)(this["ProxyFtpPwd"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("20")]
+        public int ProxyFtpTimeout {
+            get {
+                return ((int)(this["ProxyFtpTimeout"]));
+            }
+        }
     }
 }

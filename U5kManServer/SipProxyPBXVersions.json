@@ -1,27 +1,21 @@
 {
-  "BKKSipProxyPBXVersion": "3.8.4.9", 
-  "CentosRelease": "CentOS release 6.9 (Final)\n", 
-  "NodeActive": "node1.localdomain", 
-  "PresenceServer": "kamailio 4.4.7 (i386/linux) 35d8ab", 
+  "BKKSipProxyPBXVersion": "3.8.4.9",
+  "CentosRelease": "CentOS release 6.9 (Final)\n",
+  "PresenceServer": "kamailio 4.4.7 (i386/linux) 35d8ab",
   "components": [
     {
-      "date": "27/02/2020", 
-      "md5": "a115b5b1c716b5d369dd12c2b4e0f9b1", 
-      "path": "/usr/local/tomcat7/webapps/pbx.war", 
-      "size": "53838475"
-    }, 
+      "date": "25/05/2021",
+      "md5": "a03deba8a3cb56cc6440ff483b5cc64d",
+      "path": "/usr/local/tomcat7/webapps/pbx.war",
+      "size": "55530486"
+    },
     {
-      "date": "27/02/2020", 
-      "md5": "7d7777db12b8506529f5c8be3c6c7bcf", 
-      "path": "/usr/local/tomcat7/webapps/pbx/WEB-INF/lib/proxy_bkk.jar", 
-      "size": "12119643"
-    }, 
-    {
-      "date": "18/12/2018", 
-      "md5": "948087e0d07377f4ef155c161c7f1c44", 
-      "path": "/root/proxy_ulises/CheckProxy/CheckProxy.jar", 
-      "size": "450463"
+      "date": "25/05/2021",
+      "md5": "54ea72f0f05157174d8cc9a01d575d16",
+      "path": "/root/proxy_ulises/CheckProxy/CheckProxy.jar",
+      "size": "4270467"
     }
-  ]
+  ],
+  "local_node": "node1",
+  "node_status": "inactive"
 }
-
