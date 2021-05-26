@@ -51,7 +51,7 @@ namespace U5kManServer
         Services.CentralServicesMonitor MonitorOfServices;
 #endif
         U5kManServer.ExtEquSpvSpace.ExtEquSpv _ext_sup = null;
-        PabxItfService pabxService = null;
+        PabxItfService pabxService { get; set; } = null;
 
         /// <summary>
         /// Version de la Configuracion...

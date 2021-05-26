@@ -333,6 +333,9 @@
     <None Include="RMON-MIB">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="SipProxyPBXVersions.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="versiones.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

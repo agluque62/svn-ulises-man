@@ -942,27 +942,23 @@ namespace U5kManServer.WebAppServer
                     string MyName = System.Environment.MachineName;
                     if (MyName == stdg.stdServ1.name)
                     {
-                        stdg.stdServ1.jversion = (new Utilities.VersionDetails("versiones.json")).ToString();
-                        // stdg.stdServ2.jversion = "";
-
+                        stdg.stdServ1.jversion = VersionDetails.SwVersions.ToString();
                         _sync_server.QueryVersionData();
                     }
                     else if (MyName == stdg.stdServ2.name)
                     {
-                        // stdg.stdServ1.jversion = "";
-                        stdg.stdServ2.jversion = (new Utilities.VersionDetails("versiones.json")).ToString();
-
+                        stdg.stdServ2.jversion = VersionDetails.SwVersions.ToString();
                         _sync_server.QueryVersionData();
                     }
                     else
                     {
-                        stdg.stdServ1.jversion = (new Utilities.VersionDetails("versiones.json")).ToString();
+                        stdg.stdServ1.jversion = VersionDetails.SwVersions.ToString();
                         stdg.stdServ2.jversion = "";
                     }
                 }
                 else
                 {
-                    stdg.stdServ1.jversion = (new Utilities.VersionDetails("versiones.json")).ToString();
+                    stdg.stdServ1.jversion = VersionDetails.SwVersions.ToString();
                     stdg.stdServ2.jversion = "";
                 }
             }

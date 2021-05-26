@@ -33,10 +33,6 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        protected bool IsOperative { get => U5kManService._Master == true && HayPbx; }
-        /// <summary>
-        /// 
-        /// </summary>
         public new string Name { get => "PabxItfService"; }
         /// <summary>
         /// 
@@ -141,6 +137,10 @@ namespace U5kManServer
         /// 
         /// </summary>
         public string PabxUrl { get; set; }
+        public object Data => new
+        {
+
+        };
 
         #region Formatos de Tablas..
         /// <summary>
@@ -196,6 +196,10 @@ namespace U5kManServer
         private bool HayPbx { get; set; }
         private string PbxIp { get; set; }
         private string InfoString { get => String.Format("HayPbx={0}, PbxUrl={1}, Estado={2}", HayPbx, PabxUrl, _pabxStatus); }
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool IsOperative { get => U5kManService._Master == true && HayPbx; }
         #endregion
 
         #region Callbacks

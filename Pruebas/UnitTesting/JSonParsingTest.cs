@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Converters;
+
+using Utilities;
 
 namespace UnitTesting
 {
@@ -77,6 +80,46 @@ namespace UnitTesting
             string str_test1 = JsonConvert.SerializeObject(test1);
 
             var test2 = JsonConvert.DeserializeObject<DateClass>(str_test1);
+        }
+        [TestMethod]
+        public void SipProxyVersionTest()
+        {
+            var vbase = new VersionDetails("versiones.json", false);
+            var prxversion = JSONHelper.SafeJObjectParse(File.ReadAllText("SipProxyPBXVersions.json"));
+
+            if (prxversion != null)
+            {
+                var prxcomponents = prxversion["components"];
+                if (prxcomponents != null)
+                {
+                    vbase.version.Components.Add(new VersionDetails.VersionDataComponent()
+                    {
+                        Name = "UV5K-Sip Proxy",
+                        Files = prxcomponents.Select(c => new VersionDetails.VersionDataFileItem()
+                        {
+                            Path = Path.GetFileName(c["path"].ToString()),
+                            Date = c["date"].ToString(),
+                            Size = c["size"].ToString(),
+                            MD5 = c["md5"].ToString()
+                        }).ToList()
+                    });
+                    return;
+                }
+            }
+            vbase.version.Components.Add(new VersionDetails.VersionDataComponent()
+            {
+                Name = "UV5K-Sip Proxy",
+                Files = new List<VersionDetails.VersionDataFileItem>()
+                {
+                    new VersionDetails.VersionDataFileItem()
+                    {
+                        Path = "SipProxyVersions.json",
+                        Date = "",
+                        Size = "",
+                        MD5 = "File not found or corrupted"
+                    }
+                }
+            });
         }
     }
 }

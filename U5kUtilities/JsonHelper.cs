@@ -76,5 +76,25 @@ namespace Utilities
         {
             File.WriteAllText(filename, ToString(data));
         }
+        public static JObject SafeJObjectParse(string s)
+        {
+            try
+            {
+                return JObject.Parse(s);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public static JObject JsonRead(string filename)
+        {
+            if (File.Exists(filename))
+            {
+                return SafeJObjectParse(File.ReadAllText(filename));
+            }
+            return null;
+        }
     }
 }

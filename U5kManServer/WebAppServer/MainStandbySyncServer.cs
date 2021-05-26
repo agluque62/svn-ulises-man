@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -193,8 +194,8 @@ namespace U5kManServer.WebAppServer
                             {
                                 if (U5kManService._Master)
                                 {
-                                        // Si le llega al MASTER debe obtener de los datos la version de SLAVE.
-                                        StdServ srv = data.STDG.RemoteServer;
+                                    // Si le llega al MASTER debe obtener de los datos la version de SLAVE.
+                                    StdServ srv = data.STDG.RemoteServer;
                                     if (srv != null)
                                     {
                                         srv.jversion = strData;
@@ -204,8 +205,8 @@ namespace U5kManServer.WebAppServer
                                 }
                                 else
                                 {
-                                        // Si le llega al SLAVE debe generar los datos para el MASTER.
-                                        Sync(cmdSync.VersionsDetails, (new VersionDetails("versiones.json")).ToString());
+                                    // Si le llega al SLAVE debe generar los datos para el MASTER.
+                                    Sync(cmdSync.VersionsDetails, VersionDetails.SwVersions.ToString());
                                     LogTrace<MainStandbySyncServer>("Informacion de Versiones Enviada.");
                                 }
                             });
