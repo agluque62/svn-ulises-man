@@ -918,6 +918,11 @@ namespace U5kManServer
             {
                 lock (Locker)
                 {
+                    if (IsStarted)
+                    {
+                        LogError<StatsManager>($"StatsManager Allready started.");
+                        return;
+                    }
                     NextRecord = NewNextRecord;
                     LogDebug<StatsManager>($"StatsManager Next Record => {NextRecord}.");
 
@@ -953,6 +958,7 @@ namespace U5kManServer
                             }
                         });
                     });
+                    IsStarted = true;
                     LogDebug<StatsManager>($"StatsManager Started.");
                 }
             }
@@ -960,6 +966,11 @@ namespace U5kManServer
             {
                 lock (Locker)
                 {
+                    if (!IsStarted)
+                    {
+                        LogError<StatsManager>($"StatsManager Allready stopped.");
+                        return;
+                    }
                     // Registro los contadores activos.
                     Counters.Where(c => c.Active > DateTime.MinValue).ToList().ForEach(counter =>
                     {
@@ -967,6 +978,7 @@ namespace U5kManServer
                         counter.Active = DateTime.MinValue;
                     });
                     Counters.Clear();
+                    IsStarted = false;
                     LogDebug<StatsManager>($"StatsManagers Stopped");
                 }
             }
@@ -1018,7 +1030,10 @@ namespace U5kManServer
                             });
                         }
                         IamAlive.Tick("Statistics Manager", () => IamAlive.Message("Statistics Manager. Is Alive."));
-                        Tick(interval);
+                        if (IsStarted)
+                        {
+                            Tick(interval);
+                        }
                     }
                 }, null, interval, Timeout.InfiniteTimeSpan);
             }
@@ -1142,6 +1157,7 @@ namespace U5kManServer
             private System.Threading.Timer TimerTick { get; set; }
             private Object GlobalEventsToken { get; set; }
             private Object Locker { get; set; } = new object();
+            private bool IsStarted { get; set; } = false;
         }
     }
 }
