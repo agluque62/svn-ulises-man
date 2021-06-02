@@ -349,5 +349,8 @@
     <Setting Name="ProxyFtpTimeout" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">20</Value>
     </Setting>
+    <Setting Name="MainStandByMcastAdd" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">224.100.10.1</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

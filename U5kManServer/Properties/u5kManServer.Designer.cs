@@ -917,5 +917,14 @@ namespace U5kManServer.Properties {
                 return ((int)(this["ProxyFtpTimeout"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("224.100.10.1")]
+        public string MainStandByMcastAdd {
+            get {
+                return ((string)(this["MainStandByMcastAdd"]));
+            }
+        }
     }
 }
