@@ -912,7 +912,7 @@ namespace U5kManServer
 
         public bool Equals(stdRec other)
         {
-            bool retorno = tipo == other.tipo && bdt == other.bdt;
+            bool retorno = tipo == other.tipo && bdt == other.bdt && name == other.name;
 #if DEBUG
             if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en StdRecurso");
 #endif
