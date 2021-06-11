@@ -614,7 +614,7 @@ namespace U5kManServer
         public Int64 FailedPollCount { get; set; }
         
         public std Std { get; set; }
-        public SupervisedItem() { FailedPollCount = 0; Std = std.NoInfo; }
+        public SupervisedItem(Int64 limit) { ConsecutiveFailedPollLimit = limit; FailedPollCount = 0; Std = std.NoInfo; }
         public bool IsPollingTime ()
         {
             //return FailedPollCount < ConsecutiveFailedPollLimit ? true : FailedPollCount % 4 == 0;
@@ -717,7 +717,7 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        public stdPos() : base()
+        public stdPos() : base(Properties.u5kManServer.Default.ConsecutiveFailedPollLimit)
         {
             name = "";
             ip = "192.168.1.1";
@@ -1031,10 +1031,10 @@ namespace U5kManServer
             presente = false;
             Seleccionada = false;
 #if GW_STD_V1
-            IpConn = new SupervisedItem();
-            SipMod = new SupervisedItem();
-            CfgMod = new SupervisedItem();
-            SnmpMod = new SupervisedItem();
+            IpConn = new SupervisedItem(Properties.u5kManServer.Default.ConsecutiveFailedPollLimit);
+            SipMod = new SupervisedItem(Properties.u5kManServer.Default.ConsecutiveFailedPollLimit);
+            CfgMod = new SupervisedItem(Properties.u5kManServer.Default.ConsecutiveFailedPollLimitForCfgModule);
+            SnmpMod = new SupervisedItem(Properties.u5kManServer.Default.ConsecutiveFailedPollLimit);
 #endif
         }
         public stdPhGw(stdPhGw last) : this()
@@ -1137,10 +1137,10 @@ namespace U5kManServer
             }
 
 #if GW_STD_V1
-            IpConn = new SupervisedItem();
-            SipMod = new SupervisedItem();
-            CfgMod = new SupervisedItem();
-            SnmpMod = new SupervisedItem();
+            IpConn = new SupervisedItem(Properties.u5kManServer.Default.ConsecutiveFailedPollLimit);
+            SipMod = new SupervisedItem(Properties.u5kManServer.Default.ConsecutiveFailedPollLimit);
+            CfgMod = new SupervisedItem(Properties.u5kManServer.Default.ConsecutiveFailedPollLimitForCfgModule);
+            SnmpMod = new SupervisedItem(Properties.u5kManServer.Default.ConsecutiveFailedPollLimit);
 #endif
             version = string.Empty;
         }
@@ -1452,8 +1452,8 @@ namespace U5kManServer
 
         public string LastOptionsResponse { get; set; }
 
-        public EquipoEurocae() : base() { }
-        public EquipoEurocae(EquipoEurocae last)
+        public EquipoEurocae() : base(Properties.u5kManServer.Default.ConsecutiveFailedPollLimit) { }
+        public EquipoEurocae(EquipoEurocae last) : base(Properties.u5kManServer.Default.ConsecutiveFailedPollLimit)
         {
             if (last == null)
             {

@@ -352,5 +352,8 @@
     <Setting Name="MainStandByMcastAdd" Type="System.String" Scope="Application">
       <Value Profile="(Default)">224.100.10.1</Value>
     </Setting>
+    <Setting Name="ConsecutiveFailedPollLimitForCfgModule" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

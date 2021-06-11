@@ -926,5 +926,14 @@ namespace U5kManServer.Properties {
                 return ((string)(this["MainStandByMcastAdd"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int ConsecutiveFailedPollLimitForCfgModule {
+            get {
+                return ((int)(this["ConsecutiveFailedPollLimitForCfgModule"]));
+            }
+        }
     }
 }
