@@ -637,6 +637,7 @@ namespace U5kManServer
         {
             FailedPollCount = other.FailedPollCount;
             Std = other.Std;
+            ConsecutiveFailedPollLimit = other.ConsecutiveFailedPollLimit;
         }
     }
 
