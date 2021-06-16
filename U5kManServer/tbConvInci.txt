@@ -24,11 +24,11 @@
 2200,2012,Normal,
 2202,2200,Evento,Fallo Test LCEN Voip
 2203,2025,Normal,
-2204,2200,Evento,Fallo llamada de test R2 SCV
-2205,2200,Evento,Fallo llamada de test R2 VoIP (mensaje Options)
+2204,2200,Evento,Fallo de llamada de test R2 en Recurso
+2205,2200,Evento,Fallo de llamada de test R2 en VoIP (mensaje Options) en Recurso
 2206,2200,Evento,Error Protocolo N5
-2207,2200,Evento,Fallo llamada de test N5 SCV
-2208,2200,Evento,Fallo llamada de test N5 VoIP (mensaje Options)
+2207,2200,Evento,Fallo de llamada de test N5 en Recurso
+2208,2200,Evento,Fallo de llamada de test N5 en VoIP (mensaje Options) Recurso
 2300,2020,Llamada,TRO;NO;PR;ND
 2301,2021,Llamada,TRO
 2302,2022,Llamada,TRO;NO;PR;ND
