@@ -67,7 +67,7 @@ namespace U5kManServer.WebAppServer
             }
             catch (Exception x)
             {
-                LogException<MainStandbySyncServer>("", x);
+                LogException<MainStandbySyncServer>($"{srcIp},{grpIp},{Port}", x);
             }
         }
         /// <summary>
