@@ -758,7 +758,7 @@ namespace U5kManMibRevC
                         U5kSCVMib.DataGet((object gdata) =>
                         {
                             dynamic ddata = gdata;
-                            StdInfo = (int )ddata.STDTOPS[RowIndex - 1].stdpos;
+                            StdInfo = (int )ddata.STDTOPS[RowIndex - 1].StdGlobal;
                             //data = ddata.STDG.BdtConfVersion;
                         });
                         return new Integer32(StdInfo);
