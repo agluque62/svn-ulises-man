@@ -253,29 +253,62 @@ namespace U5kManServer
             // Lista de TOPS
             List<BdtTop> tops = U5kManService.Database.GetListaTop(Properties.u5kManServer.Default.stringSistema);
             // Lista de USES en TOP
-            List<Tuple<String, String>> usersOnTop = U5kManService.Database.GetUsersOnTop(Properties.u5kManServer.Default.stringSistema);
+            //List<Tuple<String, String>> usersOnTop = U5kManService.Database.GetUsersOnTop(Properties.u5kManServer.Default.stringSistema);
 
             List<stdPos> stdpos = new List<stdPos>();
-            foreach (BdtTop top in tops)
+            U5kManService.Database.GetUsersOnTop(Properties.u5kManServer.Default.stringSistema, (users) =>
             {
-                if (permitidos == null || Array.Exists(permitidos, element => element == top.Id) == true)
+                foreach (BdtTop top in tops)
                 {
-                    var uris = usersOnTop.Where(e => e.Item1 == top.Id)
-                        .Select(e => String.Format("<sip:{0}@{1}:{2}>", e.Item2, top.Ip, 5060)).ToList();
-                    stdpos.Add(new stdPos()
+                    if (permitidos == null || Array.Exists(permitidos, element => element == top.Id) == true)
                     {
-                        name = top.Id,
-                        ip = top.Ip,
-                        snmpport = Properties.u5kManServer.Default.TopSnmpPort,
-                        uris = uris
-                    });
+                        var uris = users.Where(e => top.Id == (e.idTop as string))
+                            .Select(e => String.Format("<sip:{0}@{1}:{2}>", e.idAbn, top.Ip, 5060) as string)
+                            .OrderBy(v => v)
+                            .ToList();
+                        var SectorOnPos = users.Where(e => top.Id == (e.idTop as string))
+                            .Select(p => p.idSec as string)
+                            .FirstOrDefault();
 
-                    /** */
-                    U5kEstadisticaProc.Estadisticas.AddOperador(top.Id);
+                        stdpos.Add(new stdPos()
+                        {
+                            name = top.Id,
+                            ip = top.Ip,
+                            SectorOnPos = SectorOnPos ?? "**FS**",
+                            snmpport = Properties.u5kManServer.Default.TopSnmpPort,
+                            uris = uris 
+                        });
+
+                        /** */
+                        U5kEstadisticaProc.Estadisticas.AddOperador(top.Id);
+                    }
                 }
-            }
+                gdata.CFGTOPS = stdpos;
+            });
 
-            gdata.CFGTOPS = stdpos;
+            //foreach (BdtTop top in tops)
+            //{
+            //    if (permitidos == null || Array.Exists(permitidos, element => element == top.Id) == true)
+            //    {
+            //        var uris = usersOnTop.Where(e => e.Item1 == top.Id)
+            //            .Select(e => String.Format("<sip:{0}@{1}:{2}>", e.Item2, top.Ip, 5060))
+            //            .OrderBy(v => v)
+            //            .ToList();
+
+            //        stdpos.Add(new stdPos()
+            //        {
+            //            name = top.Id,
+            //            ip = top.Ip,
+            //            snmpport = Properties.u5kManServer.Default.TopSnmpPort,
+            //            uris = uris
+            //        });
+
+            //        /** */
+            //        U5kEstadisticaProc.Estadisticas.AddOperador(top.Id);
+            //    }
+            //}
+
+            //gdata.CFGTOPS = stdpos;
         }
         /// <summary>
         /// 

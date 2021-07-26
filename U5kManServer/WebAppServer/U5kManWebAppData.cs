@@ -421,6 +421,8 @@ namespace U5kManServer.WebAppServer
             public int lan2 { get; set; }
             public int alt_hf { get; set; }
             public int rec_w { get; set; }
+            public List<string> uris { get; set; }
+            public string sect { get; set; }
         }
 
         /// <summary>
@@ -474,11 +476,26 @@ namespace U5kManServer.WebAppServer
                         lan1 = pos.lan1 == std.Ok ? 1 : pos.lan1 == std.Error ? 2 : 0,
                         lan2 = pos.lan2 == std.Ok ? 1 : pos.lan2 == std.Error ? 2 : 0,
                         alt_hf = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.HayAltavozHF ? (pos.alt_hf == std.Ok ? 1 : 0) : -1,
-                        rec_w = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.OpcOpeCableGrabacion ? (pos.rec_w == std.Ok ? 1 : 0) : -1
+                        rec_w = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.OpcOpeCableGrabacion ? (pos.rec_w == std.Ok ? 1 : 0) : -1,
+                        uris = pos.uris,
+                        sect = NormalizeSectId(pos.SectorOnPos, 16)
                     });
                 }
 #endif
             }
+        }
+        //LALM 210618
+        // Funcion Que limita el numero maximo de caracteres de una agrupacion a 16.
+        private String NormalizeSectId(String sectId, int longmax = 16)
+        {
+            String IdAgrupacion = sectId;
+            int len = sectId.Length;
+            if (len > longmax)
+            {
+                int mitad = longmax / 2;
+                IdAgrupacion = sectId.Substring(0, mitad - 1) + ".." + sectId.Substring(len - (mitad - 1), mitad - 1);
+            }
+            return IdAgrupacion;
         }
     }
 

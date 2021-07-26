@@ -1041,6 +1041,43 @@ namespace U5kBaseDatos
 
             return users;
         }
+        public void GetUsersOnTop(string sistema, Action<List<dynamic>> deliver)
+        {
+            List<object> users = new List<object>();
+
+            GetCfgActiva(sistema, (name, version) =>
+            {
+                string prefix = GetAtsPrefix(sistema);
+
+                string strsql = String.Format("SELECT s.IdTop, s.IdSector, a.IdAbonado " +
+                     "FROM sectoressectorizacion s, usuariosabonados a " +
+                     "WHERE s.Idsectorizacion=\"{0}\" AND a.IdAbonado LIKE \"{1}%\" AND a.IdSector = s.IdSector;",
+                      name, prefix);
+                try
+                {
+                    DataTable tb_users = GetDataSet(strsql).Tables[0];
+                    foreach (System.Data.DataRow tb_user in tb_users.Rows)
+                    {
+                        try
+                        {
+                            string idTop = tb_user.Field<string>("IDTOP");
+                            string idAbn = tb_user.Field<string>("IDABONADO");
+                            string idSec = tb_user.Field<string>("IDSECTOR");
+                            users.Add(new { idTop, idAbn, idSec });
+                        }
+                        catch (Exception x)
+                        {
+                            _logger.Error(x, String.Format("GetUsersOnTop. Excepcion en Fila {0}", tb_user));
+                        }
+                    }
+                }
+                catch (Exception x)
+                {
+                    throw x;
+                }
+                deliver(users);
+            });
+        }
         public void GetCfgActiva(string sistema, Action<string, string> notify)
         {
             try

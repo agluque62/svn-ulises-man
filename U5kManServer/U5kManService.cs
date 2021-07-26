@@ -679,6 +679,7 @@ namespace U5kManServer
         public string status_sync { get; set; }
         [DataMember]
         public List<string> uris { get; set; }
+        public string SectorOnPos { get; set; }
 
         /// <summary>
         /// 20170309. AGL. Obtención del Detalle de la Version sofware.
@@ -723,6 +724,7 @@ namespace U5kManServer
             name = "";
             ip = "192.168.1.1";
             snmpport = 261;
+            SectorOnPos = "**FS**";
 
             lan1 = lan2 = panel = jack_exe = jack_ayu = alt_r = alt_t = alt_hf = rec_w = std.NoInfo;
             stdpos = std.NoInfo; 
@@ -789,6 +791,7 @@ namespace U5kManServer
             status_sync = from.status_sync;
             uris = from.uris;
             sw_version = from.sw_version;
+            SectorOnPos = from.SectorOnPos;
 
             base.CopyFrom(from);
             stdg = StdGlobal;
@@ -796,7 +799,8 @@ namespace U5kManServer
 
         public bool Equals(stdPos other)
         {
-            bool retorno = (other == null ? false : (name == other.name && ip == other.ip));
+            /* Se incluyen los Sectores y uris asignadas en los criterios de igualdad de puesto */
+            bool retorno = (other == null ? false : (name == other.name && ip == other.ip && SectorOnPos == other.SectorOnPos && uris.SequenceEqual(other.uris)));
 #if DEBUG
             if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en StdPos");
 #endif
