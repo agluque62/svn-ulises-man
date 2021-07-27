@@ -75,6 +75,10 @@ angular.module("Uv5kiman")
             return md == frec_cclimax.Absoluto ? "A" :
                 md == frec_cclimax.Realtivo ? "R" : "?";
         };
+        ctrl.txtRtpPort = (ses, port) => {
+            var ret = ses.std == session_stdcodes.Conectado ? port : "";
+            return ret;
+        };
         ctrl.enableOnFD = function (tp) {
             return { FD: tp == frec_tipos.FD ? true : false, UnoMasUno: true };
         };

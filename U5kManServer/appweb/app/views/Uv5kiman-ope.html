@@ -98,8 +98,8 @@
                                                     <div id="tpses-{{ifrec}}-{{ises}}" class="collapse" style="margin-left: 15px;">
                                                         <table class="table table-bordered">
                                                             <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.showOnTx(ses.tipo)">
-                                                                <td>{{"RTPTx"}}</td>
-                                                                <td>{{ses.tx_rtp}}</td>
+                                                                <td style="width: 60%;">{{"RTPTx"}}</td>
+                                                                <td>{{ctrl.txtRtpPort(ses, ses.tx_rtp)}}</td>
                                                             </tr>
                                                             <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.showOnTx(ses.tipo)">
                                                                 <td>{{"CLD"}}</td>
@@ -110,8 +110,8 @@
                                                                 <td>{{ses.tx_owd + " ms"}}</td>
                                                             </tr>
                                                             <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.showOnRx(ses.tipo)">
-                                                                <td>{{"RTPRx"}}</td>
-                                                                <td>{{ses.rx_rtp}}</td>
+                                                                <td style="width: 60%;">{{"RTPRx"}}</td>
+                                                                <td>{{ctrl.txtRtpPort(ses, ses.rx_rtp)}}</td>
                                                             </tr>
                                                             <tr data-ng-class="ctrl.colorEstadoFrecuencia(fr.fstd)" ng-show="ctrl.showOnRx(ses.tipo)">
                                                                 <td>{{"QIDX"}}</td>
