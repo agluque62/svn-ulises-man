@@ -435,7 +435,7 @@ namespace U5kManServer
                 U5KStdGeneral.ClusterErrors ClusterError = U5KStdGeneral.ClusterErrors.NoError;
                 bool _Master = false;
 
-#if DEBUG
+#if DEBUG1
                 bool ServidorDual = true;
 #else
                 bool ServidorDual = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual;

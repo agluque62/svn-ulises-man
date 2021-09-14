@@ -574,7 +574,7 @@ namespace U5kManServer
                     }
                     else
                     {
-                        LogInfo<TopSnmpExplorer>($"{pos.name}. Fail Ignored.");
+                        LogWarn<TopSnmpExplorer>($"{pos.name}. Fail Ignored.");
                     }
                 });
             }
