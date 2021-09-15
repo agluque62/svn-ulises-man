@@ -2157,7 +2157,11 @@ namespace U5kBaseDatos
             get { return GetProperty<bool>("HaySacta", true); }
             set { SetProperty<bool>("HaySacta", value); }
         }
-
+        public bool HaySactaProxy
+        {
+            get { return GetProperty<bool>("HaySactaProxy", true); }
+            set { SetProperty<bool>("HaySactaProxy", value); }
+        }
         public bool HayAltavozHF
         {
             get { return GetProperty<bool>("HayAltavozHF", true); }
@@ -2324,6 +2328,7 @@ namespace U5kBaseDatos
             new U5kiLocalConfigItem(){Key="ServidorDual", Val="true" },
             new U5kiLocalConfigItem(){Key="HayReloj", Val="true" },
             new U5kiLocalConfigItem(){Key="HaySacta", Val="false"},
+            new U5kiLocalConfigItem(){Key="HaySactaProxy", Val="false"},
             new U5kiLocalConfigItem(){Key="HayAltavozHF", Val="false"},
             new U5kiLocalConfigItem(){Key="SonidoAlarmas", Val="false"},
             new U5kiLocalConfigItem(){Key="GenerarHistoricos", Val="true"},

@@ -935,5 +935,17 @@ namespace U5kManServer.Properties {
                 return ((int)(this["ConsecutiveFailedPollLimitForCfgModule"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool HaySactaProxy {
+            get {
+                return ((bool)(this["HaySactaProxy"]));
+            }
+            set {
+                this["HaySactaProxy"] = value;
+            }
+        }
     }
 }

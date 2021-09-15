@@ -1771,6 +1771,19 @@ namespace U5kManServer.WebAppServer
                 }
             },
             {
+                "HaySactaProxy",
+                new itemProperty()
+                {
+                    id="Proxy SACTA",
+                    tp=1,
+                    opt=new List<string>()
+                    {
+                        "False",
+                        "True"
+                    }
+                }
+            },
+            {
                 "HayAltavozHF",
                 new itemProperty()
                 {
@@ -1941,6 +1954,9 @@ namespace U5kManServer.WebAppServer
                 case "HaySacta":
                     return Prop.HaySacta ? "1" : "0";
 
+                case "HaySactaProxy":
+                    return Prop.HaySactaProxy ? "1" : "0";
+
                 case "HayAltavozHF":
                     return Prop.HayAltavozHF ? "1" : "0";
 
@@ -2005,6 +2021,10 @@ namespace U5kManServer.WebAppServer
 
                 case "HaySacta":
                     Prop.HaySacta = (val == "1");
+                    break;
+
+                case "HaySactaProxy":
+                    Prop.HaySactaProxy = (val == "1");
                     break;
 
                 case "HayAltavozHF":
@@ -2125,6 +2145,81 @@ namespace U5kManServer.WebAppServer
                 }
             }
             return strWriter.ToString();
+        }
+    }
+
+    public class SactaConfig : U5kManWebAppData
+    {
+        /* Estructura de la configuracion.
+            {
+                "TickPresencia": 5000,
+                "TimeoutPresencia": 30000,
+                "sacta": {
+                    "Domain": 1,
+                    "Center": 107,
+                    "GrpUser": 110,
+                    "SpiUsers": "111,112,113,114,7286,7287,7288,7289,15000",
+                    "SpvUsers": "86,87,88,89,7266,7267,7268,7269,34000",
+                    "lan1": {
+                        "ipmask": "192.168.0.71",
+                        "mcast": "225.12.101.1",
+                        "udpport": 19204
+                    },
+                    "lan2": {
+                        "ipmask": "192.168.1.71",
+                        "mcast": "225.212.101.1",
+                        "udpport": 19204
+                    }
+                },
+                "scv": {
+                    "Domain": 1,
+                    "Center": 107,
+                    "User": 10,
+                    "Interfaz": "192.168.0.212",
+                    "udpport": 15100,
+                    "Ignore": "305"
+                }
+            }
+         * */
+        public static void RemoteConfigPatch(string local, string remote, Action<bool, string> result)
+        {
+            try
+            {
+                var localConfig = JsonHelper.SafeJObjectParse(local);
+                if (localConfig != null)
+                {
+                    var remoteConfig = JsonHelper.SafeJObjectParse(remote);
+                    if (remoteConfig != null)
+                    {
+                        if (remoteConfig["sacta"]==null || remoteConfig["sacta"]["lan2"]==null || remoteConfig["sacta"]["lan2"]["ipmask"] == null)
+                        {
+                            result(false, $"Erroneous remote settings => {remote}");
+                        }
+                        else if (localConfig["sacta"] == null || localConfig["sacta"]["lan2"] == null || localConfig["sacta"]["lan2"]["ipmask"] == null)
+                        {
+                            result(false, $"Erroneous local settings => {local}");
+                        }
+                        else
+                        {
+                            remoteConfig["sacta"]["lan2"]["ipmask"] = localConfig["sacta"]["lan2"]["ipmask"];
+                            result(true, JsonHelper.ToString(remoteConfig, false));
+                        }
+                    }
+                    else
+                    {
+                        result(false, $"Erroneous remote settings => {remote}");
+                    }
+                }
+                else
+                {
+                    result(false, $"Erroneous local settings => {local}");
+                }
+            }
+            catch(Exception x)
+            {
+                LogException<SactaConfig>("", x);
+                result(false, $"Error => {x}");
+            }
         }
     }
 }

@@ -3030,6 +3030,15 @@ namespace U5kManServer
                 onlocal.HaySacta = value;
             }
         }
+        public bool HaySactaProxy
+        {
+            get { return OnBdt ? onbdt.HaySactaProxy : onlocal.HaySactaProxy; }
+            set
+            {
+                if (OnBdt) onbdt.HaySactaProxy = value;
+                onlocal.HaySactaProxy = value;
+            }
+        }
         public bool HayAltavozHF
         {
             get { return OnBdt ? onbdt.HayAltavozHF : onlocal.HayAltavozHF; }

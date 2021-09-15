@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Converters;
 
+using U5kManServer.WebAppServer;
 using Utilities;
 
 namespace UnitTesting
@@ -119,6 +121,18 @@ namespace UnitTesting
                         MD5 = "File not found or corrupted"
                     }
                 }
+            });
+        }
+        [TestMethod]
+        public void SactaPatchingTest()
+        {
+            var localConfig = "{\"TickPresencia\":5000,\"TimeoutPresencia\":30000,\"sacta\":{\"Domain\":1,\"Center\":107,\"GrpUser\":110,\"SpiUsers\":\"111,112,113,114,7286,7287,7288,7289,15000\",\"SpvUsers\":\"86,87,88,89,7266,7267,7268,7269,34000\",\"lan1\":{\"ipmask\":\"192.168.0.71\",\"mcast\":\"225.12.101.1\",\"udpport\":19204},\"lan2\":{\"ipmask\":\"192.168.1.71\",\"mcast\":\"225.212.101.1\",\"udpport\":19204}},\"scv\":{\"Domain\":1,\"Center\":107,\"User\":10,\"Interfaz\":\"192.168.0.212\",\"udpport\":15100,\"Ignore\":\"305\"}}";
+            var remoteConfig = "{\"TickPresencia\":5000,\"TimeoutPresencia\":30000,\"sacta\":{\"Domain\":1,\"Center\":107,\"GrpUser\":110,\"SpiUsers\":\"111,112,113,114,7286,7287,7288,7289,15000\",\"SpvUsers\":\"86,87,88,89,7266,7267,7268,7269,34000\",\"lan1\":{\"ipmask\":\"192.168.0.71\",\"mcast\":\"225.12.101.1\",\"udpport\":19204},\"lan2\":{\"ipmask\":\"192.168.1.71\",\"mcast\":\"225.212.101.1\",\"udpport\":19204}},\"scv\":{\"Domain\":1,\"Center\":107,\"User\":10,\"Interfaz\":\"192.168.0.212\",\"udpport\":15100,\"Ignore\":\"305\"}}";
+            var msg = $"Remote Sacta Config Received => {remoteConfig.Substring(0, 64)} ... {remoteConfig.Substring(remoteConfig.Count() - 64, 64)}";
+            Debug.WriteLine(msg);
+            SactaConfig.RemoteConfigPatch(localConfig, remoteConfig, (error, data) =>
+            {
+                Debug.Assert(error, $"Error raised => {data}");
             });
         }
     }

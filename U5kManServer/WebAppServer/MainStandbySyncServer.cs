@@ -158,9 +158,27 @@ namespace U5kManServer.WebAppServer
                             break;
 
                         case cmdSync.OpcionesSacta:
-                            LogDebug<MainStandbySyncServer>("Recibido cmdSync.Opciones-SNMP");
+                            LogDebug<MainStandbySyncServer>($"Remote Sacta Config Received => {strData.Substring(0,64)} ... {strData.Substring(strData.Count()-64, 64)}, Sacta Proxy=>{U5kManService.cfgSettings.HaySactaProxy}");
                             ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MiDireccionIP);
-                            sacta_srv.SactaConfSet(strData);
+                            if (U5kManService.cfgSettings.HaySactaProxy)
+                            {
+                                var local = sacta_srv.SactaConfGet();
+                                SactaConfig.RemoteConfigPatch(local, strData, (error, newData) =>
+                                {
+                                    if (!error)
+                                    {
+                                        sacta_srv.SactaConfSet(newData);
+                                    }
+                                    else
+                                    {
+                                        LogError<MainStandbySyncServer>($"On MainStandbySyncServer Error patching sacta config => {newData}");
+                                    }
+                                });
+                            }
+                            else
+                            {
+                                sacta_srv.SactaConfSet(strData);
+                            }
                             break;
 
                         case cmdSync.InfoLanes:
