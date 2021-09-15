@@ -6,13 +6,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
+using System.Net.Sockets;
 
 using Utilities;
 using NucleoGeneric;
 
 namespace U5kManServer.WebAppServer
 {
-    enum cmdSync
+    public enum cmdSync
     {
         Incidencias,
         Opciones,
@@ -21,93 +22,92 @@ namespace U5kManServer.WebAppServer
         OpcionesSnmp,
         OpcionesSacta,
         VersionsDetails,
-        GlobalStatus
+        Testing
     }
-    class MainStandbySyncServer : BaseCode
+    public class MainStandbySyncServer : BaseCode, IDisposable
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="srcIp"></param>
-        /// <param name="grpIp"></param>
-        /// <param name="Port"></param>
+        public int SyncListenerSpvPeriod { get; set; } = 5;
         public MainStandbySyncServer()
         {
         }
+        public void Start(String srcIp, String grpIp, int port)
+        {
+            LogDebug<MainStandbySyncServer>($"Starting {srcIp}, {grpIp}:{port}");
+            ThreadSync = new EventQueue();
+            ThreadSync?.Start();
+            Ip_propia = IPAddress.Parse(srcIp);
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Name
-        {
-            get { return "MainStandbySyncServer"; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public ServiceStatus Status
-        {
-            get { return _status; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public void Start(String srcIp, String grpIp, int Port)
-        {
-            try
+            ExecutiveThreadCancel = new CancellationTokenSource();
+            ExecutiveThread = Task.Run(() =>
             {
-                _ip_propia = IPAddress.Parse(srcIp);
-                _ip_grp = new IPEndPoint(IPAddress.Parse(grpIp), Port);
+                DateTime lastListenerTime = DateTime.MinValue;
+                DateTime lastRefreshTime = DateTime.MinValue;
+                // Supervisar la cancelacion.
+                while (ExecutiveThreadCancel.IsCancellationRequested == false)
+                {
+                    Task.Delay(TimeSpan.FromMilliseconds(100)).Wait();
+                    if (DateTime.Now - lastListenerTime >= TimeSpan.FromSeconds(SyncListenerSpvPeriod))
+                    {
+                        ThreadSync?.Enqueue("", () =>
+                        {
+                            if (Listener == null)
+                            {
+                                try
+                                {
+                                    Ip_grp = new IPEndPoint(IPAddress.Parse(grpIp), port);
+                                    LogDebug<MainStandbySyncServer>($"{Id} Starting Listening on {Ip_grp}");
 
-                _listener = new UdpSocket(srcIp, Port/* Port*/);
-                _listener.MaxReceiveThreads = 1;
-                _listener.NewDataEvent += OnNewData;
-                _listener.Base.JoinMulticastGroup(IPAddress.Parse(grpIp), _ip_propia);
-                _listener.BeginReceive();
-            }
-            catch (Exception x)
-            {
-                LogException<MainStandbySyncServer>($"{srcIp},{grpIp},{Port}", x);
-            }
+                                    Listener = new UdpSocket(srcIp, port/* Port*/);
+                                    Listener.MaxReceiveThreads = 1;
+                                    Listener.NewDataEvent += OnNewData;
+                                    Listener.Base.JoinMulticastGroup(IPAddress.Parse(grpIp), Ip_propia);
+                                    Listener.Base.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 16);
+                                    Listener.BeginReceive();
+
+                                    LogDebug<MainStandbySyncServer>($"{Id} Listening {Ip_grp}");
+                                }
+                                catch (Exception x)
+                                {
+                                    LogException<MainStandbySyncServer>($"{Id},{Ip_grp}", x);
+                                    ResetLan();
+                                }
+                            }
+                        });
+                        // Supervisar la disponibilidad del Listener.
+                        lastListenerTime = DateTime.Now;
+                    }
+                }
+            });
+            LogDebug<MainStandbySyncServer>($"{Id} Started...");
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public void Stop()
         {
-            try
-            {
-                if (_listener != null)
-                {
-                    _listener.Dispose();
-                    _listener = null;
-                }
-            }
-            catch (Exception x)
-            {
-                LogException<MainStandbySyncServer>("", x);
-            }
+            LogDebug<MainStandbySyncServer>($"{Id} Ending SyncManager");
+
+            ExecutiveThreadCancel?.Cancel();
+            ExecutiveThread?.Wait(TimeSpan.FromSeconds(5));
+            Listener?.Dispose();
+            Listener = null;
+            
+            ThreadSync?.Stop();
+            ThreadSync = null;
+
+            LogDebug<MainStandbySyncServer>($"{Id} SyncManager Ended");
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="data"></param>
+        public void Dispose()
+        {
+        }
         public void Sync(cmdSync cmd, String data)
         {
-            try
+            ThreadSync?.Enqueue("", () =>
             {
+                LogDebug<MainStandbySyncServer>($"{Id} Sending data => {Ip_grp}, cmd: {cmd}, data: {GeneralHelper.ToShow(data, 100)}");
                 byte[] bData = (new byte[] { (byte)cmd }).Concat(Encoding.ASCII.GetBytes(data)).ToArray();
-                _listener?.Send(_ip_grp, bData);
-            }
-            catch (Exception x)
-            {
-                LogException<MainStandbySyncServer>("", x);
-            }
-
-            /** Para que salga la trama */
-            System.Threading.Thread.Sleep(50);
+                SendData(bData);
+                /** Para que salga la trama */
+                Task.Delay(TimeSpan.FromMilliseconds(50)).Wait();
+            });
         }
-
         public void QueryVersionData()
         {
             versync.Reset();
@@ -115,74 +115,74 @@ namespace U5kManServer.WebAppServer
             versync.WaitOne(2500);
         }
 
-        public void SignalVersionDataReceived()
+        private void SendData(byte[] data)
         {
-            versync.Set();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="dg"></param>
-        private void OnNewData(object sender, DataGram dg)
-        {
-            U5kGenericos.TraceCurrentThread(this.GetType().Name + " OnNewData");
             try
             {
-#if !DEBUG1
-                if (_ip_propia.ToString() != dg.Client.Address.ToString())
-#endif
+                Listener?.Send(Ip_grp, data);
+            }
+            catch(Exception x)
+            {
+                LogException<MainStandbySyncServer>($"{Id} Exception", x);
+                ResetLan();
+            }
+        }
+        private void OnNewData(object sender, DataGram dg)
+        {
+            cmdSync cmd = (cmdSync)dg.Data[0];
+            string strData = System.Text.Encoding.Default.GetString(dg.Data, 1, dg.Data.Count() - 1);
+            
+            LogDebug<MainStandbySyncServer>($"{Id} Recibido Mensaje {cmd}, data => {GeneralHelper.ToShow(strData, 100)}");
+
+            ThreadSync?.Enqueue("", () =>
+            {
+                try
                 {
-                    cmdSync cmd = (cmdSync)dg.Data[0];
-                    string strData = System.Text.Encoding.Default.GetString(dg.Data, 1, dg.Data.Count() - 1);
-
-                    switch (cmd)
+                    if (Ip_propia.ToString() != dg.Client.Address.ToString())
                     {
-                        case cmdSync.Incidencias:
-                            LogDebug<MainStandbySyncServer>(
-                                "Recibido cmdSync.Incidencias");
-                            U5kManWADDbInci incis = U5kManWebAppData.JDeserialize<U5kManWADDbInci>(strData);
-                            incis.Save();
-                            break;
-                        case cmdSync.Opciones:
-                            LogDebug<MainStandbySyncServer>(
-                                "Recibido cmdSync.Opciones");
-                            U5kManWADOptions opts = U5kManWebAppData.JDeserialize<U5kManWADOptions>(strData);
-                            opts.Save();
-                            break;
-                        case cmdSync.OpcionesSnmp:
-                            LogDebug<MainStandbySyncServer>("Recibido cmdSync.Opciones-SNMP");
-                            U5kManWADSnmpOptions snmpopts = U5kManWebAppData.JDeserialize<U5kManWADSnmpOptions>(strData);
-                            snmpopts.Save();
-                            break;
-
-                        case cmdSync.OpcionesSacta:
-                            LogDebug<MainStandbySyncServer>($"Remote Sacta Config Received => {strData.Substring(0,64)} ... {strData.Substring(strData.Count()-64, 64)}, Sacta Proxy=>{U5kManService.cfgSettings.HaySactaProxy}");
-                            ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MiDireccionIP);
-                            if (U5kManService.cfgSettings.HaySactaProxy)
-                            {
-                                var local = sacta_srv.SactaConfGet();
-                                SactaConfig.RemoteConfigPatch(local, strData, (error, newData) =>
+                        switch (cmd)
+                        {
+                            case cmdSync.Incidencias:
+                                LogDebug<MainStandbySyncServer>($"{Id} Procesando Comando {cmd}, data => {GeneralHelper.ToShow(strData, 100)}");
+                                U5kManWADDbInci incis = U5kManWebAppData.JDeserialize<U5kManWADDbInci>(strData);
+                                incis.Save();
+                                break;
+                            case cmdSync.Opciones:
+                                LogDebug<MainStandbySyncServer>($"{Id} Procesando Comando {cmd}, data => {GeneralHelper.ToShow(strData, 100)}");
+                                U5kManWADOptions opts = U5kManWebAppData.JDeserialize<U5kManWADOptions>(strData);
+                                opts.Save();
+                                break;
+                            case cmdSync.OpcionesSnmp:
+                                LogDebug<MainStandbySyncServer>($"{Id} Procesando Comando {cmd}, data => {strData}");
+                                U5kManWADSnmpOptions snmpopts = U5kManWebAppData.JDeserialize<U5kManWADSnmpOptions>(GeneralHelper.ToShow(strData, 100));
+                                snmpopts.Save();
+                                break;
+                            case cmdSync.OpcionesSacta:
+                                LogDebug<MainStandbySyncServer>($"Processing Remote Sacta Config Received => {GeneralHelper.ToShow(strData, 100)}, Sacta Proxy=>{U5kManService.cfgSettings.HaySactaProxy}");
+                                ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MiDireccionIP);
+                                if (U5kManService.cfgSettings.HaySactaProxy)
                                 {
-                                    if (!error)
+                                    var local = sacta_srv.SactaConfGet();
+                                    SactaConfig.RemoteConfigPatch(local, strData, (error, newData) =>
                                     {
-                                        sacta_srv.SactaConfSet(newData);
-                                    }
-                                    else
-                                    {
-                                        LogError<MainStandbySyncServer>($"On MainStandbySyncServer Error patching sacta config => {newData}");
-                                    }
-                                });
-                            }
-                            else
-                            {
-                                sacta_srv.SactaConfSet(strData);
-                            }
-                            break;
+                                        if (!error)
+                                        {
+                                            sacta_srv.SactaConfSet(newData);
+                                        }
+                                        else
+                                        {
+                                            LogError<MainStandbySyncServer>($"On MainStandbySyncServer Error patching sacta config => {newData}");
+                                        }
+                                    });
+                                }
+                                else
+                                {
+                                    sacta_srv.SactaConfSet(strData);
+                                }
+                                break;
 
-                        case cmdSync.InfoLanes:
-                            {
+                            case cmdSync.InfoLanes:
+                                LogDebug<MainStandbySyncServer>($"{Id} Procesando Comando {cmd}, data => {GeneralHelper.ToShow(strData, 100)}");
                                 GlobalServices.GetWriteAccess((data) =>
                                 {
                                     StdServ srv = data.STDG.RemoteServer;
@@ -191,11 +191,10 @@ namespace U5kManServer.WebAppServer
                                         srv.string2lanes = strData;
                                     }
                                 });
-                            }
-                            break;
+                                break;
 
-                        case cmdSync.InfoNtpClient:
-                            {
+                            case cmdSync.InfoNtpClient:
+                                LogDebug<MainStandbySyncServer>($"{Id} Procesando Comando {cmd}, data => {GeneralHelper.ToShow(strData, 100)}");
                                 GlobalServices.GetWriteAccess((data) =>
                                 {
                                     StdServ srv = data.STDG.RemoteServer;
@@ -205,69 +204,73 @@ namespace U5kManServer.WebAppServer
                                     }
                                 });
                                 break;
-                            }
-
-                        case cmdSync.VersionsDetails:
-                            GlobalServices.GetWriteAccess((data) =>
-                            {
-                                if (U5kManService._Master)
+                            case cmdSync.VersionsDetails:
+                                LogDebug<MainStandbySyncServer>($"{Id} Procesando Comando {cmd}, data => {GeneralHelper.ToShow(strData, 100)}");
+                                GlobalServices.GetWriteAccess((data) =>
                                 {
-                                    // Si le llega al MASTER debe obtener de los datos la version de SLAVE.
-                                    StdServ srv = data.STDG.RemoteServer;
-                                    if (srv != null)
+                                    if (strData == ""/*U5kManService._Master*/)
                                     {
-                                        srv.jversion = strData;
-                                        SignalVersionDataReceived();
-                                        LogTrace<MainStandbySyncServer>("Informacion de Versiones Recibida.");
+                                        // Es una petición. Se debe generar los datos para el MASTER.
+                                        Sync(cmdSync.VersionsDetails, VersionDetails.SwVersions.ToString());
+                                        LogDebug<MainStandbySyncServer>($"{Id} Informacion de Versiones Enviada.");
                                     }
-                                }
-                                else
-                                {
-                                    // Si le llega al SLAVE debe generar los datos para el MASTER.
-                                    Sync(cmdSync.VersionsDetails, VersionDetails.SwVersions.ToString());
-                                    LogTrace<MainStandbySyncServer>("Informacion de Versiones Enviada.");
-                                }
-                            });
-
-                            break;
-
-                        case cmdSync.GlobalStatus:
-                            //#if DEBUG
-                            //                            U5kManServer.DebugHelper.checkEquals = true;
-                            //                            Console.WriteLine("Recibido GlobalStatus {0} bytes. Igual Anterior: {1}",
-                            //                                strData.Count(), U5kManService._std.Equals(U5kGenericos.JDeserialize<U5kManServer.U5kManStdData>(strData)));
-                            //                            U5kManServer.DebugHelper.checkEquals = false;
-                            //#endif
-                            //                            /** El Esclavo actualiza su estado global con lo que le dice el MASTER */
-                            //                            if (U5kManService._Master == false)
-                            //                            {
-                            //                                //U5kGenericos.DeserializaContractObject<U5kManServer.U5kManStdData>(strData, ref U5kManService._std);
-                            //                                U5kManService._std = U5kGenericos.JDeserialize<U5kManServer.U5kManStdData>(strData);
-                            //                            }
-                            break;
+                                    else 
+                                    {
+                                        // Es una Respuesta.
+                                        if (data != null)
+                                        {
+                                            StdServ srv = data.STDG.RemoteServer;
+                                            if (srv != null)
+                                            {
+                                                srv.jversion = strData;
+                                            }
+                                        }
+                                        SignalVersionDataReceived();
+                                        LogDebug<MainStandbySyncServer>($"{Id} Informacion de Versiones Recibida.");
+                                    }
+                                });
+                                break;
+                            default:
+                                LogDebug<MainStandbySyncServer>($"{Id} Comando Desconocido. No se procesa.");
+                                break;
+                        }
                     }
-                }
 #if DEBUG
                     else
                     {
-                        LogDebug<MainStandbySyncServer>(
-                            String.Format("Recibido Mensaje PROPIO: {0}", (cmdSync)dg.Data[0]));
+                        LogDebug<MainStandbySyncServer>($"{Id} Recibido Mensaje propio.");
                     }
 #endif
-            }
-            catch (Exception x)
-            {
-                LogException<MainStandbySyncServer>("", x);
-            }
+                }
+                catch (Exception x)
+                {
+                    LogException<MainStandbySyncServer>($"{Id} Exception", x);
+                    ResetLan();
+                }
+            });
+
+        }
+        private void SignalVersionDataReceived()
+        {
+            versync.Set();
+        }
+        void ResetLan()
+        {
+            LogDebug<MainStandbySyncServer>($"{Id} Reseting Listener");
+            Listener?.Dispose();
+            Listener = null;
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private ServiceStatus _status = ServiceStatus.Disabled;
-        private UdpSocket _listener = null;
-        private IPAddress _ip_propia = null;
-        private IPEndPoint _ip_grp = null;
+        string Id => $"On SyncServer ({Ip_propia}):";
+        Task ExecutiveThread { get; set; } = null;
+        CancellationTokenSource ExecutiveThreadCancel { get; set; } = null;
+        private UdpSocket Listener { get; set; } = null;
+        private IPAddress Ip_propia { get; set; } = null;
+        private IPEndPoint Ip_grp { get; set; } = null;
+        private EventQueue ThreadSync { get; set; } = null;
 
         /** */
         private static ManualResetEvent versync = new ManualResetEvent(false);

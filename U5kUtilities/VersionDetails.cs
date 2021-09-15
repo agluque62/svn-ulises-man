@@ -127,7 +127,7 @@ namespace Utilities
 
         public override string ToString()
         {
-            return JsonConvert.SerializeObject(version, Formatting.Indented);
+            return JsonConvert.SerializeObject(version/*, Formatting.Indented*/);
         }
         public static VersionDetails SwVersions
         {

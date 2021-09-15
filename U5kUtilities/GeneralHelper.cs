@@ -26,5 +26,15 @@ namespace Utilities
             }
             return (T)(object)0;
         }
+
+        public static string ToShow(string str, int max)
+        {
+            if (str.Length <= max)
+            {
+                return str;
+            }
+            var segment = max / 2;
+            return $"{str.Substring(0, segment)} ... {str.Substring(str.Length - segment, segment)}";
+        }
     }
 }
