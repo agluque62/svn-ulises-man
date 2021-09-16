@@ -3,16 +3,18 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using System.Globalization;
 using System.Net;
 
 using NucleoGeneric;
+using Utilities;
 
 namespace U5kManServer.WebAppServer
 {
-    class WebAppServer : BaseCode
+    public class WebAppServer : BaseCode, IDisposable
     {
         /// <summary>
         /// 
@@ -28,6 +30,7 @@ namespace U5kManServer.WebAppServer
         public bool HtmlEncode { get; set; }
         public bool Enable { get; set; }
         public string DisableCause { get; set; }
+        public int SyncListenerSpvPeriod { get; set; } = 5;
 
         /// <summary>
         /// 
@@ -53,7 +56,19 @@ namespace U5kManServer.WebAppServer
             DefaultUrl = defaultUrl;
             DefaultDir = defaultDir;
             HtmlEncode = htmlEncode;
+            Enable = false;
+            DisableCause = "";
         }
+        public WebAppServer(string rootDirectory)
+        {
+            Directory.SetCurrentDirectory(rootDirectory);
+            DefaultUrl = "/index.html";
+            DefaultDir = "/appweb";
+            HtmlEncode = true;
+            Enable = true;
+            DisableCause = "";
+        }
+        public void Dispose() { }
 
         /// <summary>
         /// 
@@ -62,17 +77,56 @@ namespace U5kManServer.WebAppServer
         /// <param name="cfg"></param>
         public void Start(int port, Dictionary<string, wasRestCallBack> cfg)
         {
-            lock (locker)
-            {
-                if (_listener != null)
-                    Stop();
+            LogDebug<WebAppServer>($"{Id} Starting WebAppServer");
+            CfgRest = cfg;
 
-                _cfgRest = cfg;
-                _listener = new HttpListener();
-                _listener.Prefixes.Add("http://*:" + port.ToString() + "/");
-                _listener.Start();
-                _listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
-            }
+            ExecutiveThreadCancel = new CancellationTokenSource();
+            ExecutiveThread = Task.Run(() =>
+            {
+                DateTime lastListenerTime = DateTime.MinValue;
+                DateTime lastRefreshTime = DateTime.MinValue;
+                // Supervisar la cancelacion.
+                while (ExecutiveThreadCancel.IsCancellationRequested == false)
+                {
+                    Task.Delay(TimeSpan.FromMilliseconds(100)).Wait();
+                    if (DateTime.Now - lastListenerTime >= TimeSpan.FromSeconds(SyncListenerSpvPeriod))
+                    {
+                        // Supervisar la disponibilidad del Listener.
+                        lock (Locker)
+                        {
+                            if (Listener == null)
+                            {
+                                try
+                                {
+                                    LogDebug<WebAppServer>($"{Id} Starting HttpListener");
+                                    Listener = new HttpListener();
+                                    Listener.Prefixes.Add("http://*:" + port.ToString() + "/");
+
+                                    /** Configurar la Autentificacion */
+                                    Listener.AuthenticationSchemes = AuthenticationSchemes.Basic | AuthenticationSchemes.Anonymous;
+                                    Listener.AuthenticationSchemeSelectorDelegate = request =>
+                                    {
+                                        /** Todas las operaciones No GET de Usuarios no ulises se consideran inseguras... Habra que autentificarse */
+                                        // return request.HttpMethod == "GET" || request.Headers["UlisesClient"] == "MTTO" ? AuthenticationSchemes.Anonymous : AuthenticationSchemes.Basic;
+                                        return AuthenticationSchemes.Anonymous;
+                                    };
+
+                                    Listener.Start();
+                                    Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
+                                    LogDebug<WebAppServer>($"{Id} HttpListener Started");
+                                }
+                                catch (Exception x)
+                                {
+                                    LogException<WebAppServer>($"{Id} ", x, false);
+                                    ResetListener();
+                                }
+                            }
+                        }
+                        lastListenerTime = DateTime.Now;
+                    }
+                }
+            });
+            LogDebug<WebAppServer>($"{Id} WebAppServer Started");
         }
 
         /// <summary>
@@ -80,14 +134,17 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         public virtual void Stop()
         {
-            lock (locker)
+            lock (Locker)
             {
-                if (_listener != null)
-                {
-                    _listener.Close();
-                    _listener = null;
-                    _cfgRest = null;
-                }
+                LogDebug<WebAppServer>($"{Id} Ending WebAppServer");
+
+                ExecutiveThreadCancel?.Cancel();
+                ExecutiveThread?.Wait(TimeSpan.FromSeconds(5));
+                Listener?.Close();
+                Listener = null;
+                CfgRest = null;
+
+                LogDebug<WebAppServer>($"{Id} WebAppServer Ended");
             }
         }
 
@@ -102,19 +159,18 @@ namespace U5kManServer.WebAppServer
         void GetContextCallback(IAsyncResult result)
         {
             U5kGenericos.TraceCurrentThread(this.GetType().Name);
-            lock (locker)
+            lock (Locker)
             {
                 //U5kGenericos.SetCurrentCulture();
 
                 ConfigCultureSet();
-                if (_listener == null || _listener.IsListening == false)
+                if (Listener == null || Listener.IsListening == false)
                     return;
-
-                HttpListenerContext context = _listener.EndGetContext(result);
-                logrequest(context);
-
+                HttpListenerContext context = Listener.EndGetContext(result);
                 try
                 {
+                    Logrequest(context);
+
                     string url = context.Request.Url.LocalPath;
                     if (Enable )
                     {
@@ -161,6 +217,12 @@ namespace U5kManServer.WebAppServer
                         ProcessFile(context.Response, (DefaultDir + "/disabled.html").Substring(1), "{{cause}}", DisableCause);
                     }
                 }
+                catch (HttpListenerException x)
+                {
+                    // Si se produce una excepcion de este tipo, hay que reiniciar el LISTENER.
+                    LogException<WebAppServer>("", x, false);
+                    ResetListener();
+                }
                 catch (Exception x)
                 {
                     LogException<WebAppServer>( "", x);
@@ -169,8 +231,11 @@ namespace U5kManServer.WebAppServer
                 }
                 finally
                 {
-                    context.Response.Close();
-                    _listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
+                    if (Listener != null && Listener.IsListening)
+                    {
+                        context.Response.Close();
+                        Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
+                    }
                 }
             }
         }
@@ -255,14 +320,14 @@ namespace U5kManServer.WebAppServer
         /// <returns></returns>
         protected wasRestCallBack FindRest(string url)
         {
-            if (_cfgRest == null)
+            if (CfgRest == null)
                 return null;
 
-            if (_cfgRest.ContainsKey(url))
-                return _cfgRest[url];
+            if (CfgRest.ContainsKey(url))
+                return CfgRest[url];
 
             string[] urlComp = url.Split('/');
-            foreach (KeyValuePair<string, wasRestCallBack> item in _cfgRest)
+            foreach (KeyValuePair<string, wasRestCallBack> item in CfgRest)
             {
                 string[] keyComp = item.Key.Split('/');
                 if (keyComp.Count() != urlComp.Count())
@@ -312,32 +377,62 @@ namespace U5kManServer.WebAppServer
             return "text/text";
         }
 
+        private void ResetListener()
+        {
+            LogDebug<WebAppServer>($"{Id} Reseting Listener");
+
+            Listener?.Close();
+            Listener = null;
+
+            LogDebug<WebAppServer>($"{Id} Listener Reset");
+        }
         #endregion
 
         #region Testing
-        private void logrequest(HttpListenerContext context)
+        private void Logrequest(HttpListenerContext context)
         {
 #if DEBUG
             if (context.Request.QueryString.Count > 0)
             {
-                NLog.LogManager.GetLogger("Testing").Debug("URL: {0}", context.Request.Url.OriginalString);
-                NLog.LogManager.GetLogger("Testing").Debug("Raw URL: {0}", context.Request.RawUrl);
-
                 var array = (from key in context.Request.QueryString.AllKeys
                              from value in context.Request.QueryString.GetValues(key)
                              select string.Format("{0}={1}", key, value)).ToArray();
 
-                NLog.LogManager.GetLogger("Testing").Debug("Query: {0}", String.Join("##",array));
+                LogDebug<WebAppServer>($"{Id} URL: {context.Request.Url.OriginalString}, " +
+                    $"Raw URL: {context.Request.RawUrl}, " +
+                    $"Query: {String.Join("##", array)}");
             }
+            else
+            {
+                LogDebug<WebAppServer>($"{Id} URL: {context.Request.Url.OriginalString}, " +
+                    $"Raw URL: {context.Request.RawUrl}, ");
+            }
+            ErrorTesting();
+#endif
+    }
+        private void ErrorTesting()
+        {
+#if DEBUG
+            DebuggingHelper.ThrowErrors.GetError((error) =>
+            {
+                if (error== DebuggingHelper.ThrowErrors.LaunchableErrors.WebListenerError)
+                {
+                    throw new HttpListenerException(1445, "Testing HttpListenerException");
+                }
+            });
 #endif
         }
         #endregion
 
         #region Private
 
-        HttpListener _listener = null;
-        Dictionary<string, wasRestCallBack> _cfgRest = null;
-        Object locker = new Object();
+        string Id => $"On WebAppServer:";
+        Task ExecutiveThread { get; set; } = null;
+        CancellationTokenSource ExecutiveThreadCancel { get; set; } = null;
+        HttpListener Listener { get; set; } = null;
+        Dictionary<string, wasRestCallBack> CfgRest { get; set; } = null;
+        object Locker { get; set; } = new Object();
+        static DateTime StartingDate { get; set; } = DateTime.Now;
 
         #endregion
     }

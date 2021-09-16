@@ -126,5 +126,30 @@ namespace Utilities
 
             }
         }
+
+        public class ThrowErrors
+        {
+            public enum LaunchableErrors { WebListenerError }
+            public static void Program(LaunchableErrors error)
+            {
+                lock (Locker)
+                {
+                    ScheduledErrors?.Enqueue(error);
+                }
+            }
+            public static void GetError(Action<LaunchableErrors> take)
+            {
+                lock (Locker)
+                {
+                    if (ScheduledErrors.Count > 0)
+                    {
+                        var error = ScheduledErrors.Dequeue();
+                        take(error);
+                    }
+                }
+            }
+            static Queue<LaunchableErrors> ScheduledErrors { get; set; } = new Queue<LaunchableErrors>();
+            static object Locker { get; set; } = new object();
+        }
     }
 }
