@@ -1198,16 +1198,32 @@ namespace U5kManServer
                     {
                         LogTrace<GwExplorer>(String.Format("GWU-HISTORICO: <<<{0}>>>", data.ToString()));
 
-                        Redan2UlisesHist conv = new Redan2UlisesHist(data.ToString());
-                        U5kIncidencia inci;
-                        List<Object> parametros;
-                        if (conv.UlisesInci(out inci, out parametros))
+                        using(var hist= new Redan2UlisesHist(data.ToString()))
                         {
-                            RecordEvent<GwExplorer>(DateTime.Now, (eIncidencias)inci.id, (eTiposInci)inci.tipo, inci.idhw, parametros.ToArray());
-                        }
-                        else
-                        {
-                            LogWarn<GwExplorer>(String.Format("GWU-HISTORICO NO CONVERTIDO: <<<{0}>>>", data.ToString()));
+                            hist.UlisesInci((ok, date, inci, parametros) =>
+                            {
+                                if (ok)
+                                {
+                                    var settings = Properties.u5kManServer.Default;
+                                    var workingDate = settings.GwsDatesAreUtc ? date.ToLocalTime() : date;
+                                    var deviation = DateTime.Now - workingDate;
+
+                                    if (deviation < TimeSpan.FromSeconds(-settings.GwsHistMaxSecondsInAdvance) || 
+                                        deviation > TimeSpan.FromHours(settings.GwsHistMaxHoursDelayed))
+                                    {
+                                        LogWarn<GwExplorer>($"GW-HISTORICO NO SINCRONIZADO: De {pgw.ip}, " +
+                                            $"UTC date => {date}, Local date => {DateTime.Now}, " +
+                                            $"Inci => {inci}", 
+                                            eIncidencias.IGRL_U5KI_SERVICE_ERROR, new Object[] { "De Generacion de Historicos de Pasarela" });
+                                    }
+                                    else
+                                    {
+                                        RecordEvent<GwExplorer>(workingDate, (eIncidencias)inci.id, (eTiposInci)inci.tipo, inci.idhw, parametros.ToArray());
+                                    }
+                                }
+                                else
+                                    LogWarn<GwExplorer>(String.Format("GWU-HISTORICO NO CONVERTIDO: <<<{0}>>>", data.ToString()));
+                            });
                         }
                     }
                     break;

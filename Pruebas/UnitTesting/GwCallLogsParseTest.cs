@@ -38,20 +38,47 @@ namespace UnitTesting
             //"2205:2015-11-06 10.58.11:EMPLAZ:CGW3:16:-:r2-1",
             //"2207:2015-11-06 10.58.11:EMPLAZ:CGW3:16:-:n2-1",
             //"2208:2015-11-06 10.58.11:EMPLAZ:CGW3:16:-:n2-1",
-            "2304:2021-06-16 07.57.48:EMPLAZ:CGW3:39:-:n5-n2:RC=n5-n2:16/06/2021 07.57.48",
+            //"2304:2021-06-16 07.57.48:EMPLAZ:CGW3:39:-:n5-n2:RC=n5-n2:16/06/2021 07.57.48",
+            "2022:2021-09-17 05.39.36:EMPLAZ:CGW1:53:-:",
+            "2021:2021-09-17 10.40.00:EMPLAZ:CGW1:54:-:"
         };
+        void PrepareTest(Action<dynamic> take)
+        {
+            take(new { GwsDatesAreUtc = true, GwsHistMaxSecondsInAdvance = 5, GwsHistMaxHoursDelayed = 12, pgw=new { ip = "127.0.0.1" } });
+        }
         [TestMethod]
         public void TestMethod1()
         {
-            IncisFromGateways.ForEach(inciText =>
+            PrepareTest((settings) =>
             {
-                new Redan2UlisesHist(inciText).UlisesInci((inci, parametros) =>
+                IncisFromGateways.ForEach(inciText =>
                 {
-                    Debug.WriteLine($"{inci}: {String.Join(", ", parametros.ToArray())}");
-                }, () =>
-                {
-                    Debug.WriteLine($"GWU-HISTORICO NO CONVERTIDO: <<<{inciText}>>>");
+                    new Redan2UlisesHist(inciText).UlisesInci((ok, date, inci, parametros) =>
+                    {
+                        if (ok)
+                        {
+                            //var settings = Properties.u5kManServer.Default;
+                            var workingDate = settings.GwsDatesAreUtc ? date.ToLocalTime() : date;
+                            var deviation = DateTime.Now - workingDate;
+
+                            if (deviation < TimeSpan.FromSeconds(-settings.GwsHistMaxSecondsInAdvance) ||
+                                deviation > TimeSpan.FromHours(settings.GwsHistMaxHoursDelayed))
+                            {
+                                Debug.WriteLine($"GW-HISTORICO NO SINCRONIZADO: De {settings.pgw.ip}, " +
+                                    $"UTC date => {date}, Local date => {DateTime.Now}, " +
+                                    $"Inci => {inci}");
+                            }
+                            else
+                            {
+
+                                Debug.WriteLine($"RecordEvent At {workingDate} => {inci}");
+                            }
+                        }
+                        else
+                            Debug.WriteLine(String.Format("GWU-HISTORICO NO CONVERTIDO: <<<{0}>>>", inciText));
+                    });
                 });
+
             });
         }
     }

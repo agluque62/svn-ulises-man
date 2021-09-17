@@ -947,5 +947,32 @@ namespace U5kManServer.Properties {
                 this["HaySactaProxy"] = value;
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        public int GwsHistMaxSecondsInAdvance {
+            get {
+                return ((int)(this["GwsHistMaxSecondsInAdvance"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("12")]
+        public int GwsHistMaxHoursDelayed {
+            get {
+                return ((int)(this["GwsHistMaxHoursDelayed"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool GwsDatesAreUtc {
+            get {
+                return ((bool)(this["GwsDatesAreUtc"]));
+            }
+        }
     }
 }

@@ -1639,7 +1639,7 @@ namespace U5kBaseDatos
     /// <summary>
     /// Convierte los Eventos Historicos de REDAN en Eventos Historicos de ULISES...
     /// </summary>
-    public class Redan2UlisesHist
+    public class Redan2UlisesHist : IDisposable
     {
         enum enHistClass {Normal, Evento, Operacion, Llamada, Ignorar}
 
@@ -1690,20 +1690,27 @@ namespace U5kBaseDatos
         /// <param name="strRedanInci"></param>
         public Redan2UlisesHist(string strRedanInci)
         {
-            string[] campos = strRedanInci.Split(':');
+            string[] campos = strRedanInci?.Split(':');
             if (campos.Count() < 6)
                 return;
+            try
+            {
+                redanCode = int.Parse(campos[0]);
+                redanDate = DateTime.ParseExact(campos[1], "yyyy-MM-dd HH.mm.ss", System.Globalization.CultureInfo.InvariantCulture);
+                redanSite = campos[2];
+                redanIdhw = campos[3];
+                redanUser = campos[5];
 
-            redanCode = int.Parse(campos[0]);
-            redanDate = DateTime.ParseExact(campos[1], "yyyy-MM-dd HH.mm.ss", System.Globalization.CultureInfo.InvariantCulture);
-            redanSite = campos[2];
-            redanIdhw = campos[3];
-            redanUser = campos[5];
-
-            for (int ipar = 6; ipar < campos.Count(); ipar++)
-                redanParams.Add(campos[ipar]);
+                for (int ipar = 6; ipar < campos.Count(); ipar++)
+                    redanParams.Add(campos[ipar]);
+            }
+            catch
+            {
+                redanCode = -1;
+            }
         }
 
+        public void Dispose() { }
         /// <summary>
         /// 
         /// </summary>
@@ -1763,17 +1770,15 @@ namespace U5kBaseDatos
         }
 
         /** */
-        public void UlisesInci(Action<U5kIncidencia, List<object>> success, Action fail)
+        public void UlisesInci(Action<bool, DateTime, U5kIncidencia, List<object>> take)
         {
-            U5kIncidencia inci;
-            List<Object> parametros;
-            if (UlisesInci(out inci, out parametros))
+            if (UlisesInci(out U5kIncidencia inci, out List<object> parametros))
             {
-                success(inci, parametros);
+                take(true, redanDate, inci, parametros);
             }
             else
             {
-                fail();
+                take(false, default, default, default);
             }
         }
 
@@ -1826,10 +1831,10 @@ namespace U5kBaseDatos
         /// 
         /// </summary>
         protected int redanCode=-1;
-        protected DateTime redanDate;
-        protected string redanSite;
-        protected string redanIdhw;
-        protected string redanUser;
+        protected DateTime redanDate = default;
+        protected string redanSite = default;
+        protected string redanIdhw = default;
+        protected string redanUser = default;
         protected List<Object> redanParams = new List<object>();        
     }
 
