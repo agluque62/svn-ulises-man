@@ -345,4 +345,22 @@ Error requesting data</value>
   <data name="GW_CPU_MODULE" xml:space="preserve">
     <value>CPU</value>
   </data>
+  <data name="BKP_DELETING" xml:space="preserve">
+    <value>Deleting old backup: </value>
+  </data>
+  <data name="BKP_ERROR_01" xml:space="preserve">
+    <value>Backup Run error: </value>
+  </data>
+  <data name="BKP_ERROR_02" xml:space="preserve">
+    <value>Database Backup failed. MYSQLDUMP.EXE cannot be found. </value>
+  </data>
+  <data name="BKP_ERROR_03" xml:space="preserve">
+    <value>U5kiDbHelper.Backup Exception: </value>
+  </data>
+  <data name="BKP_INIT" xml:space="preserve">
+    <value>Starting Database Backup</value>
+  </data>
+  <data name="BKP_OK" xml:space="preserve">
+    <value>Database backup completed.</value>
+  </data>
 </root>

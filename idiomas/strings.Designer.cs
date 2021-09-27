@@ -61,6 +61,60 @@ namespace idiomas {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a Eliminando backup antiguo: .
+        /// </summary>
+        public static string BKP_DELETING {
+            get {
+                return ResourceManager.GetString("BKP_DELETING", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Error en Ejecucion de Backup: .
+        /// </summary>
+        public static string BKP_ERROR_01 {
+            get {
+                return ResourceManager.GetString("BKP_ERROR_01", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Error en Backup de Base de Datos. No se encuentra MYSQLDUMP.EXE.
+        /// </summary>
+        public static string BKP_ERROR_02 {
+            get {
+                return ResourceManager.GetString("BKP_ERROR_02", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a U5kiDbHelper.Backup Exception: .
+        /// </summary>
+        public static string BKP_ERROR_03 {
+            get {
+                return ResourceManager.GetString("BKP_ERROR_03", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Iniciando Backup de Base de Datos.
+        /// </summary>
+        public static string BKP_INIT {
+            get {
+                return ResourceManager.GetString("BKP_INIT", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Backup de Base de Datos completado..
+        /// </summary>
+        public static string BKP_OK {
+            get {
+                return ResourceManager.GetString("BKP_OK", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Nodo en ({0}:{1})
         ///Error Obteniendo Info.
         /// </summary>

@@ -787,6 +787,7 @@ namespace U5kManServer
                 String.Format("Programando Backup para {0:MM/dd HH:mm}", current + timeToGo));
             this.timerBackup = new System.Threading.Timer(x =>
             {
+                ConfigCultureSet();
                 Properties.u5kManServer cfg = Properties.u5kManServer.Default;
                 if (cfg.TipoBdt == 0)
                 {

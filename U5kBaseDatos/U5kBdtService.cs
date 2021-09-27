@@ -1943,7 +1943,11 @@ namespace U5kBaseDatos
             try
             {
                 // LogManager.GetCurrentClassLogger().Warn("Iniciando Backup de Base de Datos.");
-                InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Iniciando Backup de Base de Datos", IsError = false });
+                InciItems.Add(new BackupInciItem() 
+                { 
+                    When = DateTime.Now, What = /*"Iniciando Backup de Base de Datos"*/idiomas.strings.BKP_INIT, 
+                    IsError = false 
+                });
                 /** Busco el fichero de backup.... */
                 string sqldumpfile = FindFile( new string [] {
                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
@@ -1982,17 +1986,29 @@ namespace U5kBaseDatos
                         string[] files2delete = Directory.GetFiles(".", "*-bkp.sql").Where(f => (new FileInfo(f)).LastWriteTime < lastTime).ToArray();
                         foreach (string file in files2delete)
                         {
-                            InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Eliminado backup antiguo: " + file, IsError = false });
+                            InciItems.Add(new BackupInciItem() 
+                            { 
+                                When = DateTime.Now, What = idiomas.strings.BKP_DELETING/*"Eliminado backup antiguo: "*/ + file, 
+                                IsError = false 
+                            });
                             File.Delete(file);
                         }
                     }
                     if (error)
                     {
-                        InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Error en Ejecucion de Backup: " + strerror, IsError = true });
+                        InciItems.Add(new BackupInciItem() 
+                        { 
+                            When = DateTime.Now, What = idiomas.strings.BKP_ERROR_01/* "Error en Ejecucion de Backup: "*/ + strerror, 
+                            IsError = true 
+                        });
                     }
                     else
                     {
-                        InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Backup de Base de Datos completado.", IsError = false });
+                        InciItems.Add(new BackupInciItem() 
+                        { 
+                            When = DateTime.Now, What = idiomas.strings.BKP_OK/* "Backup de Base de Datos completado."*/, 
+                            IsError = false 
+                        });
                     }
 //                    LogManager.GetCurrentClassLogger().Warn("Backup de Base de Datos. {0} {1}", error ? "Error en Ejecucion" : "Ejecutado", error ? strerror : "");
                     File.WriteAllText("mysql-err.txt", strerror);
@@ -2000,13 +2016,22 @@ namespace U5kBaseDatos
                 else
                 {
                     // LogManager.GetCurrentClassLogger().Error("Error en Backup de Base de Datos. No se encuentra MYSQLDUMP.EXE");
-                    InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Error en Backup de Base de Datos. No se encuentra MYSQLDUMP.EXE", IsError = true });
+                    InciItems.Add(new BackupInciItem() 
+                    { 
+                        When = DateTime.Now, 
+                        What = idiomas.strings.BKP_ERROR_02/*"Error en Backup de Base de Datos. No se encuentra MYSQLDUMP.EXE"*/, 
+                        IsError = true 
+                    });
                 }
             }
             catch (Exception x)
             {
                 // LogManager.GetCurrentClassLogger().Error(x, "U5kiDbHelper.Backup Exception");
-                InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "U5kiDbHelper.Backup Exception: " + x.Message, IsError = true });
+                InciItems.Add(new BackupInciItem() 
+                { 
+                    When = DateTime.Now, 
+                    What = idiomas.strings.BKP_ERROR_03/*"U5kiDbHelper.Backup Exception: "*/ + x.Message, 
+                    IsError = true });
             }
             return InciItems;
         }
@@ -2015,7 +2040,12 @@ namespace U5kBaseDatos
             var InciItems = new List<BackupInciItem>();
             try
             {
-                InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Iniciando Backup de Base de Datos", IsError = false });
+                InciItems.Add(new BackupInciItem() 
+                { 
+                    When = DateTime.Now, 
+                    What = idiomas.strings.BKP_INIT/* "Iniciando Backup de Base de Datos"*/, 
+                    IsError = false 
+                });
                 /** Busco el fichero de backup.... */
                 string sqldumpfile = FindFile(new string[] {
                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
@@ -2058,17 +2088,31 @@ namespace U5kBaseDatos
                         string[] files2delete = Directory.GetFiles(".", "*-bkp.sql").Where(f => (new FileInfo(f)).LastWriteTime < lastTime).ToArray();
                         foreach (string file in files2delete)
                         {
-                            InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Eliminado backup antiguo: " + file, IsError = false });
+                            InciItems.Add(new BackupInciItem() 
+                            { 
+                                When = DateTime.Now, 
+                                What = idiomas.strings.BKP_DELETING/*"Eliminado backup antiguo: "*/ + file, 
+                                IsError = false 
+                            });
                             File.Delete(file);
                         }
                     }
                     if (error)
                     {
-                        InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Error en Ejecucion de Backup: " + strerror, IsError = true });
+                        InciItems.Add(new BackupInciItem() 
+                        { 
+                            When = DateTime.Now, 
+                            What = idiomas.strings.BKP_ERROR_01/*"Error en Ejecucion de Backup: "*/ + strerror, 
+                            IsError = true });
                     }
                     else
                     {
-                        InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Backup de Base de Datos completado.", IsError = false });
+                        InciItems.Add(new BackupInciItem() 
+                        { 
+                            When = DateTime.Now, 
+                            What = idiomas.strings.BKP_OK/*"Backup de Base de Datos completado."*/, 
+                            IsError = false 
+                        });
                     }
                     //                    LogManager.GetCurrentClassLogger().Warn("Backup de Base de Datos. {0} {1}", error ? "Error en Ejecucion" : "Ejecutado", error ? strerror : "");
                     File.WriteAllText("mysql-err.txt", strerror);
@@ -2076,13 +2120,23 @@ namespace U5kBaseDatos
                 else
                 {
                     // LogManager.GetCurrentClassLogger().Error("Error en Backup de Base de Datos. No se encuentra MYSQLDUMP.EXE");
-                    InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "Error en Backup de Base de Datos. No se encuentra MYSQLDUMP.EXE", IsError = true });
+                    InciItems.Add(new BackupInciItem() 
+                    { 
+                        When = DateTime.Now, 
+                        What = idiomas.strings.BKP_ERROR_02/* "Error en Backup de Base de Datos. No se encuentra MYSQLDUMP.EXE"*/, 
+                        IsError = true 
+                    });
                 }
             }
             catch (Exception x)
             {
                 // LogManager.GetCurrentClassLogger().Error(x, "U5kiDbHelper.Backup Exception");
-                InciItems.Add(new BackupInciItem() { When = DateTime.Now, What = "U5kiDbHelper.Backup Exception: " + x.Message, IsError = true });
+                InciItems.Add(new BackupInciItem() 
+                { 
+                    When = DateTime.Now, 
+                    What = idiomas.strings.BKP_ERROR_03 /* "U5kiDbHelper.Backup Exception: "*/ + x.Message, 
+                    IsError = true 
+                });
             }
             return InciItems;
         }

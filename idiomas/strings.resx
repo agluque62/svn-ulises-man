@@ -339,4 +339,22 @@ Error Solicitando Info</value>
   <data name="GW_CPU_MODULE" xml:space="preserve">
     <value>CPU</value>
   </data>
+  <data name="BKP_DELETING" xml:space="preserve">
+    <value>Eliminando backup antiguo: </value>
+  </data>
+  <data name="BKP_ERROR_01" xml:space="preserve">
+    <value>Error en Ejecucion de Backup: </value>
+  </data>
+  <data name="BKP_ERROR_02" xml:space="preserve">
+    <value>Error en Backup de Base de Datos. No se encuentra MYSQLDUMP.EXE</value>
+  </data>
+  <data name="BKP_ERROR_03" xml:space="preserve">
+    <value>U5kiDbHelper.Backup Exception: </value>
+  </data>
+  <data name="BKP_INIT" xml:space="preserve">
+    <value>Iniciando Backup de Base de Datos</value>
+  </data>
+  <data name="BKP_OK" xml:space="preserve">
+    <value>Backup de Base de Datos completado.</value>
+  </data>
 </root>
