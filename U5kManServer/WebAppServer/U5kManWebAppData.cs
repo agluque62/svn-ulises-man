@@ -140,6 +140,7 @@ namespace U5kManServer.WebAppServer
             public int std { get; set; }
             public int sel { get; set; }
             public string url { get; set; }
+            public string ntp { get; set; }
         }
 
         /// <summary>
@@ -219,7 +220,8 @@ namespace U5kManServer.WebAppServer
                         std = (int)stdg.stdServ1.Estado,
                         sel = (int)stdg.stdServ1.Seleccionado,
                         url = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual ?
-                                String.Format("http://{0}/UlisesV5000/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : ""
+                                String.Format("http://{0}/UlisesV5000/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : "",
+                        ntp = stdg.stdServ1.NtpInfo.GlobalStatus
                     };
                     sv2 = new itemData()
                     {
@@ -228,7 +230,8 @@ namespace U5kManServer.WebAppServer
                         std = (int)stdg.stdServ2.Estado,
                         sel = (int)stdg.stdServ2.Seleccionado,
                         url = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual ?
-                                String.Format("http://{0}/UlisesV5000/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : ""
+                                String.Format("http://{0}/UlisesV5000/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : "",
+                        ntp = stdg.stdServ2.NtpInfo.GlobalStatus
                     };
                     cwp = new itemData()
                     {
@@ -423,6 +426,7 @@ namespace U5kManServer.WebAppServer
             public int rec_w { get; set; }
             public List<string> uris { get; set; }
             public string sect { get; set; }
+            public string ntp { get; set; }
         }
 
         /// <summary>
@@ -478,7 +482,8 @@ namespace U5kManServer.WebAppServer
                         alt_hf = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.HayAltavozHF ? (pos.alt_hf == std.Ok ? 1 : 0) : -1,
                         rec_w = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.OpcOpeCableGrabacion ? (pos.rec_w == std.Ok ? 1 : 0) : -1,
                         uris = pos.uris,
-                        sect = NormalizeSectId(pos.SectorOnPos, 16)
+                        sect = NormalizeSectId(pos.SectorOnPos, 16),
+                        ntp = pos.NtpInfo.GlobalStatus
                     });
                 }
 #endif
@@ -516,6 +521,7 @@ namespace U5kManServer.WebAppServer
             public int main { get; set; }
             public int lan1 { get; set; }
             public int lan2 { get; set; }
+            public string ntp { get; set; }
             /** */
             public int cpu0 { get; set; }   // 0 NP, 1: Main, 2 Standby
             public int cpu1 { get; set; }   // 0 NP, 1: Main, 2 Standby
@@ -560,6 +566,7 @@ namespace U5kManServer.WebAppServer
                     main = gw.Dual == false ? 0 : gw.gwA.Seleccionada ? 0 : gw.gwB.Seleccionada ? 1 : -1,
                     lan1 = (gw.Dual == false || gw.gwA.Seleccionada) ? (gw.gwA.lan1 == std.Ok ? 1 : 0) : (gw.gwB.lan1 == std.Ok ? 1 : 0),
                     lan2 = (gw.Dual == false || gw.gwA.Seleccionada) ? (gw.gwA.lan2 == std.Ok ? 1 : 0) : (gw.gwB.lan2 == std.Ok ? 1 : 0),
+                    ntp = gw.cpu_activa.NtpInfo.GlobalStatus,
                     cpu0 = gw.Dual == false ? (gw.gwA.presente ? 1 : 0) : (gw.gwA.presente ? (gw.gwA.Seleccionada ? 1 : 2) : (0)),
                     cpu1 = gw.Dual == false ? (0) : (gw.gwB.presente ? (gw.gwB.Seleccionada ? 1 : 2) : (0))
                 }).ToList();
@@ -606,7 +613,7 @@ namespace U5kManServer.WebAppServer
         public class itemCpu
         {
             public string ip { get; set; }
-            public int ntp { get; set; }
+            public string ntp { get; set; }
             public int lan1 { get; set; }
             public int lan2 { get; set; }
             public List<itemTar> tars { get; set; }
@@ -698,7 +705,7 @@ namespace U5kManServer.WebAppServer
                         cpus.Add(new itemCpu()
                         {
                             ip = pgw.ip,
-                            ntp = 0,
+                            ntp = pgw.NtpInfo.GlobalStatus,
                             lan1 = pgw.lan1 == U5kManServer.std.Ok ? 1 : 0,
                             lan2 = pgw.lan2 == U5kManServer.std.Ok ? 1 : 0,
                             tars = PhysicalGwTars(pgw),
