@@ -22,6 +22,7 @@ using System.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
+using Utilities;
 using U5kBaseDatos;
 using NucleoGeneric;
 
@@ -95,11 +96,45 @@ namespace U5kManServer
 #if _LISTANBX_
         public int timer { get; set; }
 #endif
-        [DataMember]
-        public string ntp_sync { get; set; }
+        //[DataMember]
+        public string ntp_sync => NtpInfo.LastInfoFromClient ?? "";
         [DataMember]
         public Dictionary<string, std> lanes { get; set; }
-
+        public class NtpInfoClass
+        {
+            public string LastInfoFromClient { get; set; } = default;
+            public string Ip { get; set; } = default;
+            public bool Connected { get; set; } = default;
+            public double Precision { get; set; } = default;
+            public void Actualize(Action<bool, string> notifyChange)
+            {
+                if (Actualize(new NtpMeinbergClientInfo()))
+                {
+                    notifyChange(Connected, Ip);
+                }
+            }
+            public void Actualize(string data)
+            {
+                Actualize(new NtpMeinbergClientInfo(data));
+            }
+            public void CopyFrom(NtpInfoClass from)
+            {
+                LastInfoFromClient = from.LastInfoFromClient;
+                Ip = from.Ip;
+                Connected = from.Connected;
+                Precision = from.Precision;
+            }
+            protected bool Actualize(NtpMeinbergClientInfo info)
+            {
+                var change = info.MainUrl != Ip || info.Connected != Connected;
+                LastInfoFromClient = info.LastClientResponse;
+                Ip = info.MainUrl;
+                Connected = info.Connected;
+                Precision = info.Offset;
+                return change;
+            }
+        }
+        public NtpInfoClass NtpInfo { get; set; } = new NtpInfoClass();
         /// <summary>
         /// 20170705. Almacena los detalles de Version SW de los Servidores.
         /// </summary>
@@ -113,7 +148,7 @@ namespace U5kManServer
             Seleccionado = sel.NoInfo;
             Estado = std.NoInfo;
             name = "name?";
-            ntp_sync = "???";
+            //ntp_sync = "???";
             lanes = new Dictionary<string, std>();
             jversion = "";
         }
@@ -158,7 +193,8 @@ namespace U5kManServer
             Seleccionado = from.Seleccionado;
             Estado = from.Estado;
             name = from.name;
-            ntp_sync = from.ntp_sync;
+            //ntp_sync = from.ntp_sync;
+            NtpInfo.CopyFrom(from.NtpInfo);
             lanes = from.lanes.ToDictionary(x => x.Key, x => x.Value);
             jversion = from.jversion;
             timer = from.timer;
@@ -169,7 +205,7 @@ namespace U5kManServer
                 Seleccionado == other.Seleccionado &&
                 Estado == other.Estado &&
                 name == other.name &&
-                ntp_sync == other.ntp_sync &&
+                // ntp_sync == other.ntp_sync &&
                 // lanes == other.lanes &&
                 jversion == other.jversion &&
                 timer == other.timer

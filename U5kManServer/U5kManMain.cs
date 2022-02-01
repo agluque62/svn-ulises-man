@@ -1064,10 +1064,11 @@ namespace U5kManServer
                 }
 #endif
                 /** Chequear el Estado de Sincronismo */
-                using (NtpClientStatus ntpc = new NtpClientStatus(Properties.u5kManServer.Default.NtpClient))
-                {
-                    TestingServer.ntp_sync = String.Join("##", ntpc.Status.ToArray());
-                }
+                //using (NtpClientStatus ntpc = new NtpClientStatus(Properties.u5kManServer.Default.NtpClient))
+                //{
+                //    TestingServer.ntp_sync = String.Join("##", ntpc.Status.ToArray());
+                //}
+                // TestingServer.ntp_sync = (new NtpMeinbergClientInfo()).LastClientResponse;
 
                 /** Actualizo los datos en la tabla... */
                 GlobalServices.GetWriteAccess((data) =>
@@ -1089,14 +1090,36 @@ namespace U5kManServer
                         {
                             MyStdServer.lanes[lan.Key] = lan.Value;
                         }
-                        MyStdServer.ntp_sync = TestingServer.ntp_sync;
+                        // MyStdServer.ntp_sync = TestingServer.ntp_sync;
+                        MyStdServer.NtpInfo.Actualize((connected, ip) =>
+                        {
+                            if (bMaster)
+                            {
+                                // Todo Generar Historicos.
+                                if (connected == true)
+                                {
+                                    GeneraIncidencia(0, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "SPV",
+                                        new object[] { idiomas.strings.NTP_ServerConnected/*"Servidor NTP Conectado"*/, ip, "", "", "", "", "", "" });
+                                    stdg.stdClock.name = ip;
+                                    stdg.stdClock.Estado = std.Ok;
+                                }
+                                else
+                                {
+                                    GeneraIncidencia(0, eIncidencias.IGRL_NBXMNG_ALARM, eTiposInci.TEH_SISTEMA, "SPV",
+                                        new object[] { idiomas.strings.NTP_NoServer/*"No Hay Servidor NTP en el Sistema"*/, ip, "", "", "", "", "", "" });
+                                    stdg.stdClock.name = ip;
+                                    stdg.stdClock.Estado = std.NoInfo;
+                                }
+                            }
+                        });
+
                         /** Si soy esclavo, notifico los datos al master */
                         if (!bMaster)
                             WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoLanes, MyStdServer.lanes2string);
 
                         /** Si soy esclavo, notifico los datos al master */
                         if (!bMaster)
-                            WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoNtpClient, MyStdServer.ntp_sync);
+                            WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoNtpClient, MyStdServer.NtpInfo.LastInfoFromClient/* ntp_sync*/);
                     }
                 });
 

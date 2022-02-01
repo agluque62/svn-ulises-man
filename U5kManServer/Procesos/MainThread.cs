@@ -498,82 +498,6 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        int spv_ntp_reint = 0;
-        void SupervisaNtp(U5kManStdData gdata)
-        {
-            // Es una Action. en Version 1, viene con el Semaforo de Escritura cogido...
-            if (U5kManService.cfgSettings/*vProperties.u5kManServer.Default*/.HayReloj == true)
-            {
-                U5KStdGeneral stdg = gdata.STDG;
-                LogDebug<MainThread>("SupervisaNTP");
-
-                try
-                {
-                    if (stdg.LocalServer != null)
-                    {
-                        String client_response = stdg.LocalServer.ntp_sync.Replace("##", "\r\n");
-                        stdg.stdClock.name = (new Utilities.NtpClientStatus(Properties.u5kManServer.Default.NtpClient)).UrlServer(client_response);
-                        if (U5kGenericos.ValidateIp(stdg.stdClock.name))
-                        {
-                            // Hago PING....
-                            bool ntpPres = U5kGenericos.Ping(stdg.stdClock.name, stdg.stdClock.Estado == std.Ok);
-                            switch (stdg.stdClock.Estado)
-                            {
-                                case std.Inicio:
-                                case std.NoInfo:
-                                    if (ntpPres == true)
-                                    {
-                                        GeneraIncidencia(0, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "SPV",
-                                            new object[] { idiomas.strings.NTP_ServerConnected/*"Servidor NTP Conectado"*/, stdg.stdClock.name, "", "", "", "", "", "" });
-                                    }
-                                    break;
-                                case std.Ok:
-                                    if (ntpPres == false)
-                                    {
-                                        GeneraIncidencia(0, eIncidencias.IGRL_NBXMNG_ALARM, eTiposInci.TEH_SISTEMA, "SPV",
-                                            new object[] { idiomas.strings.NTP_NoServer/*"No Hay Servidor NTP en el Sistema"*/, stdg.stdClock.name, "", "", "", "", "", "" });
-                                    }
-                                    break;
-                            }
-                            spv_ntp_reint = 0;
-                            stdg.stdClock.Estado = ntpPres == true ? std.Ok : std.NoInfo;
-                        }
-                        else
-                        {
-                            if (spv_ntp_reint++ > 3)
-                            {
-                                LogWarn<MainThread>(String.Format("NTP => NoInfo. IP/Name no Valido: {0}", stdg.stdClock.name));
-                                spv_ntp_reint = 0;
-                                stdg.stdClock.Estado = std.NoInfo;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (spv_ntp_reint++ > 3)
-                        {
-                            LogDebug<MainThread>(String.Format("NTP => NoInfo. LocalServer == NULL"));
-                            spv_ntp_reint = 0;
-                            stdg.stdClock.name = "Unknown";
-                            stdg.stdClock.Estado = std.NoInfo;
-                        }
-                    }
-                }
-
-                catch (Exception x)
-                {
-                    LogException<MainThread>("", x);
-                    if (spv_ntp_reint++ > 3)
-                    {
-                        stdg.stdClock.Estado = std.NoInfo;
-                        spv_ntp_reint = 0;
-                    }
-                }
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
         void SupervisaScv(U5kManStdData gdata)
         {
             // Es una Action. en Version 1, viene con el Semaforo de Escritura cogido...
@@ -706,7 +630,7 @@ namespace U5kManServer
             /** Lista de Tareas */
             List<Action<U5kManStdData>> actions = new List<Action<U5kManStdData>>()
             {
-                SupervisaScv,SupervisaPosiciones,/*SupervisaSacta,*/SupervisaNtp,SpAlarmas
+                SupervisaScv,SupervisaPosiciones,/*SupervisaSacta,SupervisaNtp,*/SpAlarmas
             };
             /** Crea los Procesos */
             Init();

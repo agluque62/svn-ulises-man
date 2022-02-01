@@ -200,7 +200,7 @@ namespace U5kManServer.WebAppServer
                                     StdServ srv = data.STDG.RemoteServer;
                                     if (srv != null)
                                     {
-                                        srv.ntp_sync = strData;
+                                        srv.NtpInfo.Actualize(strData);
                                     }
                                 });
                                 break;

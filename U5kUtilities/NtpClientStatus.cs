@@ -9,7 +9,7 @@ using Microsoft.Win32;
 
 namespace Utilities
 {
-    public class NtpClientStatus : IDisposable
+    /*public*/ class NtpClientStatus : IDisposable
     {
         #region Public
         protected enum NtpClient { Windows = 0, Meinberg = 1, Unknow = -1 }
@@ -148,12 +148,12 @@ namespace Utilities
                     }
                 }
                 Servidores = Servidores.OrderBy(item => item).ToList();
-                return Servidores.Count == 0 ? "No Meinberg Server" : Servidores.ElementAt(0).Substring(1);
+                return Servidores.Count == 0 ? "No NTP Server" : Servidores.ElementAt(0).Substring(1);
 
             }
             catch (Exception )
             {
-                return String.Format("No Meinberg Client");
+                return String.Format("No NTP Meinberg Client");
             }
         }
         private List<string> ErrorStatus(string error)
@@ -220,6 +220,15 @@ namespace Utilities
             public double Offset { get; set; }
             public double Jitter { get; set; }
             public bool Valid => (Class != NtpServerClass.Unknow);
+            public string Ip
+            {
+                get
+                {
+                    var ip = IPHelper.IsIpv4(Remote) ? Remote :
+                        IPHelper.IsIpv4(Refif) ? Refif : "127.0.0.1";
+                    return ip;
+                }
+            }
             public NtpServerInfo()
             {
                 SetToDefault();
@@ -234,8 +243,9 @@ namespace Utilities
                         var strData = GeneralHelper.NormalizeWhiteSpace(line.Substring(1)).Split(' ');
                         if (strData.Length == 10)
                         {
-                            Remote = strData[0];
-                            Refif = strData[1];
+                            char[] charsToTrim = { '.' };
+                            Remote = strData[0].Trim(charsToTrim);
+                            Refif = strData[1].Trim(charsToTrim);
                             Stratum = DecodeStratum(strData[2]);
                             Type = strData[3];
                             When = DecodeInt(strData[4]);
@@ -321,7 +331,14 @@ namespace Utilities
         const string FirstLineKey2 = "offset";
         const string FirstLineKey3 = "jitter";
         const string SecondLineKey = "==========";
+        const string LineSeparator = "##";
         #region Public Members
+        public NtpMeinbergClientInfo(string formattedClientResponse)
+        {
+            string[] separatingStrings = { LineSeparator };
+            var clientLines = formattedClientResponse?.Split(separatingStrings, StringSplitOptions.None).ToList();
+            ProcessClientResponse(clientLines ?? InfoFromCommandLine);
+        }
         public NtpMeinbergClientInfo(List<string> clientResponse = null)
         {
             ProcessClientResponse(clientResponse ?? InfoFromCommandLine);
@@ -329,6 +346,41 @@ namespace Utilities
         public void Dispose()
         {
         }
+        public string MainUrl
+        {
+            get
+            {
+                var systempeer = ServersInfo.Where(s => s.Class == NtpServerClass.SystemPeer).FirstOrDefault();
+                var candidate = ServersInfo.Where(s => s.Class == NtpServerClass.Candidate).FirstOrDefault();
+                var disconnected = ServersInfo.Where(s => s.Class == NtpServerClass.NoConnected).FirstOrDefault();
+                var mainUrl = systempeer != default ? systempeer.Ip :
+                    candidate != default ? candidate.Ip :
+                    disconnected != default ? disconnected.Ip : "No NTP Server";
+                return mainUrl;
+            }
+        }
+        public bool Connected
+        {
+            get
+            {
+                var systempeer = ServersInfo.Where(s => s.Class == NtpServerClass.SystemPeer);
+                var candidate = ServersInfo.Where(s => s.Class == NtpServerClass.Candidate);
+                var connected = systempeer.Count() > 0 || candidate.Count() > 0;
+                return connected;
+            }
+        }
+        public double Offset
+        {
+            get
+            {
+                var systempeer = ServersInfo.Where(s => s.Class == NtpServerClass.SystemPeer).FirstOrDefault();
+                var candidate = ServersInfo.Where(s => s.Class == NtpServerClass.Candidate).FirstOrDefault();
+                var offset = systempeer != default ? systempeer.Offset :
+                    candidate != default ? candidate.Offset : 0;
+                return offset;
+            }
+        }
+        public string LastClientResponse => string.Join(LineSeparator, LastClientResponseProcessed?.ToArray());
         #endregion Public Members
         protected List<string> InfoFromCommandLine
         {
