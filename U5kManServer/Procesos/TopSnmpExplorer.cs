@@ -509,36 +509,7 @@ namespace U5kManServer
 
         static public void PosicionSyncStatusSet(string name, stdPos pos, string status)
         {
-            List<string> lst_status = status.Split("##".ToCharArray()).ToList();
-            lst_status.RemoveAll(item => String.IsNullOrEmpty(item));
-
-            if (lst_status.Count < 2)
-                pos.status_sync = "Error: " + status;
-            else if (lst_status.Count < 3)
-                pos.status_sync = "No NTP Server";
-            else
-            {
-                List<string> _ntp_client_status = new List<string>();
-
-                lst_status.RemoveAt(0);
-                lst_status.RemoveAt(0);
-                foreach (String line in lst_status)
-                {
-                    string[] array = line.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-                    if (array.Length == 10)
-                    {
-                        _ntp_client_status.Add(String.Format("{0}: {1}", array[0].Trim('*'), array[0].StartsWith("*") ? idiomas.strings.TOP_Sincronizado/*"Sincronizado"*/ : 
-                            idiomas.strings.TOP_NoSincronizado/*"No Sincronizado"*/));
-                    }
-                    else
-                    {
-#if DEBUG
-                        _ntp_client_status.Add("Line Error");
-#endif
-                    }
-                }
-                pos.status_sync = String.Join("##", _ntp_client_status.ToArray()); ;
-            }
+            pos.NtpInfo.Actualize(status);
         }
 
         /// <summary>

@@ -97,43 +97,9 @@ namespace U5kManServer
         public int timer { get; set; }
 #endif
         //[DataMember]
-        public string ntp_sync => NtpInfo.LastInfoFromClient ?? "";
+        public string ntp_sync => NtpInfo.GlobalStatus;
         [DataMember]
         public Dictionary<string, std> lanes { get; set; }
-        public class NtpInfoClass
-        {
-            public string LastInfoFromClient { get; set; } = default;
-            public string Ip { get; set; } = default;
-            public bool Connected { get; set; } = default;
-            public double Precision { get; set; } = default;
-            public void Actualize(Action<bool, string> notifyChange)
-            {
-                if (Actualize(new NtpMeinbergClientInfo()))
-                {
-                    notifyChange(Connected, Ip);
-                }
-            }
-            public void Actualize(string data)
-            {
-                Actualize(new NtpMeinbergClientInfo(data));
-            }
-            public void CopyFrom(NtpInfoClass from)
-            {
-                LastInfoFromClient = from.LastInfoFromClient;
-                Ip = from.Ip;
-                Connected = from.Connected;
-                Precision = from.Precision;
-            }
-            protected bool Actualize(NtpMeinbergClientInfo info)
-            {
-                var change = info.MainUrl != Ip || info.Connected != Connected;
-                LastInfoFromClient = info.LastClientResponse;
-                Ip = info.MainUrl;
-                Connected = info.Connected;
-                Precision = info.Offset;
-                return change;
-            }
-        }
         public NtpInfoClass NtpInfo { get; set; } = new NtpInfoClass();
         /// <summary>
         /// 20170705. Almacena los detalles de Version SW de los Servidores.
@@ -712,7 +678,8 @@ namespace U5kManServer
         /// 20170309. AGL. Nuevas peticiones para la MIB
         /// </summary>
         [DataMember]
-        public string status_sync { get; set; }
+        public string status_sync => NtpInfo.GlobalStatus;
+        public NtpInfoClass NtpInfo { get; set; } = new NtpInfoClass();
         [DataMember]
         public List<string> uris { get; set; }
         public string SectorOnPos { get; set; }
@@ -765,7 +732,7 @@ namespace U5kManServer
             lan1 = lan2 = panel = jack_exe = jack_ayu = alt_r = alt_t = alt_hf = rec_w = std.NoInfo;
             stdpos = std.NoInfo; 
             stdg = StdGlobal;
-            status_sync = "???";
+            //status_sync = "???";
             uris = new List<string>();
         }
 
@@ -787,6 +754,7 @@ namespace U5kManServer
         public void Reset()
         {
             lan1 = lan2 = panel = jack_exe = jack_ayu = alt_r = alt_t = alt_hf = rec_w = std.NoInfo;
+            NtpInfo.LastInfoFromClient = default;
         }
 
         /** 20181123. Calculo en funcion de Opciones */
@@ -824,7 +792,8 @@ namespace U5kManServer
             alt_hf = from.alt_hf;
             rec_w = from.rec_w;
             stdpos = from.stdpos;
-            status_sync = from.status_sync;
+            //status_sync = from.status_sync;
+            NtpInfo.CopyFrom(from.NtpInfo);
             uris = from.uris;
             sw_version = from.sw_version;
             SectorOnPos = from.SectorOnPos;
@@ -2221,6 +2190,54 @@ namespace U5kManServer
             return null;
         }
 #endif
+    }
+    public class NtpInfoClass
+    {
+        public string LastInfoFromClient { get; set; } = default;
+        public string Ip { get; set; } = default;
+        public bool Connected { get; set; } = default;
+        public double Precision { get; set; } = default;
+        public string GlobalStatus 
+        {
+            get
+            {
+                if (LastInfoFromClient != default)
+                {
+                    var sync = Connected ? "Sync" : "No Sync";
+                    var precision = Connected ? Precision.ToString() : "--";
+                    var ip = Ip ?? "------";
+                    return $"{sync} ({precision}) <= {ip}";
+                }
+                return "No sync. info";
+            } 
+        }
+        public void Actualize(Action<bool, string> notifyChange)
+        {
+            if (Actualize(new NtpMeinbergClientInfo()))
+            {
+                notifyChange(Connected, Ip);
+            }
+        }
+        public void Actualize(string data)
+        {
+            Actualize(new NtpMeinbergClientInfo(data));
+        }
+        public void CopyFrom(NtpInfoClass from)
+        {
+            LastInfoFromClient = from.LastInfoFromClient;
+            Ip = from.Ip;
+            Connected = from.Connected;
+            Precision = from.Precision;
+        }
+        protected bool Actualize(NtpMeinbergClientInfo info)
+        {
+            var change = info.MainUrl != Ip || info.Connected != Connected;
+            LastInfoFromClient = info.LastClientResponse;
+            Ip = info.MainUrl;
+            Connected = info.Connected;
+            Precision = info.Offset;
+            return change;
+        }
     }
 
 #if !_TESTING_
