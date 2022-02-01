@@ -146,14 +146,16 @@
         <div class="row">
             <div class="col-md-4">
                 <a ng-href="{{ctrl.serv_url()}}" class="thumbnail" ng-show="ctrl.std.sv1.enable==1">
-                    <img ng-src="./images/_server.jpg" alt="Server-1" class="{{ctrl.serv_std_class(0, ctrl.std.sv1)}}"  style="max-height:64px;height:64px;width:80%;">
+                    <img ng-src="./images/_server.jpg" alt="Server-1" class="{{ctrl.serv_std_class(0, ctrl.std.sv1)}}" style="max-height:64px;height:64px;width:80%;">
                     <div class="div_titulo">{{ctrl.std.sv1.name}}</div>
+                    <div class="ntp_info">{{ctrl.std.sv1.ntp}}</div>
                 </a>
             </div>
             <div class="col-md-4">
                 <a ng-href="{{ctrl.serv_url()}}" class="thumbnail" ng-show="ctrl.std.sv2.enable==1">
                     <img ng-src="./images/_server.jpg" alt="Server-2" class="{{ctrl.serv_std_class(1, ctrl.std.sv2)}}" style="max-height:64px;height:64px;width:80%;">
                     <div class="div_titulo">{{ctrl.std.sv2.name}}</div>
+                    <div class="ntp_info">{{ctrl.std.sv2.ntp}}</div>
                 </a>
             </div>
             <div class="col-md-4">
@@ -308,6 +310,7 @@
                          data-content="{{ctrl.gw_detail(ctrl.gws[i])}}"
                          ng-click="ctrl.popover_click($event)" />
                     <p class="text-info text-center mt-1" style="margin-bottom:0;">{{ctrl.gws[i].name}}</p>
+                    <p class="text-info text-center mt-1" style="margin:0;font-size:75%;">{{ctrl.gws[i].ntp}}</p>
                 </a>
             </div>
         </div>
@@ -415,7 +418,7 @@
     <div id="gwDataModal" class="modal fade" role="dialog" tabindex='-1'>
         <div class="modal-dialog">
             <!-- Modal content-->
-            <div class="modal-content">
+            <div class="modal-content ntp_info_modal">
                 <div class="modal-header">
                     <h4 class="modal-title">{{ctrl.gw_detail_title()}}</h4>
                 </div>
@@ -432,19 +435,21 @@
                                     <!--                                    <th translate>SPV_GWD_06</th>-->
                                     <!--                                    <th translate>SPV_GWD_07</th>-->
                                     <th translate>SPV_GWD_03</th>
+                                    <th translate>Ntp</th>
                                     <th translate>SIP</th>
                                     <th translate>CFG</th>
                                     <th translate>SNMP</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr data-ng-repeat="dt in ctrl.gwgen" class="{{ctrl.lserv.class_okfallo(dt.fa==1 && dt.lan1==1 && dt.lan2==1)}}">
+                                <tr data-ng-repeat="dt in ctrl.gwgen" class="{{ctrl.gw_cpuinfo_class(dt)}}">
                                     <td>{{ctrl.lserv.texto_tipogw(dt.tipo)}}</td>
                                     <td>{{dt.cpu}}</td>
                                     <td>{{dt.ip}}</td>
                                     <td>{{ctrl.lserv.texto_okfallo(dt.lan1)+"-"+ctrl.lserv.texto_okfallo(dt.lan2)}}</td>
                                     <!--                                    <td>{{ctrl.lserv.texto_okfallo(dt.lan2)}}</td>-->
                                     <td>{{ctrl.lserv.texto_okfallo(dt.fa)}}</td>
+                                    <td>{{dt.ntp}}</td>
                                     <td>{{ctrl.lserv.texto_inservice_outservice(dt.sipMod)}}</td>
                                     <td>{{ctrl.lserv.texto_inservice_outservice(dt.cfgMod)}}</td>
                                     <td>{{ctrl.lserv.texto_inservice_outservice(dt.snmpMod)}}</td>

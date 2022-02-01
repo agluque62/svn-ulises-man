@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-
 namespace Utilities
 {
     public class DebuggingHelper
@@ -127,7 +126,52 @@ namespace Utilities
 
             }
         }
-
+        public class SimulatedTop
+        {
+            JObject Data { get; set; }
+            public SimulatedTop(string name)
+            {
+                LoadData(name);
+            }
+            protected void LoadData(string name)
+            {
+                var filename = $"./logs/Top-{name}.json";
+                if (File.Exists(filename))
+                {
+                    var strdata = File.ReadAllText(filename);
+                    Data = JObject.Parse(strdata);
+                }
+                else
+                {
+                    Data = null;
+                }
+            }
+            public void SnmpPing(Action<bool, dynamic> response)
+            {
+                if (Data == null)
+                {
+                    response(false, null);
+                }
+                else
+                {
+                    var data = new
+                    {
+                        stdpos = Data["stdpos"].ToObject<int>(),
+                        panel = Data["panel"].ToObject<int>(),
+                        jack_exe = Data["jack_exe"].ToObject<int>(),
+                        jack_ayu = Data["jack_ayu"].ToObject<int>(),
+                        alt_r = Data["alt_r"].ToObject<int>(),
+                        alt_t = Data["alt_t"].ToObject<int>(),
+                        alt_hf = Data["alt_hf"].ToObject<int>(),
+                        rec_w = Data["rec_w"].ToObject<int>(),
+                        lan1 = Data["lan1"].ToObject<int>(),
+                        lan2 = Data["lan2"].ToObject<int>(),
+                        ntp = Data["ntp"].ToObject<string>()
+                    };
+                    response(true, data);
+                }
+            }
+        }
         public class ThrowErrors
         {
             public enum LaunchableErrors { WebListenerError }

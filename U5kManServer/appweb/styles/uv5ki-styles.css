@@ -334,7 +334,7 @@ section#_ppal
 {
     font-size: 90%;
     text-align: center;
-    margin: 10px;
+    margin: 10px 0 0 0;
     white-space: pre-line;
 }
 
@@ -804,111 +804,6 @@ body .modal
     background-color: transparent;
 }
 
-/** Analizar para borrar */
-
-/*
-#_contenido #stdGlobal table tr td:first-child
-{
-    width: 50%;
-}
-
-#_contenido #stdGlobal table tr td:nth-child(2)
-{
-    text-align: right;
-}
-
-#_contenido #cfConfiguracion table
-{
-    width: 90%;
-    margin-left: 5%;
-}
-
-#_contenido #cfConfiguracion .btn
-{
-    float: right;
-}
-
-#_contenido #cfConfiguracion #salvar
-{
-    margin-right: 5%;
-    margin-bottom: 10px;
-}
-
-#_contenido #cfLocalConfig table
-{
-    width: 90%;
-    margin-left: 5%;
-}
-
-#_contenido #cfLocalConfig #salvar
-{
-    float: right;
-    margin-right: 5%;
-    margin-bottom: 10px;
-}
-
-#_contenido #cfLocalConfig input
-{
-    float: right;
-    text-align: right;
-    width: 60%;
-}
-
-#_contenido #cfLocalConfig select
-{
-    float: right;
-}
-
-#_contenido #stdSesiones table
-{
-    width: 90%;
-    margin-left: 5%;
-}
-
-#_contenido .reset
-{
-    float: right;
-    margin: 5px;
-}
-
-#_contenido .TX
-{
-    width: 49%;
-    float: left;
-    margin-left: 5px;
-}
-
-#_contenido .RX
-{
-    width: 49%;
-    float: right;
-    margin-right: 5px;
-}
-
-#_contenido .TX .btn
-{
-    float: right;
-    margin-left: 5px;
-}
-
-#_contenido .RX .btn
-{
-    float: right;
-    margin-left: 5px;
-}
-
-#_contenido .tradio
-{
-    width: 99%;
-    margin: 5px;
-}
-
-    #_contenido .tradio td
-    {
-        border: 1px solid #f2eded;
-    }
-*/
-
 /** LED Class */
 .led
 {
@@ -1345,4 +1240,16 @@ a.disabled {
 .freqNotAvailable {
     background-color: #e4b9b9;
     color: #663d00;
+}
+
+/** NTP info*/
+.ntp_info {
+    font-size: 90%;
+    text-align: center;
+    margin: 0;
+    white-space: pre-line;
+}
+
+.ntp_info_modal{
+    width: 125%;
 }

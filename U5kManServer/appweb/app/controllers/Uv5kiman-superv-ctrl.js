@@ -285,10 +285,9 @@ angular.module("Uv5kiman")
         var detail = "<table>";
         detail += "<tr><td>" + "<strong>IP</strong>" + "</td><td>" + item.ip + "</td></tr>";
         if (item.std != 0) {
-            //detail += "<tr><td>" + "<strong>LAN1</strong>" + "</td><td>" + (item.lan1 == 1 ? $lserv.translate('SCT_MSG_00')/*"Ok"*/ : ("<i>" + $lserv.translate('SCT_MSG_01')/*"Fallo"*/+"</i>") ) + "</td></tr>";
-            //detail += "<tr><td>" + "<strong>LAN2</strong>" + "</td><td>" + (item.lan2 == 1 ? $lserv.translate('SCT_MSG_00')/*"Ok"*/ : ("<i>" + $lserv.translate('SCT_MSG_01')/*"Fallo"*/ + "</i>")) + "</td></tr>";
             detail += ctrl_ope_detail_lan("LAN1", item.lan1);
             detail += ctrl_ope_detail_lan("LAN2", item.lan2);
+            detail += "<tr><td>" + "<strong>NTP</strong>" + "</td><td>" + (ctrl_ope_is_sync(item.ntp) ? item.ntp : ("<i>" + item.ntp + "</i>")) + "</td></tr>";
 
             detail += "<tr><td>" + "<strong>" + $lserv.translate('SCT_MSG_02')/*"Salvapantallas:\t\t"*/ + "</strong>" + "</td><td>" + (item.panel == 1 ? $lserv.translate('SCT_MSG_15')/*"No"*/ : ("<i>" + $lserv.translate('SCT_MSG_14')/*"Activo"*/ + "</i>")) + "</td></tr>";
             detail += "<tr><td>" + "<strong>" + $lserv.translate('SCT_MSG_05')/*"Jack EjAl:\t"*/ + "</strong>" + "</td><td>" + (item.jack_exe == 1 ? $lserv.translate('SCT_MSG_03')/*"Conectado"*/ : $lserv.translate('SCT_MSG_04')/*"Desconectado"*/) + "</td></tr>";
@@ -314,6 +313,9 @@ angular.module("Uv5kiman")
                                   ("<i>" + "Unknown" + "</i>"));
         detail += "</td></tr>";
         return detail;
+    }
+    function ctrl_ope_is_sync(sync_str) {
+        return sync_str.startsWith('Sync');
     }
 
     /** Abre y Gestiona la Ventana de Version del operador */
@@ -413,47 +415,6 @@ angular.module("Uv5kiman")
 
     //** Abre y Gestiona la ventana de Detalle de la Pasarela */
     ctrl.gw_open = function (gw) {
-    //    $serv.gw_detail_get(gw).then(function (response) {
-    //        ctrl.gwdata = response.data;
-    //        ctrl.itfs = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].recs :
-    //            ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].recs : ctrl.gwdata.cpus[1].recs;
-    //        ctrl.tars = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].tars :
-    //            ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].tars : ctrl.gwdata.cpus[1].tars;
-
-    //        ctrl.gwgen = [];
-    //        ctrl.gwgen[0] = {
-    //            tipo: ctrl.gwdata.tipo,
-    //            fa: ctrl.gwdata.cpus[0].fa,            // ctrl.gwdata.fa,
-    //            cpu: 0,
-    //            ip: ctrl.gwdata.cpus[0].ip,
-    //            lan1: ctrl.gwdata.cpus[0].lan1,
-    //            lan2: ctrl.gwdata.cpus[0].lan2,
-    //            sipMod: ctrl.gwdata.cpus[0].sipMod,
-    //            cfgMod: ctrl.gwdata.cpus[0].cfgMod,
-    //            snmpMod: ctrl.gwdata.cpus[0].snmpMod
-    //        };
-    //        if (ctrl.gwdata.tipo != 0) {
-    //            ctrl.gwgen[1] = {
-    //                tipo: "",
-    //                fa: ctrl.gwdata.cpus[1].fa,    // "",
-    //                cpu: 1,
-    //                ip: ctrl.gwdata.cpus[1].ip,
-    //                lan1: ctrl.gwdata.cpus[1].lan1,
-    //                lan2: ctrl.gwdata.cpus[1].lan2,
-    //                sipMod: ctrl.gwdata.cpus[1].sipMod,
-    //                cfgMod: ctrl.gwdata.cpus[1].cfgMod,
-    //                snmpMod: ctrl.gwdata.cpus[1].snmpMod
-
-    //            };
-    //        }
-
-    //        // console.log(response.data);
-    //        $("#gwDataModal").modal('show');
-    //    }
-    //        , function (response) {
-    //            console.log(response);
-    //            alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
-    //        });
         get_gwdata(gw, () => $("#gwDataModal").modal('show'));
     };
     ctrl.gwdata_refresh = () => get_gwdata(ctrl.MonitoredGw);
@@ -477,6 +438,11 @@ angular.module("Uv5kiman")
                 alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
             });
     };
+
+    ctrl.gw_cpuinfo_class = (cpu) => {
+        var noerror = cpu.sipMod ==1 && cpu.cfgMod==1 && cpu.snmpMod==1 && cpu.fa == 1 && cpu.lan1 == 1 && cpu.lan2 == 1 && cpu.ntp.startsWith('Sync');
+        return $lserv.class_okfallo(noerror);
+      };
 
     ctrl.export_gw_version = function () {
         var csvData = "Pasarela;" +
@@ -676,7 +642,8 @@ angular.module("Uv5kiman")
                 lan2: ctrl.gwdata.cpus[0].lan2,
                 sipMod: ctrl.gwdata.cpus[0].sipMod,
                 cfgMod: ctrl.gwdata.cpus[0].cfgMod,
-                snmpMod: ctrl.gwdata.cpus[0].snmpMod
+                snmpMod: ctrl.gwdata.cpus[0].snmpMod,
+                ntp: ctrl.gwdata.cpus[0].ntp
             };
             if (ctrl.gwdata.tipo != 0) {
                 ctrl.gwgen[1] = {
@@ -688,8 +655,8 @@ angular.module("Uv5kiman")
                     lan2: ctrl.gwdata.cpus[1].lan2,
                     sipMod: ctrl.gwdata.cpus[1].sipMod,
                     cfgMod: ctrl.gwdata.cpus[1].cfgMod,
-                    snmpMod: ctrl.gwdata.cpus[1].snmpMod
-
+                    snmpMod: ctrl.gwdata.cpus[1].snmpMod,
+                    ntp: ctrl.gwdata.cpus[1].ntp
                 };
             }
             if (notifyOk) notifyOk();

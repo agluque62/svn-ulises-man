@@ -1162,6 +1162,7 @@ namespace U5kManServer
                     var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
                     status = NormalizeNtpStatusList(status);
                     gw.NtpInfo.Actualize(status);
+                    LogTrace<GwExplorer>($"{gw.name}, NtpInfo OUT     => <<{gw.NtpInfo}>>");
                 }
             }
             catch (Exception x)
@@ -1427,44 +1428,53 @@ namespace U5kManServer
             }
             else
 #endif
-            try
-            {
-                string page = "http://" + phgw.ip + ":8080/test";
-                var timeout = TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout);
-                HttpHelper.GetSync(page, timeout, (success, message) =>
-                 {
-                     if (success)
-                     {
-                         stdRes  = message.Contains("Handler por Defecto") ? std.Ok : std.Error;
-                     }
-                     else
-                     {
-                         stdRes = std.NoInfo;
-                         mensaje = message;
-                     }
-                 });
-
-
-                //var resp = HttpHelper.Get(page, timeout, null);
-                //stdRes = resp == null ? std.NoInfo : resp.Contains("Handler por Defecto") ? std.Ok : std.Error;
-
-                /** Obtiene la version unificada */
-                if (stdRes == std.Ok && (phgw.version == string.Empty || phgw.version == idiomas.strings.GWS_VersionError))
+                try
                 {
-                    var resp = HttpHelper.GetSync(phgw.ip, "8080", "/mant/lver", timeout);
-                    phgw.version = resp ?? idiomas.strings.GWS_VersionError;
+                    string page = "http://" + phgw.ip + ":8080/test";
+                    var timeout = TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout);
+                    HttpHelper.GetSync(page, timeout, (success, message) =>
+                     {
+                         if (success)
+                         {
+                             stdRes = message.Contains("Handler por Defecto") ? std.Ok : std.Error;
+                         }
+                         else
+                         {
+                             stdRes = std.NoInfo;
+                             mensaje = message;
+                         }
+                     });
+
+
+                    //var resp = HttpHelper.Get(page, timeout, null);
+                    //stdRes = resp == null ? std.NoInfo : resp.Contains("Handler por Defecto") ? std.Ok : std.Error;
+
+                    /** Obtiene la version unificada */
+                    if (stdRes == std.Ok && (phgw.version == string.Empty || phgw.version == idiomas.strings.GWS_VersionError))
+                    {
+                        var resp = HttpHelper.GetSync(phgw.ip, "8080", "/mant/lver", timeout);
+                        phgw.version = resp ?? idiomas.strings.GWS_VersionError;
+                    }
+                    /** Obtiene la información NTP */
+                    if (stdRes == std.Ok)
+                    {
+                        var result = HttpHelper.GetSync(phgw.ip, "8080", "/ntpstatus", timeout);
+                        var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
+                        status = NormalizeNtpStatusList(status);
+                        phgw.NtpInfo.Actualize(status);
+                        LogTrace<GwExplorer>($"{phgw.name}, NtpInfo OUT     => <<{phgw.NtpInfo}>>");
+                    }
                 }
-            }
-            catch (Exception x)
-            {
-                // Error en Modulo de Configuracion Local...
-                stdRes = std.NoInfo;
-                LogException<GwExplorer>(phgw.name, x);
-            }
-            finally
-            {
-                //GetVersion_unificada(phgw);
-            }
+                catch (Exception x)
+                {
+                    // Error en Modulo de Configuracion Local...
+                    stdRes = std.NoInfo;
+                    LogException<GwExplorer>(phgw.name, x);
+                }
+                finally
+                {
+                    //GetVersion_unificada(phgw);
+                }
             response(stdRes != std.NoInfo, stdRes, mensaje);
         }
         /// <summary>
@@ -1505,7 +1515,7 @@ namespace U5kManServer
                 {
                     ExploraSlot_unificada(new KeyValuePair<stdPhGw, int>(phgw, slot));
                 }
-                GetNtpStatus(phgw);
+                //GetNtpStatus(phgw);
 #else
 #if DEBUG
                 var itm = new TimeMeasurement();

@@ -767,6 +767,7 @@ namespace U5kManServer
                     alt_t == std.NoInfo ||
                     lan1 != std.Ok ||
                     lan2 != std.Ok ||
+                    NtpInfo.GlobalStatus.StartsWith("Sync") == false ||
                     (U5kManService.cfgSettings.HayAltavozHF && alt_hf == std.NoInfo) ||
                     (U5kManService.cfgSettings.OpcOpeCableGrabacion && rec_w == std.NoInfo)
                     );
@@ -811,6 +812,23 @@ namespace U5kManServer
 #endif
             return retorno;
         }
+        public object Data => new
+        {
+            name,
+            ip,
+            stdg,
+            stdpos,
+            panel,
+            jack_exe,
+            jack_ayu,
+            alt_r,
+            alt_t,
+            alt_hf,
+            rec_w,
+            lan1,
+            lan2,
+            ntp = NtpInfo.LastInfoFromClient
+        };
     }
 
     /// <summary>
@@ -1118,8 +1136,15 @@ namespace U5kManServer
             get
             {
                 // 20201008. RM4631. Incluir en el estado global de pasarela el estado de FA.
+                // 20220201. Se incluyen el estado de las LAN y del NTP
 #if GW_STD_V1
-                if (CfgMod.Std != std.Ok || SnmpMod.Std != std.Ok || SipMod.Std != std.Ok || stdFA != std.Ok)
+                if (CfgMod.Std != std.Ok || 
+                    SnmpMod.Std != std.Ok || 
+                    SipMod.Std != std.Ok || 
+                    stdFA != std.Ok || 
+                    lan1 != std.Ok ||
+                    lan2 != std.Ok ||
+                    NtpInfo.GlobalStatus.StartsWith("Sync")==false)
                     return true;
 #endif
                 foreach (stdSlot slot in slots)
@@ -1387,7 +1412,6 @@ namespace U5kManServer
             std = from.std;
             presente = from.presente;
             Dual = from.Dual;
-            //_ntp_client_status = from.ntp_client_status.ToList();
             gwA.CopyFrom(from.gwA);
             gwB.CopyFrom(from.gwB);
         }
@@ -2228,6 +2252,10 @@ namespace U5kManServer
             Connected = info.Connected;
             Precision = info.Offset;
             return change;
+        }
+        public override string ToString()
+        {
+            return $"{Ip}, {Connected}, {Precision}, {GlobalStatus}, <<{LastInfoFromClient}>>";
         }
     }
 

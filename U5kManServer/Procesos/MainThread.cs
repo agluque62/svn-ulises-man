@@ -269,18 +269,21 @@ namespace U5kManServer
                         var SectorOnPos = users.Where(e => top.Id == (e.idTop as string))
                             .Select(p => p.idSec as string)
                             .FirstOrDefault();
-
-                        stdpos.Add(new stdPos()
+                        var pos = new stdPos()
                         {
                             name = top.Id,
                             ip = top.Ip,
                             SectorOnPos = SectorOnPos ?? "**FS**",
                             snmpport = Properties.u5kManServer.Default.TopSnmpPort,
-                            uris = uris 
-                        });
+                            uris = uris
+                        };
+                        stdpos.Add(pos);
 
                         /** */
                         U5kEstadisticaProc.Estadisticas.AddOperador(top.Id);
+#if DEBUG
+                        JsonHelper.JsonSave($"TOP-{pos.name}.json", pos.Data);
+#endif
                     }
                 }
                 gdata.CFGTOPS = stdpos;

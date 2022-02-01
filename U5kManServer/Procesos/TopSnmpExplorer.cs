@@ -558,7 +558,35 @@ namespace U5kManServer
         {
             try
             {
-                IList<Variable> onlinedata = new SnmpClient().Get(VersionCode.V2,
+                IList<Variable> onlinedata=null;
+#if DEBUG
+                if (DebuggingHelper.Simulating)
+                {
+                    var SimulatedTop = new DebuggingHelper.SimulatedTop(pos.name);
+                    SimulatedTop.SnmpPing((isok, data) =>
+                    {
+                        if (!isok)
+                            throw new Exception($"Simulated Top {pos.name}. No responde...");
+                        onlinedata = new List<Variable>
+                        {
+                            new Variable(new ObjectIdentifier(_OidPos[eTopPar.EstadoTop]), new Integer32(data.stdpos)),
+                            new Variable(new ObjectIdentifier(_OidPos[eTopPar.EstadoPanel]), new Integer32(data.panel)),
+                            new Variable(new ObjectIdentifier(_OidPos[eTopPar.EstadoJacksEjecutivo]), new Integer32(data.jack_exe)),
+                            new Variable(new ObjectIdentifier(_OidPos[eTopPar.EstadoJacksAyudante]), new Integer32(data.jack_ayu)),
+                            new Variable(new ObjectIdentifier(_OidPos[eTopPar.EstadoAltavozRadio]), new Integer32(data.alt_r)),
+                            new Variable(new ObjectIdentifier(_OidPos[eTopPar.EstadoAltavozLC]), new Integer32(data.alt_t)),
+                            new Variable(new ObjectIdentifier(_OidPos[eTopPar.EstadoAltavozHF]), new Integer32(data.alt_hf)),
+                            new Variable(new ObjectIdentifier(_OidPos[eTopPar.EstadoCableGrabacion]), new Integer32(data.rec_w)),
+                            new Variable(new ObjectIdentifier(_OidPos[eTopPar.EstadoLan1]), new Integer32(data.lan1)),
+                            new Variable(new ObjectIdentifier(_OidPos[eTopPar.EstadoLan2]), new Integer32(data.lan2)),
+                            new Variable(new ObjectIdentifier(_OidPos[eTopPar.EstadoSync]), new OctetString(data.ntp??"")),
+                            //new Variable(new ObjectIdentifier(_OidPos[eTopPar.SwVersion]), new OctetString(data.stdpos))
+                        };
+                    });
+                }
+                else
+#endif
+                onlinedata = new SnmpClient().Get(VersionCode.V2,
                     new IPEndPoint(IPAddress.Parse(pos.ip), pos.snmpport),
                     new OctetString("public"), _vList,
                     pos.SnmpTimeout, pos.SnmpReintentos);
