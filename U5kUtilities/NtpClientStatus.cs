@@ -114,6 +114,7 @@ namespace Utilities
                 return status;
             }
         }
+
         private String WindowsNtpServerUrl
         {
             get
@@ -183,8 +184,8 @@ namespace Utilities
 #if DEBUG
             string Text = "     remote           refid      st t when poll reach   delay   offset  jitter\r\n"
                           + "==============================================================================\r\n"
-                          + " 192.168.0.129 ( 172.24.90.12     6 u  234  256  377    0.977   82.219  26.097\r\n"
-                          + "*DF1501  ( 172.24.90.12     6 u  234  256  377    0.977   82.219  26.097\r\n";
+                          + " 192.168.0.129  172.24.90.12     6 u  234  256  377    0.977   82.219  26.097\r\n"
+                          + "*DF1501   172.24.90.12     6 u  234  256  377    0.977   82.219  26.097\r\n";
             return Text;
 #else
             ProcessStartInfo psi = new ProcessStartInfo("ntpq", " -p")
@@ -198,6 +199,229 @@ namespace Utilities
             return proc.StandardOutput.ReadToEnd();
 #endif
         }
+        #endregion
+    }
+
+    public class NtpMeinbergClientInfo : IDisposable
+    {
+        #region Clases Publicas
+        public enum NtpServerClass { Unknow, NoConnected, Candidate, SystemPeer, FalseTicker }
+        public class NtpServerInfo
+        {
+            public NtpServerClass Class { get; set; }
+            public string Remote { get; set; }
+            public string Refif { get; set; }
+            public int Stratum { get; set; }
+            public string Type { get; set; }
+            public int When { get; set; }
+            public int Poll { get; set; }
+            public string Reach { get; set; }
+            public double Delay { get; set; }
+            public double Offset { get; set; }
+            public double Jitter { get; set; }
+            public bool Valid => (Class != NtpServerClass.Unknow);
+            public NtpServerInfo()
+            {
+                SetToDefault();
+            }
+            public NtpServerInfo(string line)
+            {
+                if (line?.Length > 0)
+                {
+                    Class = DecodeClass(line.ElementAt(0));
+                    if (Valid)
+                    {
+                        var strData = GeneralHelper.NormalizeWhiteSpace(line.Substring(1)).Split(' ');
+                        if (strData.Length == 10)
+                        {
+                            Remote = strData[0];
+                            Refif = strData[1];
+                            Stratum = DecodeStratum(strData[2]);
+                            Type = strData[3];
+                            When = DecodeInt(strData[4]);
+                            Poll = DecodeInt(strData[5]);
+                            Reach = strData[6];
+                            Delay = DecodeDouble(strData[7]);
+                            Offset = DecodeDouble(strData[8]);
+                            Jitter = DecodeDouble(strData[9]);
+                        }
+                        else
+                        {
+                            SetToDefault();
+                        }
+                    }
+                    else
+                    {
+                        SetToDefault();
+                    }
+                }
+                else
+                {
+                    SetToDefault();
+                }
+            }
+            private void SetToDefault()
+            {
+                Class = NtpServerClass.Unknow;
+                Remote = default;
+                Refif = default;
+                Stratum = 16;
+                Type = default;
+                When = Poll = 0;
+                Reach = default;
+                Delay = Offset = Jitter = 0;
+            }
+            private NtpServerClass DecodeClass(char uClass)
+            {
+                switch (uClass)
+                {
+                    case '*':
+                        return NtpServerClass.SystemPeer;
+                    case '+':
+                        return NtpServerClass.Candidate;
+                    case '-':
+                        return NtpServerClass.FalseTicker;
+                    case ' ':
+                    case 'x':
+                        return NtpServerClass.NoConnected;
+                    default:
+                        return NtpServerClass.Unknow;
+                }
+            }
+            private int DecodeStratum(string input)
+            {
+                var value = DecodeInt(input);
+                if (value < 0 || value > 16)
+                    Class = NtpServerClass.Unknow;
+                return value;
+            }
+            private int DecodeInt(string input)
+            {
+                if (int.TryParse(input, out int res))
+                    return res;
+                Class = NtpServerClass.Unknow;
+                return default;
+            }
+            private double DecodeDouble(string input)
+            {
+                var provider = System.Globalization.CultureInfo.InvariantCulture.NumberFormat;
+                //NumberFormatInfo provider = new NumberFormatInfo();
+                //provider.NumberDecimalSeparator = ".";
+                //provider.NumberGroupSeparator = ",";
+                
+                if (double.TryParse(input, System.Globalization.NumberStyles.Any, provider, out double res))
+                    return res;
+                Class = NtpServerClass.Unknow;
+                return default;
+            }
+        }
+        #endregion
+        const string CommandErrorKey = "ntpc Error";
+        const string FirstLineKey1 = "refid";
+        const string FirstLineKey2 = "offset";
+        const string FirstLineKey3 = "jitter";
+        const string SecondLineKey = "==========";
+        #region Public Members
+        public NtpMeinbergClientInfo(List<string> clientResponse = null)
+        {
+            ProcessClientResponse(clientResponse ?? InfoFromCommandLine);
+        }
+        public void Dispose()
+        {
+        }
+        #endregion Public Members
+        protected List<string> InfoFromCommandLine
+        {
+            get
+            {
+                List<string> status = new List<string>();
+                try
+                {
+                    string Text = ExecuteMeinberCommand();
+                    using (StringReader reader = new StringReader(Text))
+                    {
+                        string line;
+                        while ((line = reader.ReadLine()) != null)
+                        {
+                            if (line != String.Empty)
+                                status.Add(Normalize(line));
+                        }
+                    }
+                }
+                catch (Exception x)
+                {
+                    return ErrorStatus(x.Message);
+                }
+
+                return status;
+            }
+        }
+        private String Normalize(String inputString)
+        {
+            var normalizedString = inputString.Normalize(NormalizationForm.FormD);
+            var sb = new StringBuilder();
+            for (int i = 0; i < normalizedString.Length; i++)
+            {
+                var uc = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(normalizedString[i]);
+                if (uc != System.Globalization.UnicodeCategory.NonSpacingMark)
+                {
+                    sb.Append(normalizedString[i]);
+                }
+            }
+            return (sb.ToString().Normalize(NormalizationForm.FormC));
+        }
+        private List<string> ErrorStatus(string error)
+        {
+            return new List<string>() { $"{CommandErrorKey} {error}" };
+        }
+        private String ExecuteMeinberCommand()
+        {
+#if DEBUG1
+            string Text = "     remote           refid      st t when poll reach   delay   offset  jitter\r\n"
+                          + "==============================================================================\r\n"
+                          + " 192.168.0.129 ( 172.24.90.12     6 u  234  256  377    0.977   82.219  26.097\r\n"
+                          + "*DF1501  ( 172.24.90.12     6 u  234  256  377    0.977   82.219  26.097\r\n";
+            return Text;
+#else
+            var filePath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) + "/ntp/bin/ntpq.exe";
+            ProcessStartInfo psi = new ProcessStartInfo(filePath, " -p")
+            {
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            var proc = Process.Start(psi);
+            return proc.StandardOutput.ReadToEnd();
+#endif
+        }
+        private void ProcessClientResponse(List<string> response)
+        {
+            LastClientResponseProcessed = response;
+            ServersInfo = new List<NtpServerInfo>();
+            response.ForEach(line =>
+            {
+                DecodeLine(line, (info) =>
+                {
+                    ServersInfo.Add(info);
+                });
+            });
+        }
+        private void DecodeLine(string line, Action<NtpServerInfo> addServer)
+        {
+            // Filtra Errores de Procesado y las dos primeras líneas.
+            string[] check = new string[] { CommandErrorKey, FirstLineKey1, FirstLineKey2, FirstLineKey3, SecondLineKey };
+            var discard = check.Where(item => line.ToLower().Contains(item.ToLower())).ToList().Count > 0;
+            if (discard) return;
+            // Decodifica datos del servidor, y filtra los erróneos...
+            var info = new NtpMeinbergClientInfo.NtpServerInfo(line);
+            if (info.Valid)
+                addServer(info);
+        }
+        #region Private Members
+        List<string> LastClientResponseProcessed { get; set; }
+        List<NtpServerInfo> ServersInfo { get; set; }
         #endregion
     }
 }

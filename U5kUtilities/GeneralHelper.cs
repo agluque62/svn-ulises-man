@@ -26,7 +26,6 @@ namespace Utilities
             }
             return (T)(object)0;
         }
-
         public static string ToShow(string str, int max)
         {
             if (str.Length <= max)
@@ -35,6 +34,36 @@ namespace Utilities
             }
             var segment = max / 2;
             return $"{str.Substring(0, segment)} ... {str.Substring(str.Length - segment, segment)}";
+        }
+        public static string NormalizeWhiteSpace(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return string.Empty;
+
+            int current = 0;
+            char[] output = new char[input.Length];
+            bool skipped = false;
+
+            foreach (char c in input.ToCharArray())
+            {
+                if (char.IsWhiteSpace(c))
+                {
+                    if (!skipped)
+                    {
+                        if (current > 0)
+                            output[current++] = ' ';
+
+                        skipped = true;
+                    }
+                }
+                else
+                {
+                    skipped = false;
+                    output[current++] = c;
+                }
+            }
+
+            return new string(output, 0, current);
         }
     }
 }

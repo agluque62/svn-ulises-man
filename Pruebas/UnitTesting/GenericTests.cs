@@ -223,5 +223,36 @@ namespace UnitTesting
         {
             return new DateTime((dt.Ticks + d.Ticks - 1) / d.Ticks * d.Ticks, dt.Kind);
         }
+        [TestMethod]
+        public void TestMainbergData1()
+        {
+            string line = "*DF1501  172.24.90.12     6 u  234  256  377    0.977  -82.219  26.097";
+            char Class = line.ElementAt(0);
+            var linedata = GeneralHelper.NormalizeWhiteSpace( line.Substring(1)).Split(' ');
+            var info = new NtpMeinbergClientInfo.NtpServerInfo(line);
+        }
+        [TestMethod]
+        public void TestMeinbergData2()
+        {
+            List<string> OkResp = new List<string>()
+            {
+                "     remote           refid      st t when poll reach   delay   offset  jitter",
+                "==============================================================================",
+                "*sarah.vandalswe 213.136.0.252    2 u   18   64  377   31.888  -45.950  13.130",
+                "+ntp9.kashra-ser 90.187.148.77    2 u   53   64  377   36.299  -30.225   8.936",
+                " 82.223.128.121  .STEP.          16 u   60   64    0    0.000    0.000   0.000",
+                "+ntp4.kashra-ser 90.187.148.77    2 u    3   64  377   33.912  -30.896   8.626",
+                "+sys.gegeweb.eu  145.238.203.14   2 u   25   64  377   29.584  -36.319  11.234",
+                "xNucleoDF-VM01   LOCAL(0)         6 u   11   16  377    0.290   78.940   1.489"
+            };
+            List<string> EmptyResp = new List<string>() { "" };
+            List<string> NoServersResp = new List<string>() { "No association ID's returned" };
+
+            var info4Ok = new NtpMeinbergClientInfo(OkResp);
+            var info4Empty = new NtpMeinbergClientInfo(EmptyResp);
+            var info4NoServers = new NtpMeinbergClientInfo(NoServersResp);
+
+            var infor4Live = new NtpMeinbergClientInfo();
+        }
     }
 }
