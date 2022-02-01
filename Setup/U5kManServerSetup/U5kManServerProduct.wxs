@@ -5,7 +5,7 @@
     Name="U5kManServer"
     Language="1033"
     Version="!(bind.fileVersion.U5kManServer_exe)"
-    Manufacturer="NucleoCC"
+    Manufacturer="Grupo Amper"
     UpgradeCode="55dc56f3-459f-48ff-8c86-7fe468622b8d">
 
     <Package InstallerVersion="200"
@@ -15,7 +15,7 @@
     <Property Id="NETFRAMEWORK452">
       <RegistrySearch Id="NetFramework" Root="HKLM" Type="raw" Name="Release" Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"/>
     </Property>
-    <Property Id="COMPANYFOLDER_NAME" Value="NucleoCC"></Property>
+    <Property Id="COMPANYFOLDER_NAME" Value="GrupoAmper"></Property>
     <Property Id="INSTALLFOLDER_NAME" Value="UlisesV5000SSM"></Property>
     <Property Id="PVERSION" Value="!(bind.fileVersion.U5kManServer_exe)"></Property>
     <Property Id="MSIUSEREALADMINDETECTION" Value="1" />

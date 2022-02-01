@@ -45,8 +45,8 @@
                      Name='GDT_Property' Type='raw' />
     </Property>
 
-    <CustomAction Id="SetOpenURL" Property="WixShellExecTarget" Value="[CONFLOCAL]" />
-    <CustomAction Id="OpenURL" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" Return="ignore" />
+    <!--<CustomAction Id="SetOpenURL" Property="WixShellExecTarget" Value="[CONFLOCAL]" />-->
+    <!--<CustomAction Id="OpenURL" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" Return="ignore" />-->
     <CustomAction Id='Md5Mark' Directory="INSTALLFOLDER"
                   Execute='deferred'
                   Impersonate='no'
@@ -169,8 +169,8 @@
 
     <InstallExecuteSequence>
       <!-- Launch webpage during full uninstall, but not upgrade -->
-      <Custom Action="SetOpenURL" After="InstallFinalize">NOT Installed AND NOT REMOVE</Custom>
-      <Custom Action="OpenURL" After="SetOpenURL">1</Custom>
+      <!--<Custom Action="SetOpenURL" After="InstallFinalize">NOT Installed AND NOT REMOVE</Custom>
+      <Custom Action="OpenURL" After="SetOpenURL">1</Custom>-->
       <Custom Action="Md5Mark" Before="InstallFinalize">NOT Installed AND NOT REMOVE</Custom>
     </InstallExecuteSequence>
 
