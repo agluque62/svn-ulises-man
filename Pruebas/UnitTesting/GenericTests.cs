@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 
 using Utilities;
 using U5kBaseDatos;
+using U5kManServer;
+using U5kManServer.WebAppServer;
 
 namespace UnitTesting
 {
@@ -251,8 +253,35 @@ namespace UnitTesting
             var info4Ok = new NtpMeinbergClientInfo(OkResp);
             var info4Empty = new NtpMeinbergClientInfo(EmptyResp);
             var info4NoServers = new NtpMeinbergClientInfo(NoServersResp);
-
             var infor4Live = new NtpMeinbergClientInfo();
+
+            var len = OkResp.ElementAt(0).Length;
+            var GwResp = string.Join("", OkResp);
+            var info4Gw = new NtpMeinbergClientInfo(GwResp, len);
+
+        }
+        [TestMethod]
+        public void TestMeinbergData3()
+        {
+            string data4Gw = "{\"lines\":[\"     remote           refid      st t when poll reach   delay   offset  jitter==============================================================================x192.168.0.228   LOCAL(0)        13 u    2   16  377    0.472  +103.47  18.630x192.168.0.212   LOCAL(0)         6 u    7   16  377    0.481  -26.491   9.921\"]}";
+
+            var pdata = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(data4Gw)).lines;
+            List<string> Value = NormalizeNtpStatusList(pdata);
+
+        }
+        protected List<string> NormalizeNtpStatusList(List<string> input)
+        {
+            List<string> output = new List<string>();
+            int lenline = 78;
+
+            if (input.Count == 1 && input[0].Length > lenline)
+            {
+                output = Enumerable.Range(0, input[0].Length / lenline).Select(i => input[0].Substring(i * lenline, lenline)).ToList();
+            }
+            else
+                output = input;
+
+            return output;
         }
     }
 }

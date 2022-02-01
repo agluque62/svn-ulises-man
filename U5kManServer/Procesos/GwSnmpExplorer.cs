@@ -701,11 +701,6 @@ namespace U5kManServer
             /** Actualiza los Parametros Globales de la Pasarela */
             GwActualizaEstado(gw);
 
-            /** */
-            if (gw.presente)
-            {
-                GetNtpStatus(gw);
-            }
         }
 
 #region Exploracion de GW Unificada
@@ -1150,7 +1145,7 @@ namespace U5kManServer
                 }
             }
         }
-        protected async void GetNtpStatus(stdGw gw)
+        protected async void GetNtpStatus(stdPhGw gw)
         {
             try
             {
@@ -1162,13 +1157,36 @@ namespace U5kManServer
                 {
                     // ... Read the string.
                     string result = await content.ReadAsStringAsync();
-                    gw.ntp_client_status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
+
+                    //gw.ntp_client_status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
+                    var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
+                    status = NormalizeNtpStatusList(status);
+                    gw.NtpInfo.Actualize(status);
                 }
             }
             catch (Exception x)
             {
                 LogException<GwExplorer>(String.Format(" GW:{0},{1}", gw.name, gw.ip), x);
             }
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        protected List<string> NormalizeNtpStatusList(List<string> input)
+        {
+            List<string> output = new List<string>();
+            int lenline = 78;
+
+            if (input.Count == 1 && input[0].Length > lenline)
+            {
+                output = Enumerable.Range(0, input[0].Length / lenline).Select(i => input[0].Substring(i * lenline, lenline)).ToList();
+            }
+            else
+                output = input;
+
+            return output;
         }
         /// <summary>
         /// 
@@ -1459,7 +1477,7 @@ namespace U5kManServer
             if (DebuggingHelper.Simulating)
             {
                 var res = DebuggingHelper.SimulatedGw.SnmpPing2Cpu(phgw.ParentName, phgw.name,
-                    (status, lan1, lan2, mss, fa) =>
+                    (status, lan1, lan2, mss, fa, ntpdata) =>
                     {
                         phgw.std = status == 0 ? std.NoInfo : status == 1 ? std.Ok : std.Error;
                         int stdLan = (lan1 == 1 ? 0x01 : 0x00) | (lan2 == 1 ? 0x02 : 0x00);
@@ -1473,6 +1491,7 @@ namespace U5kManServer
                         {
                             ExploraSlot_unificada(new KeyValuePair<stdPhGw, int>(phgw, slot));
                         }
+                        phgw.NtpInfo.Actualize(ntpdata, 78);
                     });
                 response(res);
             }
@@ -1486,6 +1505,7 @@ namespace U5kManServer
                 {
                     ExploraSlot_unificada(new KeyValuePair<stdPhGw, int>(phgw, slot));
                 }
+                GetNtpStatus(phgw);
 #else
 #if DEBUG
                 var itm = new TimeMeasurement();
@@ -1495,7 +1515,7 @@ namespace U5kManServer
                 itm.StopAndPrint((msg) => LogTrace<GwExplorer>(msg));
 #endif
 #endif
-                response(true);
+                    response(true);
             }
             catch (Exception x)
             {

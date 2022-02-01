@@ -333,11 +333,19 @@ namespace Utilities
         const string SecondLineKey = "==========";
         const string LineSeparator = "##";
         #region Public Members
-        public NtpMeinbergClientInfo(string formattedClientResponse)
+        public NtpMeinbergClientInfo(string formattedClientResponse, int len=-1)
         {
-            string[] separatingStrings = { LineSeparator };
-            var clientLines = formattedClientResponse?.Split(separatingStrings, StringSplitOptions.None).ToList();
-            ProcessClientResponse(clientLines ?? InfoFromCommandLine);
+            if (len == -1)
+            {
+                string[] separatingStrings = { LineSeparator };
+                var clientLines = formattedClientResponse?.Split(separatingStrings, StringSplitOptions.None).ToList();
+                ProcessClientResponse(clientLines ?? InfoFromCommandLine);
+            }
+            else
+            {
+                var clientLines = GeneralHelper.SplitToChunks(formattedClientResponse, len).ToList();
+                ProcessClientResponse(clientLines ?? InfoFromCommandLine);
+            }
         }
         public NtpMeinbergClientInfo(List<string> clientResponse = null)
         {

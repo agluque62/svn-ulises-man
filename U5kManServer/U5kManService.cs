@@ -1153,6 +1153,7 @@ namespace U5kManServer
             SnmpMod = new SupervisedItem(Properties.u5kManServer.Default.ConsecutiveFailedPollLimit);
 #endif
             version = string.Empty;
+            NtpInfo.LastInfoFromClient = default;
         }
 
 #if GW_STD_V1
@@ -1165,6 +1166,7 @@ namespace U5kManServer
             {
                 slot.Reset();
             }
+            NtpInfo.LastInfoFromClient = default;
         }
 #endif
         /// <summary>
@@ -1207,6 +1209,7 @@ namespace U5kManServer
 #endif
             stdFA = from.stdFA;
             ParentName = from.ParentName;
+            NtpInfo.CopyFrom(from.NtpInfo);
         }
 
         public bool Equals(stdPhGw other)
@@ -1239,6 +1242,7 @@ namespace U5kManServer
             SipMod = SipMod.Std == std.Ok,
             CfgMod = CfgMod.Std == std.Ok,
             SnmpMod = SnmpMod.Std == std.Ok,
+            NtpInfo,
             slots = new List<object>()
             {
                 slots[0].Data, slots[1].Data, slots[2].Data, slots[3]
@@ -1246,6 +1250,7 @@ namespace U5kManServer
         };
 
         public Queue<Object> events = new Queue<object>();
+        public NtpInfoClass NtpInfo { get; set; } = new NtpInfoClass();
     }
 
     /// <summary>
@@ -1284,69 +1289,51 @@ namespace U5kManServer
         public stdPhGw gwA = new stdPhGw();
         [DataMember]
         public stdPhGw gwB = new stdPhGw();
-        [DataMember]
-        public List<string> _ntp_client_status = new List<string>();
-        /// <summary>
-        /// 
-        /// </summary>
-        public List<string> ntp_client_status
-        {
-            get
-            {
-                return _ntp_client_status;
-            }
-            set
-            {
-#if !_TESTING_
-                List<string> Value = NormalizeNtpStatusList(value);
-                _ntp_client_status.Clear();
+        //        [DataMember]
+        //        public List<string> _ntp_client_status = new List<string>();
+        //        /// <summary>
+        //        /// 
+        //        /// </summary>
+        //        public List<string> ntp_client_status
+        //        {
+        //            get
+        //            {
+        //                return _ntp_client_status;
+        //            }
+        //            set
+        //            {
+        //#if !_TESTING_
+        //                List<string> Value = NormalizeNtpStatusList(value);
+        //                _ntp_client_status.Clear();
 
-                if (Value.Count < 2)
-                    _ntp_client_status.Add("Error...");
-                else if (Value.Count < 3)
-                    _ntp_client_status.Add("No NTP Server");
-                else
-                {
-                    Value.RemoveAt(0);
-                    Value.RemoveAt(0);
-                    foreach (String line in Value)
-                    {
-                        string[] array = line.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-                        if (array.Length == 10)
-                        {
-                            _ntp_client_status.Add(String.Format("{0}: {1}", array[0].Trim('*'), array[0].StartsWith("*") ? idiomas.strings.Sincronizado/*"Sincronizado"*/ : 
-                                idiomas.strings.NoSincronizado/*"No Sincronizado"*/));
-                        }
-                        else
-                        {
-#if DEBUG
-                            _ntp_client_status.Add("Line Error");
-#endif
-                        }
-                    }
-                }
-#endif
-            }
-        }        
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        protected List<string> NormalizeNtpStatusList(List<string> input)
-        {
-            List<string> output = new List<string>();
-            int lenline = 78;
-
-            if (input.Count == 1 && input[0].Length > lenline)
-            {
-                output = Enumerable.Range(0, input[0].Length / lenline).Select(i => input[0].Substring(i * lenline, lenline)).ToList();
-            }
-            else
-                output = input;
-
-            return output;
-        }
+        //                if (Value.Count < 2)
+        //                    _ntp_client_status.Add("Error...");
+        //                else if (Value.Count < 3)
+        //                    _ntp_client_status.Add("No NTP Server");
+        //                else
+        //                {
+        //                    Value.RemoveAt(0);
+        //                    Value.RemoveAt(0);
+        //                    foreach (String line in Value)
+        //                    {
+        //                        string[] array = line.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+        //                        if (array.Length == 10)
+        //                        {
+        //                            _ntp_client_status.Add(String.Format("{0}: {1}", array[0].Trim('*'), array[0].StartsWith("*") ? idiomas.strings.Sincronizado/*"Sincronizado"*/ : 
+        //                                idiomas.strings.NoSincronizado/*"No Sincronizado"*/));
+        //                        }
+        //                        else
+        //                        {
+        //#if DEBUG
+        //                            _ntp_client_status.Add("Line Error");
+        //#endif
+        //                        }
+        //                    }
+        //                }
+        //#endif
+        //            }
+        //        }
+        public string status_sync => cpu_activa.NtpInfo.GlobalStatus;
         /// <summary>
         /// 
         /// </summary>
@@ -1400,7 +1387,7 @@ namespace U5kManServer
             std = from.std;
             presente = from.presente;
             Dual = from.Dual;
-            _ntp_client_status = from.ntp_client_status.ToList();
+            //_ntp_client_status = from.ntp_client_status.ToList();
             gwA.CopyFrom(from.gwA);
             gwB.CopyFrom(from.gwB);
         }
@@ -1425,7 +1412,7 @@ namespace U5kManServer
             std,
             presente,
             Dual,
-            _ntp_client_status,
+            //_ntp_client_status,
             gwA = gwA.Data,
             gwB = gwB.Data
         };
@@ -2218,7 +2205,11 @@ namespace U5kManServer
                 notifyChange(Connected, Ip);
             }
         }
-        public void Actualize(string data)
+        public void Actualize(string data, int len=-1)
+        {
+            Actualize(new NtpMeinbergClientInfo(data, len));
+        }
+        public void Actualize(List<string> data)
         {
             Actualize(new NtpMeinbergClientInfo(data));
         }

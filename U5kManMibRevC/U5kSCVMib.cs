@@ -1124,9 +1124,9 @@ namespace U5kManMibRevC
                         U5kSCVMib.DataGet((object gdata) =>
                         {
                             dynamic ddata = gdata;
-
-                            List<string> ntpl = ddata.STDGWS[RowIndex - 1].ntp_client_status;
-                            SyncInfo = ntpl == null ? "null" : String.Join("##", ntpl.ToArray());
+                            //List<string> ntpl = ddata.STDGWS[RowIndex - 1].ntp_client_status;
+                            //SyncInfo = ntpl == null ? "null" : String.Join("##", ntpl.ToArray());
+                            SyncInfo = ddata.STDGWS[RowIndex - 1].status_sync;
                         });
 
                         return new OctetString(SyncInfo);

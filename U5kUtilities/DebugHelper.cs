@@ -69,7 +69,7 @@ namespace Utilities
                 return false;
             }
 
-            public static bool SnmpPing2Cpu(string gw, string cpu, Action<int, int, int, bool, int> response)
+            public static bool SnmpPing2Cpu(string gw, string cpu, Action<int, int, int, bool, int, string> response)
             {
                 var data = GwData(gw, cpu);
                 if (data != null)
@@ -82,7 +82,8 @@ namespace Utilities
                         var lan2 = data["lan2"].ToObject<int>();
                         var mss = data["Seleccionada"].ToObject<bool>();
                         var fa = data["stdFA"].ToObject<int>();
-                        response(std, lan1, lan2, mss, fa);
+                        var ntpdata = data["ntp"]["LastInfoFromClient"].ToObject<string>();
+                        response(std, lan1, lan2, mss, fa, ntpdata);
                     }
                     return mod;
                 }

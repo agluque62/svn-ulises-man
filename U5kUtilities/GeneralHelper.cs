@@ -65,5 +65,16 @@ namespace Utilities
 
             return new string(output, 0, current);
         }
+        public static string[] SplitToChunks(string source, int maxLength)
+        {
+            return source
+                .Where((x, i) => i % maxLength == 0)
+                .Select(
+                    (x, i) => new string(source
+                        .Skip(i * maxLength)
+                        .Take(maxLength)
+                        .ToArray()))
+                .ToArray();
+        }
     }
 }
