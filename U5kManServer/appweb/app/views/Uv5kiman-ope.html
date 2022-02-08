@@ -169,13 +169,15 @@
                                     <td>{{eq.sip==0 ? "" : eq.sip==1 ? "No" : eq.sip==2 ? "Disc" : "Conn"}}</td>
                                     <td ng-show="ctrl.control_mnm">
                                         <button class="btn btn-default"
-                                                data-ng-click="ctrl.EnableDisable(eq)"
-                                                data-ng-show="{{ctrl.gearEnableDisableShow(eq.std)}}">
+                                                ng-click="ctrl.EnableDisable(eq)"
+                                                ng-disabled="!ctrl.optionAllowed()"
+                                                ng-show="{{ctrl.gearEnableDisableShow(eq.std)}}">
                                             {{ctrl.txtHabilitar(eq)}}
                                         </button>
                                         <button class="btn btn-default"
-                                                data-ng-click="ctrl.Asignar(eq)"
-                                                data-ng-show="{{ctrl.gearAsignarShow(eq)}}">
+                                                ng-click="ctrl.Asignar(eq)"
+                                                ng-disabled="!ctrl.optionAllowed()"
+                                                ng-show="{{ctrl.gearAsignarShow(eq)}}">
                                             {{ctrl.gearAsignarText(eq)}}
                                         </button>
                                     </td>
@@ -230,13 +232,15 @@
                                     <td>{{eq.sip==0 ? "" : eq.sip==1 ? "No" : eq.sip==2 ? "Disc" : "Conn"}}</td>
                                     <td ng-show="ctrl.control_mnm">
                                         <button class="btn btn-default"
-                                                data-ng-click="ctrl.EnableDisable(eq)"
-                                                data-ng-show="{{ctrl.gearEnableDisableShow(eq.std)}}">
+                                                ng-click="ctrl.EnableDisable(eq)"
+                                                ng-disabled="!ctrl.optionAllowed()"
+                                                ng-show="{{ctrl.gearEnableDisableShow(eq.std)}}">
                                             {{ctrl.txtHabilitar(eq)}}
                                         </button>
                                         <button class="btn btn-default"
-                                                data-ng-click="ctrl.Asignar(eq)"
-                                                data-ng-show="{{ctrl.gearAsignarShow(eq)}}">
+                                                ng-click="ctrl.Asignar(eq)"
+                                                ng-disabled="!ctrl.optionAllowed()"
+                                                ng-show="{{ctrl.gearAsignarShow(eq)}}">
                                             {{ctrl.gearAsignarText(eq)}}
                                         </button>
                                     </td>
@@ -356,7 +360,7 @@
                                                         <div class="col-md-5" style="padding-left:5px; padding-right:5px;">
                                                             <button class="btn btn-sm btn-info" style="font-size:90%; padding-right:5px;"
                                                                     ng-click="ctrl.rdUnoMasUnoSelectMain(tx)"
-                                                                    ng-disabled="ctrl.rdUnoMasUnoTxDisabled(tx)"
+                                                                    ng-disabled="ctrl.rdUnoMasUnoTxDisabled(tx) || !ctrl.optionAllowed()"
                                                                     ng-show="{{tx.sel==0}}">
                                                                 {{ctrl.translate("Reserva=>Sel")}}
                                                             </button>
@@ -375,6 +379,7 @@
                                                         </div>
                                                         <div class="col-md-5" style="padding-left:5px; padding-right:5px;">
                                                             <button class="btn btn-sm btn-info" style="font-size:90%; padding-right:5px;"
+                                                                    ng-disabled="!ctrl.optionAllowed()"
                                                                     ng-click="ctrl.rdUnoMasUnoEnable(rx)">
                                                                 {{rx.ab==0 ? ctrl.translate("Habilitar") : ctrl.translate("Deshabilitar")}}
                                                             </button>

@@ -38,6 +38,9 @@ angular.module("Uv5kiman")
             return menu ? menu : 0;
         };
 
+        ctrl.optionAllowed = () => {
+            return $lserv.user_access(['Spv', 'Ope']);
+        };
 
         /** Servicios Pagina de Sesiones*/
         //** Version 1 */ 
