@@ -22,10 +22,11 @@ angular.module("Uv5kiman")
 
         //** */
         ctrl.user = function () {
-            var user = /*$lserv.User()*/ctrl.logged ? ctrl.logged.id : "--";
-            var perfil = /*$lserv.Perfil()*/ctrl.logged ? ctrl.logged.prf : -1;
-            user += (perfil == 0 ? " (ope)" : perfil == 1 ? " (T1)" : perfil == 2 ? " (T2)" : perfil == 3 ? " (T3)" : " ??");
-            return user;
+            return $lserv.logged_user();
+        };
+
+        ctrl.showExceptSpv = () => {
+            return ctrl.listainci.length > 0 && $lserv.user_access(['Spv']);
         };
 
         //** */
@@ -34,8 +35,6 @@ angular.module("Uv5kiman")
         //** */
         ctrl.reconoce = function (incidencia, pregunta) {
             if (pregunta) {
-                //if (confirm($lserv.translate('GCT_MSG_00') /*"¿ Desea reconocer la incidencia: " */ + incidencia.inci + "?") == false)
-                //    return;
                 alertify.confirm($lserv.translate('GCT_MSG_00') /*"¿ Desea reconocer la incidencia: " */ + incidencia.inci + "?",
                     function () {
                         $serv.listinci_rec({ user: ctrl.user(), inci: incidencia });
@@ -53,14 +52,6 @@ angular.module("Uv5kiman")
 
         /** */
         ctrl.reconoce_todas = function () {
-            //if (ctrl.listainci.length==0 || confirm("¿ Desea Reconocer todas las Incidencias ?") == false)
-            //    return;
-            ///** inci in ctrl.dlistainci */
-            //ctrl.listainci.forEach(function (inci, index) {
-            //    ctrl.reconoce(inci, false);
-            //});
-            //load_inci();
-
             alertify.confirm($lserv.translate("Desea Reconocer todas las Incidencias ?"),
                 function () {
                     ctrl.listainci.forEach(function (inci, index) {
@@ -68,9 +59,6 @@ angular.module("Uv5kiman")
                     });
 
                     load_inci();
-
-                    // ctrl.listainci = [];
-                    // ctrl.HashCode = -1;
                 },
                 function () {
                     alertify.message($lserv.translate("Operacion Cancelada"));
@@ -80,7 +68,6 @@ angular.module("Uv5kiman")
 
         /** */
         ctrl.retorna = function () {
-            //window.location.href = $lserv.Retorno();
             $serv.logout();
         };
 
@@ -91,7 +78,7 @@ angular.module("Uv5kiman")
 
         //** */
         ctrl.inci_desc = function (desc) {
-            return /*$lserv.descifra(desc)*/desc;
+            return desc;
         };
 
         /** */
@@ -108,7 +95,6 @@ angular.module("Uv5kiman")
                         setup: function () {
                             return {
                                 buttons: [
-                                    //{ text: $lserv.translate("Opciones") },
                                     { text: $lserv.translate("Aceptar"), key: 27/*Esc*/ }
                                 ],
                                 focus: { element: 0 }
@@ -125,15 +111,6 @@ angular.module("Uv5kiman")
                         },
                         // This will be called each time an action button is clicked.
                         callback: function (closeEvent) {
-                            //The closeEvent has the following properties
-                            //
-                            // index: The index of the button triggering the event.
-                            // button: The button definition object.
-                            // cancel: When set true, prevent the dialog from closing.
-                            //if (closeEvent.index === 0) {
-                            //    javascript:showOptions();
-                            //    closeEvent.cancel = true;
-                            //}
                         }
                     };
                 });
@@ -164,10 +141,7 @@ angular.module("Uv5kiman")
         /** 20181009. Configuraciones locales */
         var editor = null;
         window.showOptions = function () {
-
-
             if (!alertify.LocalOptions) {
-
                 //define a new dialog
                 alertify.dialog('LocalOptions', function factory() {
                     return {
@@ -205,12 +179,6 @@ angular.module("Uv5kiman")
                                         },
                                         properties: {
                                             SoundOnClient: { title: "Sonido en Alarmas  ", type: "boolean", format: "checkbox", default: false }
-                                            //Region: { title: "Region / Zona", type: "string" },
-                                            //HistoricsDeep: { title: "Dias de Historico", type: "integer", enum: [30, 90, 180, 365], default: 30 },
-                                            //refreshTime: { title: 'Tiempo de Refresco en ms', type: "integer" },
-                                            //log2con: {title: 'Tracear a consola',type: "string", enum: 
-                                            //    ['none','silly','info','warn'], default: 'none'},
-
                                         },
                                         required: ['SoundOnClient']
                                     },
@@ -221,11 +189,6 @@ angular.module("Uv5kiman")
                         },
                         // This will be called each time an action button is clicked.
                         callback: function (closeEvent) {
-                            //The closeEvent has the following properties
-                            //
-                            // index: The index of the button triggering the event.
-                            // button: The button definition object.
-                            // cancel: When set true, prevent the dialog from closing.
                             if (closeEvent.index === 0) {
                                 // TODO. Salvar las opciones....
                                 if (confirm('Desea Salvar los cambios?')) {
@@ -289,15 +252,12 @@ angular.module("Uv5kiman")
                 }
                 else {
                     /** El servidor me devuelve errores... */
-                    //if (!Simulate) window.open(routeForDisconnect, "_self");
-                    // Seguramente ha vencido la sesion.
                     console.log("Sesion Vencida...");
                     window.location.href = "/login.html";
                 }
             }
                 , function (response) {
                     // Error. No puedo conectarme al servidor.
-                    //if (!Simulate) window.open(routeForDisconnect, "_self");
                     console.log("Error Peticion: ", error);
                 });
         }
@@ -322,8 +282,7 @@ angular.module("Uv5kiman")
 
                 ctrl.PhoneGlobalState = response.data.tf_status;
                 ctrl.RadioGlobalState = response.data.rd_status;
-                ctrl.logged = response.data.logged;
-
+                $lserv.logged_user(response.data.logged);
             }
                 , function (response) {
                     console.log(response);
@@ -339,8 +298,6 @@ angular.module("Uv5kiman")
 
         /** Funcion Periodica del controlador */
         var timer = $interval(function () {
-            // ctrl.date=(new Date()).toLocaleDateString();
-            // ctrl.hora = (new Date()).toLocaleTimeString();
             ctrl.date = moment().format('ll');
             ctrl.hora = moment().format('LTS');
             if (++timetoinci == InciPoll) {
@@ -378,10 +335,9 @@ angular.module("Uv5kiman")
             //call it here
             get_std_gen();
 
-            //// DEBUG.
-            //var cifrado = $lserv.cifra("...Hay Hola que tal...?");
-            //var descifrado = $lserv.descifra(cifrado);
-            //console.log(descifrado + ": " + cifrado);
+        //    window.location.hash = "no-back-button";
+        //    window.location.hash = "Again-No-back-button";//esta linea es necesaria para chrome
+        //    window.onhashchange = function () { window.location.hash = "no-back-button"; }
         });
 
         /** Salida del Controlador. Borrado de Variables */

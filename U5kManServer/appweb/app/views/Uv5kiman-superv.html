@@ -246,7 +246,9 @@
                         </tr>
                         <tr>
                             <td colspan="2" class="text-center">
-                                <button id="startstopsacta" type="button" ng-click="ctrl.SactaServiceStartStop(ctrl.std.sactaservicerunning)"
+                                <button id="startstopsacta" type="button" 
+                                        ng-click="ctrl.SactaServiceStartStop(ctrl.std.sactaservicerunning)"
+                                        ng-disabled="!ctrl.optionAllowed()"
                                         class="{{ctrl.SactaServiceStd(ctrl.std.sactaservicerunning).clase}}">
                                     {{ctrl.SactaServiceStd(ctrl.std.sactaservicerunning).text}}
                                 </button>

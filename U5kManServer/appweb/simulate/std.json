@@ -136,6 +136,7 @@
 		}
 	},
 	"perfil": 0,
+	"logged":{"id": "Prueba", "prf": "Ope"},
 	"lang": "es",
 	"rd_status": 2,
 	"tf_status": 2,

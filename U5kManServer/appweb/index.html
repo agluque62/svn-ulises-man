@@ -90,7 +90,11 @@
                                 <div>{{ctrl.inci_desc(inci.inci)}}</div>
                             </td>
                             <td style="text-align: right;">
-                                <button type="button" ng-click="ctrl.reconoce(inci, true)" class="btn btn-default" translate>INDEX_INCI_RECONOCER</button>
+                                <button type="button" 
+                                        ng-click="ctrl.reconoce(inci, true)" 
+                                        class="btn btn-default" 
+                                        ng-show="ctrl.showExceptSpv()"
+                                        translate>INDEX_INCI_RECONOCER</button>
                             </td>
                         </tr>
                     </tbody>
@@ -107,7 +111,7 @@
                             <td>
                                 <button style="float:none" width="24"
                                         class="btn btn-default"
-                                        ng-show="ctrl.listainci.length > 0"
+                                        ng-show="ctrl.showExceptSpv()"
                                         ng-click="ctrl.ToggleSound()">
                                     <img ng-src='{{ctrl.SoundImg()}}'>
                                 </button>
@@ -124,7 +128,7 @@
                                 <button height="24px"
                                         class="btn btn-default"
                                         ng-click="ctrl.reconoce_todas()"
-                                        ng-show="ctrl.listainci.length > 0" translate>
+                                        ng-show="ctrl.showExceptSpv()" translate>
                                     Reconocer Todas
                                 </button>
                                 <!--<button class="btn btn-default" ng-show="ctrl.listainci.length > 0" onclick="document.getElementById('myAudio').muted=!document.getElementById('myAudio').muted"><img ng-src='{{ctrl.SoundImg()}}' alt="" width="24"></button>-->

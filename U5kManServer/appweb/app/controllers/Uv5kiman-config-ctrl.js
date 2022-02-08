@@ -331,6 +331,10 @@ angular.module("Uv5kiman")
         myLink.click();
     };
 
+    ctrl.optionAllowed = () => {
+        return $lserv.user_access(['Spv', 'Ope']);
+    };
+
     /** Funciones Internas.. */
     /** */
     function linci_get() {

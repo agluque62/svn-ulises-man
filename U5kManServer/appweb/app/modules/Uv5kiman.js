@@ -372,13 +372,11 @@ var stdc_class = ["noinfo", "ok", "aviso", "fallo", "aviso", "fallo", "fallo", "
 
 /** */
 var roles = {
-	ADMIN_PROFILE: 64,
-	ING_PROFILE: 32,
-	GEST_POFILE: 16,
-	CRTL_PROFILE: 8,
-	ALM1_PROFILE: 4,
-	ALM2_PROLIFLE: 2,
-	VIS_PROFILE: 1
+    Operador: 0,
+    Tecnico1: 1,
+    Tecnico2: 2,
+    Tecnico3: 3,
+    Supervision: 4
 };
 /** */
 var routeForUnauthorizedAccess = '/noaut';

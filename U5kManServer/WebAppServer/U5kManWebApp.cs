@@ -162,6 +162,7 @@ namespace U5kManServer.WebAppServer
                     //    U5kBaseDatos.eTiposInci.TEH_SISTEMA,
                     //    "MTTO", new object[] { user });
                 });
+                gdt.LoggedUser = null;
                 SessionExpiredAt = DateTime.Now;
                 context.Response.Redirect("/login.html");
             }
@@ -883,12 +884,55 @@ namespace U5kManServer.WebAppServer
 #if !_SACTA_API_V1_
             if (context.Request.HttpMethod == "GET")
             {
-                ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-                sb.Append(sacta_srv.SactaConfGet());
+#if DEBUG
+                if (DebuggingHelper.Simulating)
+                {
+                    var sacta_config = new
+                    {
+                        TickPresencia = 5000,
+                        TimeoutPresencia = 30000,
+                        sacta = new
+                        {
+                            Domain = 1,
+                            Center = 107,
+                            GrpUser = 110,
+                            SpiUsers = "111,112,113,114,7286,7287,7288,7289,15000",
+                            SpvUsers = "86,87,88,89,7266,7267,7268,7269,34000",
+                            lan1 = new
+                            {
+                                ipmask = "192.168.0.71",
+                                mcast = "225.12.101.1",
+                                udpport = 19204
+                            },
+                            lan2 = new
+                            {
+                                ipmask = "192.168.1.71",
+                                mcast = "225.212.101.1",
+                                udpport = 19204
+                            }
+                        },
+                        scv = new
+                        {
+                            Domain = 1,
+                            Center = 107,
+                            User = 10,
+                            Interfaz = "192.168.0.212",
+                            udpport = 15100,
+                            Ignore = "305"
+                        }
+                    };
+                    sb.Append(JsonHelper.ToString(sacta_config));
+                }
+                else
+#endif
+                {
+                    ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
+                    sb.Append(sacta_srv.SactaConfGet());
+                }
             }
             else if (context.Request.HttpMethod == "POST")
             {
-                string [] UrlFields = context.Request.Url.LocalPath.Split('/');
+                string[] UrlFields = context.Request.Url.LocalPath.Split('/');
                 if (UrlFields.Length > 2)
                 {
                     string activar = UrlFields[2];
@@ -900,7 +944,7 @@ namespace U5kManServer.WebAppServer
                         {
                             ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
                             sacta_srv.StartSacta();
-                            GlobalServices.GetWriteAccess((data) =>                            
+                            GlobalServices.GetWriteAccess((data) =>
                             {
                                 U5kManService._main.EstadoSacta(16, stdg);
                             });
@@ -927,7 +971,7 @@ namespace U5kManServer.WebAppServer
                     else
                     {
                         context.Response.StatusCode = 400;
-                        sb.Append(JsonConvert.SerializeObject(new { res = "Codigo no implementado: " + activar })); 
+                        sb.Append(JsonConvert.SerializeObject(new { res = "Codigo no implementado: " + activar }));
                     }
                 }
                 else
@@ -1029,7 +1073,7 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
 #endif
-        }
+            }
 
         /// <summary>
         /// 

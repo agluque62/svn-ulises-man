@@ -44,6 +44,9 @@ angular
 
         var abc = "?$0VxC |KhGcyFS4d-QuoelDn(Iv52#/i:E&BmOL9r{=UfMbtPq7Nw,%1]Y3AsZT)}g_kJ86+aXjH.pz![WR;";
 
+        var LoggedUser = {};
+        var ProfileIds = ['Ope', 'Tc1', 'Tc2', 'Tc2', 'Tc3', 'Spv'];
+
         /** 20171218. Filtros para Historicos y Estadisticas */
         /** Filtro de Estadistica */
         var StsF = {
@@ -386,6 +389,22 @@ angular
             }
             , GatewayDualityType: function (newtype) {
                 return gwDualityType(newtype);
+            }
+            , logged_user: (user) => {
+                if (user) {
+                    LoggedUser = user;
+                }
+                var strUser = sprintf("%(id)s: (%(prf)s)", LoggedUser);
+                return strUser;
+            }
+            , user_access: (forbidden) => {
+                if (Array.isArray(forbidden) == false) { return false; }
+                var access = true;
+                forbidden.forEach((current) => {
+                    if (current === LoggedUser.prf)
+                        access = false;
+                });
+                return access;
             }
         };
 

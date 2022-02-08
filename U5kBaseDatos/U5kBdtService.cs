@@ -1282,6 +1282,13 @@ namespace U5kBaseDatos
             public string id { get; set; }
             public string pwd { get; set; }
             public int prf { get; set; }
+            public string ProfileId
+            {
+                get 
+                {
+                    return prf == 0 ? "Ope" : prf == 1 ? "Tc1" : prf == 2 ? "Tc2" : prf == 3 ? "Tc3" : prf == 4 ? "Spv" : "???";
+                }
+            }
         }
 
         public List<SystemUserInfo> SystemUsers()

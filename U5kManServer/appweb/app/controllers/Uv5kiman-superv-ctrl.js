@@ -34,6 +34,10 @@ angular.module("Uv5kiman")
         return menu ? menu : 0;
     };
 
+    ctrl.optionAllowed = () => {
+        return $lserv.user_access(['Spv', 'Ope']);
+    };
+
     //** */
     ctrl.std_class = function (item) {
         // return stdc_class[stdc.Ok];
