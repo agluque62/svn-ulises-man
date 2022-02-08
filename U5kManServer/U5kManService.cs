@@ -1591,7 +1591,11 @@ namespace U5kManServer
         [DataMember]
         private Uv5kManDestinosPabx pabxdest = new Uv5kManDestinosPabx();
         [DataMember]
-        public List<object> usuarios = new List<object>();
+        public List<U5kBdtService.SystemUserInfo> SystemUsers { get; set; } = new List<U5kBdtService.SystemUserInfo>()
+        {
+            {new U5kBdtService.SystemUserInfo(){ id="*CD40*", pwd="*AMPERS*", prf=3} }
+        };
+        public U5kBdtService.SystemUserInfo LoggedUser { get; set; } = null;
 
 #endif
 

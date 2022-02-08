@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define _WEBLOGIN_
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,8 +18,181 @@ using Newtonsoft.Json.Linq;
 using Utilities;
 namespace U5kManServer.WebAppServer
 {
+#if _WEBLOGIN_
+    class U5kManWebApp : WebServerBase
+#else
     class U5kManWebApp : WebAppServer
+#endif
     {
+#if _WEBLOGIN_
+        public void Start(int port=8090, int SessionDuration = 5)
+        {
+            Dictionary<string, wasRestCallBack> cfg = new Dictionary<string, wasRestCallBack>()
+                {
+                    {"/listinci",restListInci},     // GET & POST
+                    {"/std",restStd},               // GET
+                    {"/cwp",restCwps},              // GET
+                    {"/cwp/*/version",restCwpVersion},              // GET
+                    {"/exteq",restExtEqu},          // GET
+                    {"/pbxab",restPabx},            // GET
+                    {"/gws",restGws},               // GET
+                    {"/gws/*",restGwData},          // GET /gws/name & POST /gws/name {cmd: (getVersion, chgPR)}
+                    {"/db/operadores",restDbCwps},  // GET
+                    {"/db/pasarelas",restDbGws},    // GET
+                    {"/db/mnitems",restDbMNItems},    // GET
+                    {"/db/incidencias",restDbInci}, // GET & POST
+                    {"/db/historicos",restDbHist},  // POST para enviar el Filtro.
+                    {"/db/estadistica",restDbEstadistica},  // POST para enviar el Filtro.
+                    {"/db/systemusers",restDbSystemUsers},  // 
+                    {"/options",restOptions},               // GET & POST
+                    {"/snmpopts",restSnmpOptions},               // GET & POST
+                    {"/rdsessions",restRdSessions},         // GET
+                    {"/gestormn",restRdMNMan},         // GET
+                    {"/rdhf",restHFTxData},        // GET
+                    {"/rddata", restRadioData },    // GET
+                    {"/rd11", restRadio11Control }, // POST
+                    {"/sacta", restSacta},              // GET & POST
+                    {"/sacta/*", restSacta},              // GET & POST
+                    {"/extatssest",restExtAtsDest},
+                    {"/versiones",restVersiones},
+                    {"/allhard", restAllHard},
+                    {"/tifxinfo", restTifxInfo},
+                    {"/logs", restLogs},
+                    {"/logs/*", restLogs},
+                    {"/reset",(context, sb, gdt)=>
+                        {
+                            if (context.Request.HttpMethod == "POST")
+                            {
+                                U5kGenericos.ResetService = true;
+                                RecordManualAction("Reset Modulo");     // todo. Multiidioma...            
+                            }
+                            else
+                            {
+                                context.Response.StatusCode = 404;
+                                sb.Append(JsonConvert.SerializeObject( new{ res="Operacion no Soportada"} ));
+                            }
+                        }
+                    },
+                {"/alive", RestAlive },
+                {"/logout", RestLogout }
+            };
+            List<string> SecureUris = new List<string>()
+            {
+                "/styles/bootstrap/bootstrap.min.css",
+                "/styles/uv5ki-styles.css",
+                "/scripts/jquery/jquery-2.1.3.min.js",
+                "/images/corporativo-a.png",
+                "/favicon.ico",
+                "/images/corporativo-a.png"
+            };
+            /** Rutina a la que llama el servidor base para autentificar un usuario */
+            AuthenticateUser = (data, response) =>
+            {
+                /** 'namecontroluser'=user&'namecontrolpwd'=pwd */
+                var items = data.Split('&')
+                        .Where(x => !string.IsNullOrEmpty(x))
+                        .Select(x => x.Split('='))
+                        .Where(x => x[1] != "")
+                        .ToDictionary(x => x[0], x => x[1]);
+
+                if (items.Keys.Contains("username") && items.Keys.Contains("password"))
+                {
+                    var user = items["username"];
+                    var pass = items["password"];
+                    // TODO. De momento no cojo el semaforo....
+                    GlobalServices.GetWriteAccess((gdt) =>
+                    {
+                        gdt.LoggedUser = gdt.SystemUsers.Where(u => u.id == user && u.pwd == pass).FirstOrDefault();
+                        response(gdt.LoggedUser != null, gdt.LoggedUser != null ? "" : "Usuario o password incorrecta");
+                        Task.Run(() =>
+                        {
+                            // TODO Generar el historico....
+                            //RecordEvent<U5kManWebApp>(DateTime.Now,
+                            //    U5kBaseDatos.eIncidencias.IEE_CAIDA,
+                            //    U5kBaseDatos.eTiposInci.TEH_SISTEMA,
+                            //    "MTTO", new object[] { user });
+                        });
+                    }, false);
+                }
+                else
+                {
+                    response(false, "No ha introducido usuario o password");
+                }
+            };
+            try
+            {
+                base.Start(port, new CfgServer()
+                {
+                    DefaultDir = "/appweb",
+                    DefaultUrl = "/index.html",
+                    LoginUrl = "/login.html",
+                    LogoutUrl = "/logout",
+                    LoginErrorTag = "<div id='result'>",
+                    HtmlEncode = false,
+                    SessionDuration = SessionDuration,
+                    SecureUris = SecureUris,
+                    CfgRest = cfg
+                });
+            }
+            catch (Exception x)
+            {
+                LogException<U5kManWebApp>("", x);
+            }
+        }
+        protected void RestLogout(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
+        {
+            context.Response.ContentType = "application/json";
+            if (context.Request.HttpMethod == "POST")
+            {
+                gdt.LoggedUser = null;
+                Task.Run(() =>
+                {
+                    // TODO Generar el historico....
+                    //RecordEvent<U5kManWebApp>(DateTime.Now,
+                    //    U5kBaseDatos.eIncidencias.IEE_CAIDA,
+                    //    U5kBaseDatos.eTiposInci.TEH_SISTEMA,
+                    //    "MTTO", new object[] { user });
+                });
+                SessionExpiredAt = DateTime.Now;
+                context.Response.Redirect("/login.html");
+            }
+            else
+            {
+                context.Response.StatusCode = 404;
+                sb.Append(JsonHelper.ToString(new { res = context.Request.HttpMethod + ": Metodo No Permitido" }, false));
+            }
+        }
+        protected void RestAlive(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
+        {
+            context.Response.ContentType = "application/json";
+            if (context.Request.HttpMethod == "GET")
+            {
+                context.Response.StatusCode = 200;
+                sb.Append(JsonHelper.ToString(new { res = "OK" }, false));
+            }
+            else
+            {
+                context.Response.StatusCode = 404;
+                sb.Append(JsonHelper.ToString(new { res = context.Request.HttpMethod + ": Metodo No Permitido" }, false));
+            }
+        }
+        protected void RestLogs(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
+        {
+            context.Response.ContentType = "application/json";
+            if (context.Request.HttpMethod == "GET")
+            {
+                context.Response.StatusCode = 200;
+                // TODO. Leer los Logs y Añadir 
+                // ReadLog((logs) => { sb.Append(JsonConvert.SerializeObject(logs, Formatting.Indented)); });
+                sb.Append(JsonHelper.ToString(new { res = "Contenido del Logs" }, false));
+            }
+            else
+            {
+                context.Response.StatusCode = 404;
+                sb.Append(JsonHelper.ToString(new { res = context.Request.HttpMethod + ": Metodo No Permitido" }, false));
+            }
+        }
+#else
         /// <summary>
         /// 
         /// </summary>
@@ -68,7 +242,7 @@ namespace U5kManServer.WebAppServer
                     {"/logs/*", restLogs},
                     {"/reset",(context, sb, gdt)=>
                         {
-                            if (context.Request.HttpMethod == "POST")            
+                            if (context.Request.HttpMethod == "POST")
                             {
                                 U5kGenericos.ResetService = true;
                                 RecordManualAction("Reset Modulo");     // todo. Multiidioma...            
@@ -95,9 +269,7 @@ namespace U5kManServer.WebAppServer
                 LogException<WebAppServer>( "", x);
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
+#endif
         public override void Stop()
         {
             try
@@ -110,7 +282,11 @@ namespace U5kManServer.WebAppServer
                 LogException<WebAppServer>( "", x);
             }
         }
-
+        public void EnableDisable(bool enable, string cause = "")
+        {
+            Enable = enable;
+            DisableCause = cause;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -463,7 +639,7 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(JsonConvert.SerializeObject(gdt.usuarios));
+                sb.Append(JsonConvert.SerializeObject(gdt.SystemUsers));
             }
             else
             {

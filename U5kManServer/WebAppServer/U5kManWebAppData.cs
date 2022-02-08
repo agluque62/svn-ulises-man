@@ -191,7 +191,7 @@ namespace U5kManServer.WebAppServer
 #endif
         public int perfil { get; set; }
         public string lang { get; set; }
-
+        public U5kBdtService.SystemUserInfo logged { get; set; }
         public int rd_status { get; set; }
         public int tf_status { get; set; }
 
@@ -363,10 +363,10 @@ namespace U5kManServer.WebAppServer
                         sel = 0,
                         url = ""
                     };
-                    var operador = gdt.usuarios.Find(x => ((U5kBdtService.SystemUserInfo)x).id == user);
+                    var operador = gdt.SystemUsers.Find(x => ((U5kBdtService.SystemUserInfo)x).id == user);
                     perfil = operador == null ? 0 : ((U5kBdtService.SystemUserInfo)operador).prf;
                     lang = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.Idioma;
-
+                    logged = gdt.LoggedUser;
                     /** Estado Global Radio */
 #if _HAY_NODEBOX__
                     var fr = U5kManService._sessions_data.Count();                              // Frecuencias Configuradas.

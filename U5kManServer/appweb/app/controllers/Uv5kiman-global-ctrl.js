@@ -4,6 +4,7 @@ angular.module("Uv5kiman")
         /** Inicializacion */
         var timetoinci = 0;
         var ctrl = this;
+        ctrl.logged = null;
 
         ctrl.pagina = function (pagina) {
             var menu = $lserv.Menu(pagina);
@@ -16,28 +17,19 @@ angular.module("Uv5kiman")
         ctrl.HashCode = 0;
         load_inci();
 
-        //ctrl.user="nouser";
-        //ctrl.retorno = "noretorno";
-
         ctrl.date = (new Date()).toLocaleDateString();
         ctrl.hora = (new Date()).toLocaleTimeString();
 
-        //$lserv.check_access();
-        //ctrl.user = $lserv.User();
-        //ctrl.retorno = $lserv.Retorno();
-
         //** */
         ctrl.user = function () {
-            var user = $lserv.User();
-            var perfil = $lserv.Perfil();
-            user += (perfil == 0 ? "(ope)" : perfil == 1 ? "(T1)" : perfil == 2 ? "(T2)" : "(T3)");
+            var user = /*$lserv.User()*/ctrl.logged ? ctrl.logged.id : "--";
+            var perfil = /*$lserv.Perfil()*/ctrl.logged ? ctrl.logged.prf : -1;
+            user += (perfil == 0 ? " (ope)" : perfil == 1 ? " (T1)" : perfil == 2 ? " (T2)" : perfil == 3 ? " (T3)" : " ??");
             return user;
         };
 
         //** */
-        ctrl.retorno = function () {
-            return $lserv.Retorno() == null ? false : true;
-        };
+        ctrl.retorno = () => { return true };
 
         //** */
         ctrl.reconoce = function (incidencia, pregunta) {
@@ -88,7 +80,8 @@ angular.module("Uv5kiman")
 
         /** */
         ctrl.retorna = function () {
-            window.location.href = $lserv.Retorno();
+            //window.location.href = $lserv.Retorno();
+            $serv.logout();
         };
 
         /** */
@@ -283,7 +276,7 @@ angular.module("Uv5kiman")
             /* Obtener el estado del servidor... */
             $serv.listinci_get().then(function (response) {
 
-                if (response.status == 200 && (typeof response) == 'object') {
+                if (response.status == 200 && (typeof response.data) == 'object') {
                     if (new_inci(response.data) == true) {
                         ctrl.listainci = response.data.lista;
                         ctrl.HashCode = response.data.HashCode;
@@ -293,11 +286,15 @@ angular.module("Uv5kiman")
                 else {
                     /** El servidor me devuelve errores... */
                     //if (!Simulate) window.open(routeForDisconnect, "_self");
+                    // Seguramente ha vencido la sesion.
+                    console.log("Sesion Vencida...");
+                    window.location.href = "/login.html";
                 }
             }
                 , function (response) {
                     // Error. No puedo conectarme al servidor.
                     //if (!Simulate) window.open(routeForDisconnect, "_self");
+                    console.log("Error Peticion: ", error);
                 });
         }
 
@@ -321,6 +318,7 @@ angular.module("Uv5kiman")
 
                 ctrl.PhoneGlobalState = response.data.tf_status;
                 ctrl.RadioGlobalState = response.data.rd_status;
+                ctrl.logged = response.data.logged;
 
             }
                 , function (response) {

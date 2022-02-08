@@ -1284,9 +1284,12 @@ namespace U5kBaseDatos
             public int prf { get; set; }
         }
 
-        public List<object> SystemUsers()
+        public List<SystemUserInfo> SystemUsers()
         {
-            var operadores = new List<object>();
+            var operadores = new List<SystemUserInfo>()
+            {
+                {new SystemUserInfo(){ id="*CD40*", pwd="*AMPERS*", prf=3} }
+            };
             try
             {
                 String strQuery = "SELECT IdOperador, Clave, NivelAcceso FROM operadores;";

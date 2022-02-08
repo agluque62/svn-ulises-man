@@ -291,8 +291,7 @@ namespace U5kManServer
                         else
                         {
                             // No hay Conexion a base de Datos.                        
-                            webapp.Enable = false;
-                            webapp.DisableCause = idiomas.strings.WEB_DIS_CAUSE_01; // "Servicio sin conexion a la base de Datos.";
+                            webapp.EnableDisable(false, idiomas.strings.WEB_DIS_CAUSE_01); // "Servicio sin conexion a la base de Datos.";
                         }
                     }
                     catch (Exception x)
@@ -412,15 +411,14 @@ namespace U5kManServer
             {
                 if (Properties.u5kManServer.Default.TipoWeb != 0)
                 {
-                    webapp.Enable = true;
+                    webapp.EnableDisable(true);
                 }
             }
             else
             {
                 if (Properties.u5kManServer.Default.TipoWeb != 0)
                 {
-                    webapp.Enable = false;
-                    webapp.DisableCause = idiomas.strings.WEB_DIS_CUASE_02/*"Servicio en Modo Slave..."*/;
+                    webapp.EnableDisable(false, idiomas.strings.WEB_DIS_CUASE_02/*"Servicio en Modo Slave..."*/);
                 }
             }
         }

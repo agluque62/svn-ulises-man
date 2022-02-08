@@ -209,7 +209,7 @@ namespace U5kManServer
                     if (retorno == true)
                     {
                         // 20170802. Carga de Usuarios....
-                        gdata.usuarios = U5kManService.Database.SystemUsers();
+                        gdata.SystemUsers = U5kManService.Database.SystemUsers();
 
                         /** 20171130. Supervisa el gestor Agente SNMP que debe resetearse con la configuracion */
                         //if (_snmpagent.IsRunning())

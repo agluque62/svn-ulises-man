@@ -115,6 +115,9 @@ angular
             , module_reset: function () {
                 return remotePost(rest_url_reset);
             }
+            , logout: function () {
+                return remotePost(rest_url_logout);
+            }
         };
 
         //

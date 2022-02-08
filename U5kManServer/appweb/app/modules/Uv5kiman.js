@@ -326,6 +326,7 @@ var rest_url_versiones = "/versiones";
 
 var rest_url_allhard = "/allhard";
 var rest_url_reset = "/reset";
+var rest_url_logout = "/logout";
 
 var routeForDisconnect = "/noserver.html";
 
