@@ -21,11 +21,11 @@ namespace U5kManServer.WebAppServer
 #if _WEBLOGIN_
     class U5kManWebApp : WebServerBase
 #else
-    class U5kManWebApp : WebAppServer
+    class U5kManWebApp : OldWebAppServer
 #endif
     {
 #if _WEBLOGIN_
-        public void Start(int port=8090, int SessionDuration = 5)
+        public void Start(int port=8090, int SessionDuration = 30)
         {
             Dictionary<string, wasRestCallBack> cfg = new Dictionary<string, wasRestCallBack>()
                 {
@@ -88,35 +88,44 @@ namespace U5kManServer.WebAppServer
             /** Rutina a la que llama el servidor base para autentificar un usuario */
             AuthenticateUser = (data, response) =>
             {
-                /** 'namecontroluser'=user&'namecontrolpwd'=pwd */
-                var items = data.Split('&')
-                        .Where(x => !string.IsNullOrEmpty(x))
-                        .Select(x => x.Split('='))
-                        .Where(x => x[1] != "")
-                        .ToDictionary(x => x[0], x => x[1]);
-
-                if (items.Keys.Contains("username") && items.Keys.Contains("password"))
+                /** Control de Disable */
+                if (Enable)
                 {
-                    var user = items["username"];
-                    var pass = items["password"];
-                    // TODO. De momento no cojo el semaforo....
-                    GlobalServices.GetWriteAccess((gdt) =>
+
+                    /** 'namecontroluser'=user&'namecontrolpwd'=pwd */
+                    var items = data.Split('&')
+                            .Where(x => !string.IsNullOrEmpty(x))
+                            .Select(x => x.Split('='))
+                            .Where(x => x[1] != "")
+                            .ToDictionary(x => x[0], x => x[1]);
+
+                    if (items.Keys.Contains("username") && items.Keys.Contains("password"))
                     {
-                        gdt.LoggedUser = gdt.SystemUsers.Where(u => u.id == user && u.pwd == pass).FirstOrDefault();
-                        response(gdt.LoggedUser != null, gdt.LoggedUser != null ? "" : "Usuario o password incorrecta");
-                        Task.Run(() =>
+                        var user = items["username"];
+                        var pass = items["password"];
+                        // TODO. De momento no cojo el semaforo....
+                        GlobalServices.GetWriteAccess((gdt) =>
                         {
+                            gdt.LoggedUser = gdt.SystemUsers.Where(u => u.id == user && u.pwd == pass).FirstOrDefault();
+                            response(gdt.LoggedUser != null, gdt.LoggedUser != null ? "" : "Usuario o password incorrecta");
+                            Task.Run(() =>
+                            {
                             // TODO Generar el historico....
                             //RecordEvent<U5kManWebApp>(DateTime.Now,
                             //    U5kBaseDatos.eIncidencias.IEE_CAIDA,
                             //    U5kBaseDatos.eTiposInci.TEH_SISTEMA,
                             //    "MTTO", new object[] { user });
                         });
-                    }, false);
+                        }, false);
+                    }
+                    else
+                    {
+                        response(false, "No ha introducido usuario o password");
+                    }
                 }
                 else
                 {
-                    response(false, "No ha introducido usuario o password");
+                    response(false, $"Servicion Web Inhabilitado: {DisableCause}");
                 }
             };
             try
@@ -279,7 +288,7 @@ namespace U5kManServer.WebAppServer
             }
             catch (Exception x)
             {
-                LogException<WebAppServer>( "", x);
+                LogException<U5kManWebApp>( "", x);
             }
         }
         public void EnableDisable(bool enable, string cause = "")

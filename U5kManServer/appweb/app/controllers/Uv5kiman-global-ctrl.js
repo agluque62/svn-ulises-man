@@ -261,6 +261,10 @@ angular.module("Uv5kiman")
         ctrl.RadioStdClass = function () {
             return GlobalStdClass("btn btn-xs", ctrl.RadioGlobalState);
         };
+        /** Para contar los clicks... */
+        ctrl.global_click = () => {
+            $serv.click();
+        };
 
         function GlobalStdClass(base, std) {
             var stdClass = std == undefined ? "btn-default" :

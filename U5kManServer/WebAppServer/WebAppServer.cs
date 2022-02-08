@@ -14,7 +14,7 @@ using Utilities;
 
 namespace U5kManServer.WebAppServer
 {
-    class WebAppServer : BaseCode, IDisposable
+    public class OldWebAppServer : BaseCode, IDisposable
     {
         /// <summary>
         /// 
@@ -35,7 +35,7 @@ namespace U5kManServer.WebAppServer
         /// <summary>
         /// 
         /// </summary>
-        public WebAppServer()
+        public OldWebAppServer()
         {
             SetRequestRootDirectory();
             DefaultUrl = "/index.html";
@@ -50,7 +50,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         /// <param name="defaultDir"></param>
         /// <param name="defaultUrl"></param>
-        public WebAppServer(string defaultDir, string defaultUrl, bool htmlEncode = true)
+        public OldWebAppServer(string defaultDir, string defaultUrl, bool htmlEncode = true)
         {
             SetRequestRootDirectory();
             DefaultUrl = defaultUrl;
@@ -59,7 +59,7 @@ namespace U5kManServer.WebAppServer
             Enable = false;
             DisableCause = "";
         }
-        public WebAppServer(string rootDirectory)
+        public OldWebAppServer(string rootDirectory)
         {
             Directory.SetCurrentDirectory(rootDirectory);
             DefaultUrl = "/index.html";
@@ -77,9 +77,8 @@ namespace U5kManServer.WebAppServer
         /// <param name="cfg"></param>
         public void Start(int port, Dictionary<string, wasRestCallBack> cfg)
         {
-            LogDebug<WebAppServer>($"{Id} Starting WebAppServer");
+            LogDebug<OldWebAppServer>($"{Id} Starting WebAppServer");
             CfgRest = cfg;
-
             ExecutiveThreadCancel = new CancellationTokenSource();
             ExecutiveThread = Task.Run(() =>
             {
@@ -98,7 +97,7 @@ namespace U5kManServer.WebAppServer
                             {
                                 try
                                 {
-                                    LogDebug<WebAppServer>($"{Id} Starting HttpListener");
+                                    LogDebug<OldWebAppServer>($"{Id} Starting HttpListener");
                                     Listener = new HttpListener();
                                     Listener.Prefixes.Add("http://*:" + port.ToString() + "/");
 
@@ -113,11 +112,11 @@ namespace U5kManServer.WebAppServer
 
                                     Listener.Start();
                                     Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
-                                    LogDebug<WebAppServer>($"{Id} HttpListener Started");
+                                    LogDebug<OldWebAppServer>($"{Id} HttpListener Started");
                                 }
                                 catch (Exception x)
                                 {
-                                    LogException<WebAppServer>($"{Id} ", x, false);
+                                    LogException<OldWebAppServer>($"{Id} ", x, false);
                                     ResetListener();
                                 }
                             }
@@ -126,7 +125,7 @@ namespace U5kManServer.WebAppServer
                     }
                 }
             });
-            LogDebug<WebAppServer>($"{Id} WebAppServer Started");
+            LogDebug<OldWebAppServer>($"{Id} WebAppServer Started");
         }
 
         /// <summary>
@@ -136,7 +135,7 @@ namespace U5kManServer.WebAppServer
         {
             lock (Locker)
             {
-                LogDebug<WebAppServer>($"{Id} Ending WebAppServer");
+                LogDebug<OldWebAppServer>($"{Id} Ending WebAppServer");
 
                 ExecutiveThreadCancel?.Cancel();
                 ExecutiveThread?.Wait(TimeSpan.FromSeconds(5));
@@ -144,7 +143,7 @@ namespace U5kManServer.WebAppServer
                 Listener = null;
                 CfgRest = null;
 
-                LogDebug<WebAppServer>($"{Id} WebAppServer Ended");
+                LogDebug<OldWebAppServer>($"{Id} WebAppServer Ended");
             }
         }
 
@@ -220,12 +219,12 @@ namespace U5kManServer.WebAppServer
                 catch (HttpListenerException x)
                 {
                     // Si se produce una excepcion de este tipo, hay que reiniciar el LISTENER.
-                    LogException<WebAppServer>("", x, false);
+                    LogException<OldWebAppServer>("", x, false);
                     ResetListener();
                 }
                 catch (Exception x)
                 {
-                    LogException<WebAppServer>( "", x);
+                    LogException<OldWebAppServer>( "", x);
                     context.Response.StatusCode = 500;
                     // Todo. Render(Encode(x.Message), context.Response);
                 }
@@ -379,12 +378,12 @@ namespace U5kManServer.WebAppServer
 
         private void ResetListener()
         {
-            LogDebug<WebAppServer>($"{Id} Reseting Listener");
+            LogDebug<OldWebAppServer>($"{Id} Reseting Listener");
 
             Listener?.Close();
             Listener = null;
 
-            LogDebug<WebAppServer>($"{Id} Listener Reset");
+            LogDebug<OldWebAppServer>($"{Id} Listener Reset");
         }
         #endregion
 
@@ -398,13 +397,13 @@ namespace U5kManServer.WebAppServer
                              from value in context.Request.QueryString.GetValues(key)
                              select string.Format("{0}={1}", key, value)).ToArray();
 
-                LogDebug<WebAppServer>($"{Id} URL: {context.Request.Url.OriginalString}, " +
+                LogDebug<OldWebAppServer>($"{Id} URL: {context.Request.Url.OriginalString}, " +
                     $"Raw URL: {context.Request.RawUrl}, " +
                     $"Query: {String.Join("##", array)}");
             }
             else
             {
-                LogDebug<WebAppServer>($"{Id} URL: {context.Request.Url.OriginalString}, " +
+                LogDebug<OldWebAppServer>($"{Id} URL: {context.Request.Url.OriginalString}, " +
                     $"Raw URL: {context.Request.RawUrl}, ");
             }
             ErrorTesting();
@@ -453,6 +452,7 @@ namespace U5kManServer.WebAppServer
             public string LoginErrorTag { get; set; }
             public List<string> SecureUris { get; set; }
         }
+        public int SyncListenerSpvPeriod { get; set; } = 5;
         public WebServerBase()
         {
             SetRequestRootDirectory();
@@ -465,12 +465,51 @@ namespace U5kManServer.WebAppServer
             {
                 if (Listener != null)
                     Stop();
-
                 Config = cfg;
-                Listener = new HttpListener();
-                Listener.Prefixes.Add("http://*:" + port.ToString() + "/");
-                Listener.Start();
-                Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
+
+                ExecutiveThreadCancel = new CancellationTokenSource();
+                ExecutiveThread = Task.Run(() =>
+                {
+                    DateTime lastListenerTime = DateTime.MinValue;
+                    DateTime lastRefreshTime = DateTime.MinValue;
+                    // Supervisar la cancelacion.
+                    while (ExecutiveThreadCancel.IsCancellationRequested == false)
+                    {
+                        Task.Delay(TimeSpan.FromMilliseconds(100)).Wait();
+                        if (DateTime.Now - lastListenerTime >= TimeSpan.FromSeconds(SyncListenerSpvPeriod))
+                        {
+                            // Supervisar la disponibilidad del Listener.
+                            lock (locker)
+                            {
+                                if (Listener == null)
+                                {
+                                    try
+                                    {
+                                        LogDebug<WebServerBase>($"{Id} Starting HttpListener");
+                                        Listener = new HttpListener();
+                                        Listener.Prefixes.Add("http://*:" + port.ToString() + "/");
+                                        Listener.Start();
+                                        Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
+                                        LogDebug<WebServerBase>($"{Id} HttpListener Started");
+                                    }
+                                    catch (Exception x)
+                                    {
+                                        LogException<WebServerBase>($"{Id} ", x, false);
+                                        ResetListener();
+                                    }
+                                }
+                                if (InactivityDetector.Tick4Idle(true) == true)
+                                {
+                                    SessionExpiredAt = DateTime.MinValue;
+                                }
+#if DEBUG
+                                LogInfo<WebServerBase>($"Time to End Session => {(SessionExpiredAt - DateTime.Now)}");
+#endif
+                            }
+                            lastListenerTime = DateTime.Now;
+                        }
+                    }
+                });
             }
         }
         public virtual void Stop()
@@ -480,13 +519,14 @@ namespace U5kManServer.WebAppServer
                 if (Listener != null)
                 {
                     Listener.Close();
+                    ExecutiveThreadCancel?.Cancel();
+                    ExecutiveThread?.Wait(TimeSpan.FromSeconds(5));
                     Listener = null;
                     Config = null;
                 }
             }
         }
         #endregion
-
         #region Protected
         void GetContextCallback(IAsyncResult result)
         {
@@ -494,55 +534,49 @@ namespace U5kManServer.WebAppServer
             {
                 if (Listener == null || Listener.IsListening == false)
                     return;
-
                 HttpListenerContext context = Listener.EndGetContext(result);
-                logrequest(context);
-
+                Logrequest(context);
                 try
                 {
                     if (IsAuthenticated(context))
                     {
                         string url = context.Request.Url.LocalPath;
-                        if (Enable)
+                        if (url == "/") context.Response.Redirect(Config?.DefaultUrl);
+                        else
                         {
-                            if (url == "/") context.Response.Redirect(Config?.DefaultUrl);
+                            wasRestCallBack cb = FindRest(url);
+                            if (cb != null)
+                            {
+                                StringBuilder sb = new System.Text.StringBuilder();
+                                // TODO. De momento no cojo el semaforo....
+                                GlobalServices.GetWriteAccess((gdt) =>
+                                {
+                                    cb(context, sb, gdt);
+                                }, false);
+                                context.Response.ContentType = FileContentType(".json");
+                                Render(Encode(sb.ToString()), context.Response);
+                                if (InactivityDetector.OnRestReceived(context) == false)
+                                {
+                                    SessionExpiredAt = DateTime.Now + TimeSpan.FromMinutes(Config.SessionDuration);
+                                }
+                            }
                             else
                             {
-                                wasRestCallBack cb = FindRest(url);
-                                if (cb != null)
+                                url = Config?.DefaultDir + url;
+                                if (url.Length > 1 && File.Exists(url.Substring(1)))
                                 {
-                                    StringBuilder sb = new System.Text.StringBuilder();
-                                    // TODO. De momento no cojo el semaforo....
-                                    GlobalServices.GetWriteAccess((gdt) =>
-                                    {
-                                        cb(context, sb, gdt);
-                                    }, false);
-                                    context.Response.ContentType = FileContentType(".json");
-                                    Render(Encode(sb.ToString()), context.Response);
+                                    /** Es un fichero lo envio... */
+                                    string file = url.Substring(1);
+                                    string ext = Path.GetExtension(file).ToLowerInvariant();
+
+                                    context.Response.ContentType = FileContentType(ext);
+                                    ProcessFile(context.Response, file);
                                 }
                                 else
                                 {
-                                    url = Config?.DefaultDir + url;
-                                    if (url.Length > 1 && File.Exists(url.Substring(1)))
-                                    {
-                                        /** Es un fichero lo envio... */
-                                        string file = url.Substring(1);
-                                        string ext = Path.GetExtension(file).ToLowerInvariant();
-
-                                        context.Response.ContentType = FileContentType(ext);
-                                        ProcessFile(context.Response, file);
-                                    }
-                                    else
-                                    {
-                                        context.Response.StatusCode = 404;
-                                    }
+                                    context.Response.StatusCode = 404;
                                 }
                             }
-                        }
-                        else
-                        {
-                            context.Response.ContentType = FileContentType(".html");
-                            ProcessFile(context.Response, (Config?.DefaultDir + "/disabled.html").Substring(1), "{{cause}}", DisableCause);
                         }
                     }
                 }
@@ -659,8 +693,10 @@ namespace U5kManServer.WebAppServer
         #endregion
 
         #region Autenticacion
-        protected DateTime SessionExpiredAt = DateTime.Now;
-        protected Action<string, Action<bool, string>> AuthenticateUser = null;
+        protected DateTime SessionExpiredAt { get; set; } = DateTime.Now;
+        protected Action<string, Action<bool, string>> AuthenticateUser { get; set; } = null;
+        protected bool Enable { get; set; }
+        protected string DisableCause { get; set; }
         private bool IsAuthenticated(HttpListenerContext context)
         {
             // Control de los Post de Login
@@ -710,9 +746,17 @@ namespace U5kManServer.WebAppServer
             return false;
         }
         #endregion Autentificacion
+        private void ResetListener()
+        {
+            LogDebug<OldWebAppServer>($"{Id} Reseting Listener");
 
+            Listener?.Close();
+            Listener = null;
+
+            LogDebug<OldWebAppServer>($"{Id} Listener Reset");
+        }
         #region Testing
-        private void logrequest(HttpListenerContext context)
+        private void Logrequest(HttpListenerContext context)
         {
             LogDebug<WebServerBase>($"HTTP Request: {context.Request.HttpMethod} {context.Request.Url.OriginalString}");
             if (context.Request.QueryString.Count > 0)
@@ -728,13 +772,61 @@ namespace U5kManServer.WebAppServer
 
         #region Private
 
-        HttpListener Listener = null;
-        protected bool Enable { get; set; }
-        protected string DisableCause { get; set; }
+        string Id => $"On WebAppServer:";
+        HttpListener Listener { get; set; } = null;
         Object locker { get; set; } = new Object();
         CfgServer Config { get; set; }
+        InactivityDetectorClass InactivityDetector { get; set; } = new InactivityDetectorClass();
+        Task ExecutiveThread { get; set; } = null;
+        CancellationTokenSource ExecutiveThreadCancel { get; set; } = null;
 
         #endregion
     }
+    public class InactivityDetectorClass : IDisposable
+    {
+        public TimeSpan IdleTime { get; set; } = TimeSpan.FromSeconds(45);
+        public bool Tick4Idle(bool modeClick = false)
+        {
+            if (modeClick)
+            {
+                var Elapsed = DateTime.Now - Control.When;
+                return Elapsed > IdleTime ? true : false;
+            }
+            else if (LastRestReceived.Count()>0)
+            {
+                var LastReceivedOn = LastRestReceived.Values.Max();
+                var Elapsed = DateTime.Now - LastReceivedOn;
+                // true => Detectada inactividad.
+                return Elapsed > IdleTime ? true : false;
+            }
+            return false;
+        }
+        public bool OnRestReceived(string rest)
+        {
+            var LastKey = Key;
+            LastRestReceived[rest] = DateTime.Now;
+            LastRestReceived = LastRestReceived.OrderByDescending(n => n.Value).Take(3).ToDictionary(n => n.Key, n => n.Value);
+            return Key == LastKey; // true => Detectada inactividad. No se refresca el tiempo de expiracion de sesión.
+        }
+        public bool OnRestReceived(HttpListenerContext contex)
+        {
+            var lastCount = Control.Clicks as string;
+            var notCount = contex.Request.Headers["Click-counter"];
+            if (notCount != null)
+            {
+                Control = new { Clicks = notCount, When = DateTime.Now };
+            }
+            var currentCount = Control.Clicks as string;
+            return lastCount == currentCount;
+        }
+        public void Dispose()
+        {
+        }
+        string Key => string.Join("", LastRestReceived.Keys.OrderBy(n => n));
+        //string Clicks { get; set; } = "";
+        dynamic Control { get; set; } = new { Clicks = "0", When=DateTime.Now };
+        Dictionary<string, DateTime> LastRestReceived { get; set; } = new Dictionary<string, DateTime>();
+    }
+
 }
 

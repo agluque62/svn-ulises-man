@@ -2,8 +2,14 @@
 angular
     .module('Uv5kiman')
     .factory('$serv', function ($q, $http, $lserv) {
+        var clickCounter = 0;
         return {
-            stdgen_get: function () {
+            click: () =>
+            {
+                clickCounter += 1;
+                return clickCounter;
+            }
+            , stdgen_get: function () {
                 return remoteGet(rest_url_std + "?user=" + $lserv.User());
             }
             , listinci_get: function () {
@@ -133,7 +139,15 @@ angular
             //        deferred.reject("Otro error");
             //    });
             //return deferred.promise;
-            return $http.get(normalizeUrl(url), { headers: { 'Content-Type': 'application/json; charset=UTF-8' }, data: '' });
+            return $http.get(normalizeUrl(url),
+                {
+                    headers:
+                    {
+                        'Content-Type': 'application/json; charset=UTF-8',
+                        'Click-counter': clickCounter
+                    },
+                    data: ''
+                });
         }
 
         //

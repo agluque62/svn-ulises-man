@@ -15,146 +15,153 @@
     <link rel="stylesheet" type="text/css" href="./styles/alertify/themes/bootstrap.css" />
 </head>
 <body>
-    <div id="agrupar" data-ng-controller="uv5kiGlobalCtrl as ctrl">
-        <header id="cabecera">
-            <div id="_contSupIzq">
-                <div id="_logo" width="90%">
-                    <!-- <img src="./images/nucleo-df-new.jpg" /> -->
-                    <img src="./images/corporativo-a.png" height="85%" />
+    <div id="agrupar" data-ng-controller="uv5kiGlobalCtrl as ctrl" >
+        <div data-ng-click="ctrl.global_click()">
+            <header id="cabecera">
+                <div id="_contSupIzq">
+                    <div id="_logo" width="90%">
+                        <!-- <img src="./images/nucleo-df-new.jpg" /> -->
+                        <img src="./images/corporativo-a.png" height="85%" />
+                    </div>
                 </div>
-            </div>
-            <div id="_tit_ppal">
-                <p translate>INDEX_TITULO</p>
-                <div id="_manual" ng-show="false"><a href="" data-ng-click="ctrl.manual()">Manual</a></div>
-            </div>
-            <div id="_contSupDrcha">
-                <div id="_hfecha">{{ctrl.date}} {{ctrl.hora}}</div>
-                <div id="_hsolohora"><i translate>INDEX_USER</i><b>{{ctrl.user()}}</b></div>
-            </div>
-        </header>
-        <!--<section id="_separador"></section>-->
-        <nav id="_menu" class="container">
-            <h3 translate>INDEX_OPCIONES</h3>
-            <ul class="nav nav-pills nav-stacked">
-                <li data-ng-class="{'active': ctrl.pagina()==0}">
-                    <a href="#/" data-ng-click="ctrl.pagina(0)" translate>Hardware</a>
-                </li>
-                <li data-ng-class="{'active': ctrl.pagina()==1}">
-                    <a href="#/opesp" data-ng-click="ctrl.pagina(1)" translate>Operativa Radio</a>
-                </li>
-                <li data-ng-class="{'active': ctrl.pagina()==4}">
-                    <a href="#/tifxsp" data-ng-click="ctrl.pagina(4)" translate>Presencia Telefonia</a>
-                </li>
-                <li data-ng-class="{'active': ctrl.pagina()==2}">
-                    <a href="#/hist" data-ng-click="ctrl.pagina(2)" translate>INDEX_OPC_HISTORICOS</a>
-                </li>
-                <li data-ng-class="{'active': ctrl.pagina()==3}">
-                    <a href="#/config" data-ng-click="ctrl.pagina(3)" translate>INDEX_OPC_CONFIGURACION</a>
-                </li>
-                <li>
-                    <a href="" data-ng-click="ctrl.about()" translate>Acerca de...</a>
-                </li>
-                <li><br /></li>
-                <li><br /></li>
-                <li>
-                    <form method="POST" action="/logout">
-                        <div>
-                            <!-- Submit Button -->
-                            <input type="submit" class="btn btn-default" style="width: 100%;" value="Logout" />
-                        </div>
-                    </form>
-                </li>
-            </ul>
-        </nav>
+                <div id="_tit_ppal">
+                    <p translate>INDEX_TITULO</p>
+                    <div id="_manual" ng-show="false"><a href="" data-ng-click="ctrl.manual()">Manual</a></div>
+                </div>
+                <div id="_contSupDrcha">
+                    <div id="_hfecha">{{ctrl.date}} {{ctrl.hora}}</div>
+                    <div id="_hsolohora"><i translate>INDEX_USER</i><b>{{ctrl.user()}}</b></div>
+                </div>
+            </header>
+            <!--<section id="_separador"></section>-->
+            <nav id="_menu" class="container">
+                <h3 translate>INDEX_OPCIONES</h3>
+                <ul class="nav nav-pills nav-stacked">
+                    <li data-ng-class="{'active': ctrl.pagina()==0}">
+                        <a href="#/" data-ng-click="ctrl.pagina(0)" translate>Hardware</a>
+                    </li>
+                    <li data-ng-class="{'active': ctrl.pagina()==1}">
+                        <a href="#/opesp" data-ng-click="ctrl.pagina(1)" translate>Operativa Radio</a>
+                    </li>
+                    <li data-ng-class="{'active': ctrl.pagina()==4}">
+                        <a href="#/tifxsp" data-ng-click="ctrl.pagina(4)" translate>Presencia Telefonia</a>
+                    </li>
+                    <li data-ng-class="{'active': ctrl.pagina()==2}">
+                        <a href="#/hist" data-ng-click="ctrl.pagina(2)" translate>INDEX_OPC_HISTORICOS</a>
+                    </li>
+                    <li data-ng-class="{'active': ctrl.pagina()==3}">
+                        <a href="#/config" data-ng-click="ctrl.pagina(3)" translate>INDEX_OPC_CONFIGURACION</a>
+                    </li>
+                    <li>
+                        <a href="" data-ng-click="ctrl.about()" translate>Acerca de...</a>
+                    </li>
+                    <li><br /></li>
+                    <li><br /></li>
+                    <li>
+                        <form method="POST" action="/logout">
+                            <div>
+                                <!-- Submit Button -->
+                                <input type="submit" class="btn btn-default" style="width: 100%;" value="Logout" />
+                            </div>
+                        </form>
+                    </li>
+                </ul>
+            </nav>
 
-        <section id="_ppal">
-            <div data-ng-view></div>
-        </section>
-        <div id="inci">
-            <h1 translate>INDEX_INCI</h1>
-            <table st-table="ctrl.dlistainci" st-safe-src="ctrl.listainci" class="table table-striped" style="margin-bottom: 0">
-                <thead>
-                    <tr>
-                        <th translate>INDEX_INCI_FECHA</th>
-                        <th translate>INDEX_INCI_DESCRIPCION</th>
-                        <th translate>INDEX_INCI_RECONOCER</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr data-ng-repeat="inci in ctrl.dlistainci">
-                        <td>
-                            <div>{{inci.time}}</div>
-                        </td>
-                        <td>
-                            <div>{{ctrl.inci_desc(inci.inci)}}</div>
-                        </td>
-                        <td style="text-align: right;">
-                            <button type="button" ng-click="ctrl.reconoce(inci, true)" class="btn btn-default" translate>INDEX_INCI_RECONOCER</button></td>
-                    </tr>
-                </tbody>
-                <tfoot>
-                    <tr style="padding:0;">
-                        <td>
-                        </td>
-                        <td></td>
-                        <td style="text-align: right;">
-                            <div id="pag" st-pagination="" st-items-by-page="4" st-displayed-pages="4" ></div>
-                        </td>
-                    </tr>
-                    <tr >
-                        <td>
-                            <button style="float:none" width="24"
-                                class="btn btn-default" 
-                                ng-show="ctrl.listainci.length > 0" 
-                                ng-click="ctrl.ToggleSound()">                                 
-                                <img ng-src='{{ctrl.SoundImg()}}'>
-                            </button>
-                        </td>
-                        <td style="text-align: right">
-							<!-- Control Audio local -->
-							<audio id="myAudio" >
-								<source src="ALARM.wav" type="audio/wav">
-								Your browser does not support the audio element.
-							</audio>
-                            <!--<img ng-src='{{ctrl.SoundImg()}}' alt="" width="24">-->
-                        </td>
-                        <td>
-                            <button height="24px"
-                                class="btn btn-default" 
-                                ng-click="ctrl.reconoce_todas()" 
-                                ng-show="ctrl.listainci.length > 0" translate>
+            <section id="_ppal">
+                <div data-ng-view></div>
+            </section>
+            <div id="inci">
+                <h1 translate>INDEX_INCI</h1>
+                <table st-table="ctrl.dlistainci" st-safe-src="ctrl.listainci" class="table table-striped" style="margin-bottom: 0">
+                    <thead>
+                        <tr>
+                            <th translate>INDEX_INCI_FECHA</th>
+                            <th translate>INDEX_INCI_DESCRIPCION</th>
+                            <th translate>INDEX_INCI_RECONOCER</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-ng-repeat="inci in ctrl.dlistainci">
+                            <td>
+                                <div>{{inci.time}}</div>
+                            </td>
+                            <td>
+                                <div>{{ctrl.inci_desc(inci.inci)}}</div>
+                            </td>
+                            <td style="text-align: right;">
+                                <button type="button" ng-click="ctrl.reconoce(inci, true)" class="btn btn-default" translate>INDEX_INCI_RECONOCER</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr style="padding:0;">
+                            <td>
+                            </td>
+                            <td></td>
+                            <td style="text-align: right;">
+                                <div id="pag" st-pagination="" st-items-by-page="4" st-displayed-pages="4"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <button style="float:none" width="24"
+                                        class="btn btn-default"
+                                        ng-show="ctrl.listainci.length > 0"
+                                        ng-click="ctrl.ToggleSound()">
+                                    <img ng-src='{{ctrl.SoundImg()}}'>
+                                </button>
+                            </td>
+                            <td style="text-align: right">
+                                <!-- Control Audio local -->
+                                <audio id="myAudio">
+                                    <source src="ALARM.wav" type="audio/wav">
+                                    Your browser does not support the audio element.
+                                </audio>
+                                <!--<img ng-src='{{ctrl.SoundImg()}}' alt="" width="24">-->
+                            </td>
+                            <td>
+                                <button height="24px"
+                                        class="btn btn-default"
+                                        ng-click="ctrl.reconoce_todas()"
+                                        ng-show="ctrl.listainci.length > 0" translate>
                                     Reconocer Todas
-                            </button>
-                            <!--<button class="btn btn-default" ng-show="ctrl.listainci.length > 0" onclick="document.getElementById('myAudio').muted=!document.getElementById('myAudio').muted"><img ng-src='{{ctrl.SoundImg()}}' alt="" width="24"></button>-->
-                        </td>
-                    </tr>
+                                </button>
+                                <!--<button class="btn btn-default" ng-show="ctrl.listainci.length > 0" onclick="document.getElementById('myAudio').muted=!document.getElementById('myAudio').muted"><img ng-src='{{ctrl.SoundImg()}}' alt="" width="24"></button>-->
+                            </td>
+                        </tr>
                     </tfoot>
-            </table>
-        </div>
-<!--        <footer id="_pie"> 
-            <div>
-                <p style="width:80%; margin:0;" translate>INDEX_PIE</p>
-                <button width="24" style="float:right" 
-                        class="btn btn-default" >P</button>
-                <button width="24" style="float:right" 
-                        class="btn btn-default" >R</button>
+                </table>
             </div>
-        </footer>-->
+            <!--        <footer id="_pie">
+                <div>
+                    <p style="width:80%; margin:0;" translate>INDEX_PIE</p>
+                    <button width="24" style="float:right"
+                            class="btn btn-default" >P</button>
+                    <button width="24" style="float:right"
+                            class="btn btn-default" >R</button>
+                </div>
+            </footer>-->
 
-        <footer id="_pie">
-            <div class="row">
-                <div class="col-md-10">
-                    <p style="margin:0;" translate>INDEX_PIE</p>
+            <footer id="_pie">
+                <div class="row">
+                    <div class="col-md-10">
+                        <p style="margin:0;" translate>INDEX_PIE</p>
+                    </div>
+                    <div class="col-md-2">
+                        <button style="float:right; margin-right: 2px;"
+                                class="{{ctrl.PhoneStdClass()}}">
+                            T
+                        </button>
+                        <button style="float:right; margin-right: 2px;"
+                                class="{{ctrl.RadioStdClass()}}">
+                            R
+                        </button>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                <button style="float:right; margin-right: 2px;" 
-                        class="{{ctrl.PhoneStdClass()}}" >T</button>
-                <button style="float:right; margin-right: 2px;" 
-                        class="{{ctrl.RadioStdClass()}}" >R</button>
-                </div>
-            </div>
-        </footer>
-    </div>
+            </footer>
+        </div>
+        </div>
 
     <!-- inject-vendor:js -->
     <script src="./scripts/jquery/jquery-2.1.3.min.js"></script>

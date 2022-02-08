@@ -62,5 +62,8 @@ PETICIONES AENA.
 		[] Documentacion MIB
 	[] Revisar Protocolo de Pruebas.
 
+[] Errores al salir
+	[] StatsManager: Dice Stopped (Stop-982) y despues (2s) Tick-991
+	[] PabxManager: Dice iniciando parada y no sale, hay eventos de polling hasta 20 s. despues.
 
 	
