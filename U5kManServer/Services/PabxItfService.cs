@@ -116,6 +116,7 @@ namespace U5kManServer
                 {
                     if (action.Item1)
                         action.Item2();
+                    LogInfo<PabxItfService>($"{action.Item2}. Detenido.");
                 }
                 catch (Exception x)
                 {
@@ -679,36 +680,56 @@ namespace U5kManServer
                 LogTrace<PabxItfService>($"GetProxyDataAndVersions entry...");
                 var FileName = "SipProxyPBXVersions.json";
                 var RemotePath = "/home/user";
-                // Leer el Fichero Local para las versiones.
-                var ftpLocalServer = $"ftp://{Properties.u5kManServer.Default.ProxyLocalAdd}";
                 var ftpUser = Properties.u5kManServer.Default.ProxyFtpUser;
                 var ftpPassword = Properties.u5kManServer.Default.ProxyFtpPwd;
                 var ftpTimeout = (int)TimeSpan.FromSeconds(Properties.u5kManServer.Default.ProxyFtpTimeout).TotalMilliseconds;
-                using (var ftp= new FtpClient(ftpLocalServer, ftpUser, ftpPassword, ftpTimeout))
+                var ftpLocalServer = $"ftp://{Properties.u5kManServer.Default.ProxyLocalAdd}";
+                // Leer el Fichero Local para las versiones.
+                U5kGenericos.Ping(Properties.u5kManServer.Default.ProxyLocalAdd, true, (presente, status) =>
                 {
-                    ftp.Download($"{RemotePath}/{FileName}", FileName, (res, ex) =>
+                    if (presente)
                     {
-                        LogDebug<PabxItfService>($"Getting Local PBXVersion file on {ftpLocalServer} Result: {res}, Error: {ex?.Message}");
-                        //if (!res && File.Exists(FileName)) File.Delete(FileName);
-                    });
-                }
+                        using (var ftp = new FtpClient(ftpLocalServer, ftpUser, ftpPassword, ftpTimeout))
+                        {
+                            ftp.Download($"{RemotePath}/{FileName}", FileName, (res, ex) =>
+                            {
+                                LogDebug<PabxItfService>($"Getting Local PBXVersion file on {ftpLocalServer} Result: {res}, Error: {ex?.Message}");
+                               //if (!res && File.Exists(FileName)) File.Delete(FileName);
+                           });
+                        }
+                    }
+                    else
+                    {
+                        LogTrace<PabxItfService>($"GetProxyDataAndVersions {Properties.u5kManServer.Default.ProxyLocalAdd} No Presente.");
+                    }
+                });
                 if (IsOperative)
                 {
                     // Leer el estado del Activo para la presentacion.
-                    var ftpActiveServer = $"ftp://{PbxIp}";
-                    using (var ftp = new FtpClient(ftpActiveServer, ftpUser, ftpPassword, ftpTimeout))
+                    U5kGenericos.Ping(PbxIp, true, (presente, status) =>
                     {
-                        ftp.Download($"{RemotePath}/{FileName}", (res, data, ex) =>
+                        if (presente)
                         {
-                            LogDebug<PabxItfService>($"Getting Active PBXVersion file on {ftpActiveServer} Result: {res}, Error: {ex?.Message}");
-                            if (res)
+                            var ftpActiveServer = $"ftp://{PbxIp}";
+                            using (var ftp = new FtpClient(ftpActiveServer, ftpUser, ftpPassword, ftpTimeout))
                             {
-                                var jdata = JsonHelper.SafeJObjectParse(data);
-                                NodeId = jdata != null ? jdata["local_node"]?.ToString() : "Error";
-                                NodeStatus = jdata != null ? jdata["node_status"]?.ToString() : "Error";
+                                ftp.Download($"{RemotePath}/{FileName}", (res, data, ex) =>
+                                {
+                                    LogDebug<PabxItfService>($"Getting Active PBXVersion file on {ftpActiveServer} Result: {res}, Error: {ex?.Message}");
+                                    if (res)
+                                    {
+                                        var jdata = JsonHelper.SafeJObjectParse(data);
+                                        NodeId = jdata != null ? jdata["local_node"]?.ToString() : "Error";
+                                        NodeStatus = jdata != null ? jdata["node_status"]?.ToString() : "Error";
+                                    }
+                                });
                             }
-                        });
-                    }
+                        }
+                        else
+                        {
+                            LogTrace<PabxItfService>($"GetProxyDataAndVersions {PbxIp} No Presente.");
+                        }
+                    });
                 }
                 LastTestProxyData = DateTime.Now;
                 LogTrace<PabxItfService>($"GetProxyDataAndVersions exit...");
@@ -721,4 +742,5 @@ namespace U5kManServer
         #endregion
 
     }
+
 }

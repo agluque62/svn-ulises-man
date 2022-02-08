@@ -911,7 +911,7 @@ namespace U5kManServer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("20")]
+        [global::System.Configuration.DefaultSettingValueAttribute("3")]
         public int ProxyFtpTimeout {
             get {
                 return ((int)(this["ProxyFtpTimeout"]));

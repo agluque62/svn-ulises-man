@@ -502,9 +502,7 @@ namespace U5kManServer.WebAppServer
                                 {
                                     SessionExpiredAt = DateTime.MinValue;
                                 }
-#if DEBUG
-                                LogInfo<WebServerBase>($"Time to End Session => {(SessionExpiredAt - DateTime.Now)}");
-#endif
+                                LogTrace<WebServerBase>($"Time to End Session => {(SessionExpiredAt - DateTime.Now)}");
                             }
                             lastListenerTime = DateTime.Now;
                         }
