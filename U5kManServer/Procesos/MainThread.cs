@@ -221,6 +221,7 @@ namespace U5kManServer
                         /** 20180705. Las paradas y arranques de procesos daban problemas.... */
                         _snmpagent.ReloadRequest = true;
                         /*******************************************/
+                        LogInfo<MainThread>("Configuración Cargada...");
                     }
                 }
                 else
@@ -658,6 +659,7 @@ namespace U5kManServer
             {
                 while (IsRunning())
                 {
+                    GoToSleepInTimer();
                     try
                     {
                         /** Supervisa la configuracion */
@@ -668,7 +670,7 @@ namespace U5kManServer
                                 cfg_loaded = LoadConfig(data);
                             });
                         }
-                        else
+                        if (cfg_loaded == true)
                         {
                             /** Supervisa que los procesos esten arrancados */
                             process.ForEach(proc =>
@@ -718,7 +720,6 @@ namespace U5kManServer
                             break;
                         }
                     }
-                    GoToSleepInTimer();
                 }
             }
 
