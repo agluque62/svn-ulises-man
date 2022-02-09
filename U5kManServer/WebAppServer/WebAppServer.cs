@@ -735,13 +735,18 @@ namespace U5kManServer.WebAppServer
                 return true;
             }
             // Control de lo que tengo que dejar pasar
-            if (SessionExpiredAt > DateTime.Now || Config.SecureUris.Contains(context.Request.RawUrl))
+            if (SessionExpiredAt > DateTime.Now || ContainsSecureUri(context.Request))
             {
                 return true;
             }
             // Redireccionar.
             context.Response.Redirect(Config?.LoginUrl);
             return false;
+        }
+        private bool ContainsSecureUri(HttpListenerRequest request)
+        {
+            var path = request.RawUrl.Split('?').FirstOrDefault();
+            return path != null && Config.SecureUris.Contains(path);
         }
         #endregion Autentificacion
         private void ResetListener()

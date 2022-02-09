@@ -8,9 +8,9 @@
     <meta name="keywords" content="HTML5, CSS3, JavaScript" />
     <title>ULISES V 5000 I. Aplicacion de Mantenimiento</title>
     <!-- Estilos  -->
-    <!--    <link rel="stylesheet" href="./styles/bootstrap/bootstrap.min.css" />-->
     <link rel="stylesheet" href="./styles/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="./styles/uv5ki-styles.css" />
+    <link rel="stylesheet" href="./styles/datatables.min.css" />
 </head>
 <body>
     <div>
@@ -22,54 +22,162 @@
             </div>
         </header>
 
-        <section class="login">
-            <div class="modal-content" style="margin: 2%;">
-                <div class="modal-header">
-                    <h4 class="modal-title" style="text-align:center;" translate>Introduzca Login y Password</h4>
+        <section>
+            <div>
+                <div class="row">
+                    <div class="col-lg-3"></div>
+                    <div class="col-lg-6">
+                        <div class="modal-content login">
+                            <div class="modal-header">
+                                <h4 class="modal-title" style="text-align:center;" translate>Introduzca Login y Password</h4>
+                            </div>
+                            <div class="modal-body">
+                                <form class="form-horizontal" role="form" method="POST" action="/login.html">
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-4" style="text-align:left;">Usuario:</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control" name="username" placeholder="Introduzca Usuario" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-4" style="text-align:left;">Password:</label>
+                                        <div class="col-sm-8">
+                                            <input type="password" class="form-control" name="password" placeholder="Introduzca password" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="text-align:center; color:red; font-size:120%;">
+                                        <div id='result'></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="col-sm-offset-2 col-sm-10">
+                                            <button type="submit" class="btn btn-default" style="float:right">Login</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <form class="form-horizontal" role="form" method="POST" action="/login.html">
-                        <div class="form-group">
-                            <label class="control-label col-sm-4" style="text-align:left;">Usuario:</label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control" name="username" placeholder="Introduzca Usuario" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-sm-4" style="text-align:left;">Password:</label>
-                            <div class="col-sm-8">
-                                <input type="password" class="form-control" name="password" placeholder="Introduzca password" />
-                            </div>
-                        </div>
-                        <div class="form-group" style="text-align:center; color:red; font-size:120%;">
-                            <div id='result'></div>
-                        </div>
-                        <div class="form-group">
-                            <div class="col-sm-offset-2 col-sm-10">
-                                <button type="submit" class="btn btn-default" style="float:right">Login</button>
-                            </div>
-                        </div>
-                    </form>
+                <div class="row">
+                    <div class="col-sm-1"></div>
+                    <div class="col-lg-10">
+                        <h4>Alarmas Pendientes</h4>
+                        <table id="incil" class="table table-striped table-bordered display" >
+                            <thead>
+                                <tr>
+                                    <th style="width:10%;">Fecha/Hora</th>
+                                    <th>Descripcion</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                            </tfoot>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </section>
 
-        <footer>
-            <div class="row cabecera pie">
+            <div class="row pie">
                 <div class="col-md-12">Grupo Amper. Copyright @ 2021-2022. Todos los Derechos Reservados</div>
             </div>
-        </footer>
+
+        </section>
     </div>
 
     <script src="./scripts/jquery/jquery-2.1.3.min.js"></script>
+    <script src="./scripts/datatables.min.js"></script>
 
     <script>
-        $(document).ready(function () {
-            console.log('on.ready');
-            setTimeout(function () {
-                $('#result').html("");
-            }, 5000);
-        });
+        var Simulate = location.port == 1445;
+        var RemoteData = Simulate ? "/simulate/listinci.json" : "/listinci";
+        var HashCode = 0;
+            $(document).ready(function () {
+                console.log('on.ready');
+                setInterval(function () {
+
+                    $('#result').html("");
+
+                    $.get(RemoteData, (data, status) => {
+                        console.log("$.get('/listinci'", status, data);
+                        if (status == "success") {
+                            if (HashCode != data.HashCode) {
+                                HashCode = data.HashCode;
+                                InciTable.ajax.reload();
+                                console.log('InciTable.reload');
+                            }
+                        }
+                    });
+
+                }, 5000);
+
+                InciTable = $('#incil').DataTable(
+                    {
+                        ajax: {
+                            url: RemoteData,
+                            dataSrc: "lista"
+                        },
+                        autoWidth: false,
+                        pageLength: 4,
+                        ordering: false,
+                        columns: [
+                            { "data": "time", "width": "15%", "class": "text-left", "render": (data) => data },
+                            { "data": "inci", "width": "85%", "class": "text-left", "render": (data) => data },
+                        ],
+                        dom: "<'row'<'col-md-12 small text-info'tr>>" +
+                            "<'row'<'col-md-5'><'col-md-7'p>>",
+                        language: {
+                            "decimal": "",
+                            "emptyTable": "No hay datos disponibles",
+                            "info": "Registros _START_ - _END_ de _TOTAL_",
+                            "infoEmpty": "0 Registros",
+                            "infoFiltered": "(_MAX_ Registros filtrados)",
+                            "infoPostFix": "",
+                            "thousands": ".",
+                            "lengthMenu": "Mostrar _MENU_ Reg.",
+                            "loadingRecords": "Loading...",
+                            "processing": "Processing...",
+                            "search": "Buscar:",
+                            "zeroRecords": "No se han encontrado registros",
+                            "paginate": {
+                                first: "Primera",
+                                last: "Ultima",
+                                next: "Siguiente",
+                                previous: "Anterior"
+                            },
+                            aria: {
+                                sortAscending: ": Activar ordenado por conlumna ascendente",
+                                sortDescending: ": Activar ordenado por columna descendente"
+                            },
+                            searchBuilder: {
+                                add: 'Add Condicion',
+                                condition: 'Condicion',
+                                clearAll: 'Limpiar',
+                                deleteTitle: 'Borrar',
+                                data: 'Columna',
+                                leftTitle: 'Left',
+                                logicAnd: '&',
+                                logicOr: '|',
+                                rightTitle: 'Right',
+                                title: {
+                                    0: 'Filtro',
+                                    _: 'Filtro (%d)'
+                                },
+                                value: 'Opcion',
+                                valueJoiner: 'y',
+                                conditions: {
+                                    string: {
+                                        contains: 'Contiene',
+                                        empty: 'Vacio',
+                                        endsWith: 'Acaba en ',
+                                        equals: 'Igual a',
+                                        not: 'Distinto de ',
+                                        notEmpty: 'No Vacio',
+                                        startsWith: 'Comienza con'
+                                    }
+                                }
+                            }
+                        } 
+                    });
+            });
     </script>
 </body>
 </html>

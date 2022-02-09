@@ -1289,11 +1289,16 @@ a.disabled {
 }
 
 .login {
-    margin: 5% 30% 5% 30%;
+    margin: 5% 10% 5% 10%;
+}
+
+.inci {
+    margin: 5% 0% 5% 0%;
 }
 .pie {
     height: 30px;
     padding-top: 5px;
     text-align: center;
+    border: 1px solid #4A7729;
 }
 

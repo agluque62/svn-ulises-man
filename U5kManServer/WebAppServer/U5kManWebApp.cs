@@ -81,6 +81,9 @@ namespace U5kManServer.WebAppServer
                 "/styles/bootstrap/bootstrap.min.css",
                 "/styles/uv5ki-styles.css",
                 "/scripts/jquery/jquery-2.1.3.min.js",
+                "/scripts/datatables.min.js",
+                "/simulate/listinci.json",
+                "/listinci",
                 "/images/corporativo-a.png",
                 "/favicon.ico",
                 "/images/corporativo-a.png"
