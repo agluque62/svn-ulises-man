@@ -841,7 +841,7 @@ namespace U5kManServer
                         U5kManService.Database = new U5kBdtService(Thread.CurrentThread.CurrentUICulture, eBdt.bdtSqlite, cfg.SQLitePath);
                     else
                         U5kManService.Database = new U5kBdtService(Thread.CurrentThread.CurrentUICulture, eBdt.bdtMySql, cfg.MySqlServer, cfg.MySqlUser, cfg.MySqlPwd);
-#if DEBUG
+#if DEBUG1
                     /** TODO. Activar la Configuracion Centralizada en RELEASE */
                     if (U5kManService.Database != null)
                         U5kManService.cfgSettings = new CfgSettings(U5kManService.Database);

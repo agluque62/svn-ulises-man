@@ -447,7 +447,7 @@ namespace U5kManServer.WebAppServer
             public string LoginUrl { get; set; }
             public string LogoutUrl { get; set; }
             public bool HtmlEncode { get; set; }
-            public int SessionDuration { get; set; }
+            //public int SessionDuration { get; set; }
             public Dictionary<string, wasRestCallBack> CfgRest { get; set; }
             public string LoginErrorTag { get; set; }
             public List<string> SecureUris { get; set; }
@@ -555,7 +555,7 @@ namespace U5kManServer.WebAppServer
                                 Render(Encode(sb.ToString()), context.Response);
                                 if (InactivityDetector.OnRestReceived(context) == false)
                                 {
-                                    SessionExpiredAt = DateTime.Now + TimeSpan.FromMinutes(Config.SessionDuration);
+                                    SessionExpiredAt = DateTime.Now + TimeSpan.FromMinutes(/*Config.SessionDuration*/U5kManService.cfgSettings.WebInactivityTimeout);
                                 }
                             }
                             else
@@ -718,7 +718,7 @@ namespace U5kManServer.WebAppServer
                             AuthenticateUser?.Invoke(WebUtility.UrlDecode(data), (accepted, cause) =>
                             {
                                 if (accepted)
-                                    SessionExpiredAt = DateTime.Now + TimeSpan.FromMinutes(Config.SessionDuration);
+                                    SessionExpiredAt = DateTime.Now + TimeSpan.FromMinutes(/*Config.SessionDuration*/U5kManService.cfgSettings.WebInactivityTimeout);
                                 else
                                 {
                                     //context.Response.Redirect(Config?.LoginUrl);

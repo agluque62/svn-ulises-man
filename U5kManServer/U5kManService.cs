@@ -3180,6 +3180,15 @@ namespace U5kManServer
                 onlocal.OpcOpCableGrabacion = value;
             }
         }
+        public int WebInactivityTimeout
+        {
+            get { return OnBdt ? onbdt.WebInactivityTimeout : onlocal.WebInactivityTimeout; }
+            set
+            {
+                if (OnBdt) { }
+                onlocal.WebInactivityTimeout = value;
+            }
+        }
         #endregion
 
         U5kBdtService Bdt { get; set; }

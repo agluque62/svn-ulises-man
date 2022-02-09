@@ -2267,6 +2267,11 @@ namespace U5kBaseDatos
             set { SetProperty<int>("LineasIncidencias", value); }
         }
 
+        public int WebInactivityTimeout
+        {
+            get { return GetProperty<int>("WebInactivityTimeout", 30); }
+            set { SetProperty<int>("WebInactivityTimeout", value); }
+        }
         #endregion
 
         #region Publics
@@ -2404,6 +2409,7 @@ namespace U5kBaseDatos
             new U5kiLocalConfigItem(){Key="PttAndSqhOnBdt", Val="false"},
             new U5kiLocalConfigItem(){Key="DiasEnHistorico", Val="180"},
             new U5kiLocalConfigItem(){Key="LineasIncidencias", Val="32"},
+            new U5kiLocalConfigItem(){Key="WebInactivityTimeout", Val="30"}
         };
         #endregion Private
     }

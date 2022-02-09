@@ -974,5 +974,17 @@ namespace U5kManServer.Properties {
                 return ((bool)(this["GwsDatesAreUtc"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("30")]
+        public int WebInactivityTimeout {
+            get {
+                return ((int)(this["WebInactivityTimeout"]));
+            }
+            set {
+                this["WebInactivityTimeout"] = value;
+            }
+        }
     }
 }

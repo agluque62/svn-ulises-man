@@ -25,7 +25,7 @@ namespace U5kManServer.WebAppServer
 #endif
     {
 #if _WEBLOGIN_
-        public void Start(int port=8090, int SessionDuration = 30)
+        public void Start(int port=8090)
         {
             Dictionary<string, wasRestCallBack> cfg = new Dictionary<string, wasRestCallBack>()
                 {
@@ -125,7 +125,7 @@ namespace U5kManServer.WebAppServer
                 }
                 else
                 {
-                    response(false, $"Servicion Web Inhabilitado: {DisableCause}");
+                    response(false, $"Servicio Web Inhabilitado: {DisableCause}");
                 }
             };
             try
@@ -138,7 +138,7 @@ namespace U5kManServer.WebAppServer
                     LogoutUrl = "/logout",
                     LoginErrorTag = "<div id='result'>",
                     HtmlEncode = false,
-                    SessionDuration = SessionDuration,
+                    //SessionDuration = SessionDuration,
                     SecureUris = SecureUris,
                     CfgRest = cfg
                 });

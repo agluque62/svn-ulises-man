@@ -1887,6 +1887,21 @@ namespace U5kManServer.WebAppServer
                     }
                 }
             },
+            {
+                "WebInactivityTimeout",
+                new itemProperty()
+                {
+                    id="Tiempo Maximo de Inactivad de sesion (minutos)",
+                    tp=1,
+                    opt=new List<string>()
+                    {
+                        "5",
+                        "15",
+                        "30",
+                        "60"
+                    }
+                }
+            },
         };
 
         /// <summary>
@@ -1994,6 +2009,11 @@ namespace U5kManServer.WebAppServer
                 case "PttAndSqhOnBdt":
                     return Prop.Historico_PttSqhOnBdt == false ? "0" : "1";
 
+                case "WebInactivityTimeout":
+                    return Prop.WebInactivityTimeout <= 5 ? "0" :
+                        Prop.WebInactivityTimeout <= 15 ? "1" :
+                        Prop.WebInactivityTimeout <= 30 ? "2" : "3";
+
                 default:
                     return "0";
             }
@@ -2068,6 +2088,12 @@ namespace U5kManServer.WebAppServer
                     Prop.Historico_PttSqhOnBdt = val == "1";
                     break;
 
+                case "WebInactivityTimeout":
+                    Prop.WebInactivityTimeout =
+                        val == "0" ? 5 :
+                        val == "1" ? 15 :
+                        val == "2" ? 30 : 60;
+                    break;
             }
         }
     }
