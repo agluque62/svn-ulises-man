@@ -986,5 +986,17 @@ namespace U5kManServer.Properties {
                 this["WebInactivityTimeout"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2")]
+        public int WebMaxSessions {
+            get {
+                return ((int)(this["WebMaxSessions"]));
+            }
+            set {
+                this["WebMaxSessions"] = value;
+            }
+        }
     }
 }

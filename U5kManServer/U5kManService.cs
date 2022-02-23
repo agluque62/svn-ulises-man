@@ -1595,7 +1595,7 @@ namespace U5kManServer
         {
             {new U5kBdtService.SystemUserInfo(){ id="*CD40*", pwd="*AMPERS*", prf=3} }
         };
-        public U5kBdtService.SystemUserInfo LoggedUser { get; set; } = null;
+        //public U5kBdtService.SystemUserInfo LoggedUser { get; set; } = null;
 
 #endif
 

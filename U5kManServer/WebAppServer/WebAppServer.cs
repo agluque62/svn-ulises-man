@@ -498,11 +498,8 @@ namespace U5kManServer.WebAppServer
                                         ResetListener();
                                     }
                                 }
-                                if (InactivityDetector.Tick4Idle(true) == true)
-                                {
-                                    SessionExpiredAt = DateTime.MinValue;
-                                }
-                                LogTrace<WebServerBase>($"Time to End Session => {(SessionExpiredAt - DateTime.Now)}");
+                                Sessions.Tick4Idle();
+                                LogTrace<WebServerBase>($"{Sessions}");
                             }
                             lastListenerTime = DateTime.Now;
                         }
@@ -553,10 +550,6 @@ namespace U5kManServer.WebAppServer
                                 }, false);
                                 context.Response.ContentType = FileContentType(".json");
                                 Render(Encode(sb.ToString()), context.Response);
-                                if (InactivityDetector.OnRestReceived(context) == false)
-                                {
-                                    SessionExpiredAt = DateTime.Now + TimeSpan.FromMinutes(/*Config.SessionDuration*/U5kManService.cfgSettings.WebInactivityTimeout);
-                                }
                             }
                             else
                             {
@@ -691,10 +684,11 @@ namespace U5kManServer.WebAppServer
         #endregion
 
         #region Autenticacion
-        protected DateTime SessionExpiredAt { get; set; } = DateTime.Now;
-        protected Action<string, Action<bool, string>> AuthenticateUser { get; set; } = null;
+        //protected DateTime SessionExpiredAt { get; set; } = DateTime.Now;
+        protected Action<string, Action<bool, string, Cookie>> AuthenticateUser { get; set; } = null;
         protected bool Enable { get; set; }
         protected string DisableCause { get; set; }
+        protected SessionsControl Sessions { get; set; } = new SessionsControl();
         private bool IsAuthenticated(HttpListenerContext context)
         {
             // Control de los Post de Login
@@ -715,33 +709,45 @@ namespace U5kManServer.WebAppServer
                         {
                             var data = reader.ReadToEnd();
                             // Llamar a la rutina de AUT de la aplicacion.
-                            AuthenticateUser?.Invoke(WebUtility.UrlDecode(data), (accepted, cause) =>
+                            AuthenticateUser?.Invoke(WebUtility.UrlDecode(data), (accepted, cause, cookie) =>
                             {
                                 if (accepted)
-                                    SessionExpiredAt = DateTime.Now + TimeSpan.FromMinutes(/*Config.SessionDuration*/U5kManService.cfgSettings.WebInactivityTimeout);
+                                {
+                                    LogTrace<WebServerBase>($"Set Cookie => {cookie}=>{cookie.Expires}");
+                                    context.Response.Cookies.Add(cookie);
+                                    context.Response.Redirect(Config?.DefaultUrl);
+                                }
                                 else
                                 {
-                                    //context.Response.Redirect(Config?.LoginUrl);
                                     ProcessFile(context.Response, (Config?.DefaultDir + Config?.LoginUrl).Substring(1),
                                         Config.LoginErrorTag, Config.LoginErrorTag + cause);
                                 }
                             });
                         }
                     }
-                    if (SessionExpiredAt > DateTime.Now)
-                        context.Response.Redirect(Config?.DefaultUrl);
                     return false;
                 }
                 return true;
             }
             // Control de lo que tengo que dejar pasar
-            if (SessionExpiredAt > DateTime.Now || ContainsSecureUri(context.Request))
+            if (ContainsSecureUri(context.Request))
             {
                 return true;
             }
+            else
+            {
+                var allowed = Sessions.GetPermission(context.Request, (cookie) =>
+                {
+                    context.Response.Cookies.Add(cookie);
+                });
+                if (allowed)
+                {
+                    return true;
+                }
+            }
             // Redireccionar.
             context.Response.Redirect(Config?.LoginUrl);
-            return false;
+           return false;
         }
         private bool ContainsSecureUri(HttpListenerRequest request)
         {
@@ -779,12 +785,13 @@ namespace U5kManServer.WebAppServer
         HttpListener Listener { get; set; } = null;
         Object locker { get; set; } = new Object();
         CfgServer Config { get; set; }
-        InactivityDetectorClass InactivityDetector { get; set; } = new InactivityDetectorClass();
+        //InactivityDetectorClass InactivityDetector { get; set; } = new InactivityDetectorClass();
         Task ExecutiveThread { get; set; } = null;
         CancellationTokenSource ExecutiveThreadCancel { get; set; } = null;
-
+        //Dictionary<string, Cookie> Sessions { get; set; } = new Dictionary<string, Cookie>();
         #endregion
     }
+    // TODO. Debe gestionar todas las sesiones activas...
     public class InactivityDetectorClass : IDisposable
     {
         public TimeSpan IdleTime { get; set; } = TimeSpan.FromSeconds(45);
@@ -830,6 +837,124 @@ namespace U5kManServer.WebAppServer
         dynamic Control { get; set; } = new { Clicks = "0", When=DateTime.Now };
         Dictionary<string, DateTime> LastRestReceived { get; set; } = new Dictionary<string, DateTime>();
     }
+    public class SessionsControl
+    {
+        public class Session
+        {
+            public string Key { get; set; }
+            public DateTime Expires { get; set; }
+            public string ClicksCount { get; set; }
+            public DateTime LastActivityTime { get; set; }
+            public TimeSpan Time2Renew { get; set; }
+            public override string ToString()
+            {
+                return $"([{Key}],[{When(Expires)}],[{ClicksCount}],[{When(LastActivityTime)}]; ";
+            }
+            string When(DateTime date) => date.TimeOfDay.ToString(@"hh\:mm\:ss");
+        }
+        public int MaxSessions { get; set; } = Properties.u5kManServer.Default.WebMaxSessions;
+        public TimeSpan IdleTime { get; set; } = TimeSpan.FromSeconds(45);
+        public void GetAccess(TimeSpan Duration, string userid, string userprofile, Action<bool, Cookie> respond)
+        {
+            Cleanup();
+            if (SessionsCount() < MaxSessions)
+            {
+                var key = $"{userid}#{userprofile}#{GenetareKey()}" ;
+                lock (Locker)
+                {
+                    Sessions.Add(new Session()
+                    {
+                        Key = key,
+                        Expires = DateTime.Now + Duration,
+                        LastActivityTime = DateTime.Now,
+                        Time2Renew = Duration,
+                        ClicksCount = "0"
+                    });
+                }
+                respond(true, new Cookie()
+                {
+                    Name = "login",
+                    Value = key,
+                    Expires = DateTime.Now + Duration
+                });
+            }
+            else
+            {
+                respond(false, null);
+            }
+        }
+        public bool GetPermission(HttpListenerRequest request, Action<Cookie> respond)
+        {
+            Cleanup();
+            var keyAccess = request.Cookies.Cast<Cookie>().Where(c => c.Name == "login").Select(c => c.Value).FirstOrDefault();
+            lock (Locker)
+            {
+                var session = Sessions.Where(s => s.Key == keyAccess).FirstOrDefault();
+                if (session != null)
+                {
+                    var newClickCount = request.Headers["Click-counter"];
+                    if (newClickCount != null)
+                    {
+                        if (newClickCount != session.ClicksCount)
+                        {
+                            session.Expires = DateTime.Now + session.Time2Renew;
+                            session.ClicksCount = newClickCount;
+                            respond(new Cookie()
+                            {
+                                Name = "login",
+                                Value = session.Key,
+                                Expires = DateTime.Now + session.Time2Renew
+                            });
+                        }
+                    }
+                    session.LastActivityTime = DateTime.Now;
+                    return true;
+                }
+            }
+            return false;
+        }
+        public void Tick4Idle() => Cleanup();
+        public void Logout(HttpListenerRequest request)
+        {
+            Cleanup();
+            var keyAccess = request.Cookies.Cast<Cookie>().Where(c => c.Name == "login").Select(c => c.Value).FirstOrDefault();
+            lock (Locker)
+            {
+                Sessions = Sessions.Where(s => s.Key != keyAccess).Select(s => s).ToList();
+            }
+        }
+        public override string ToString()
+        {
+            return $"Sesiones: {String.Join("", Sessions.Select(s => s.ToString()))}";
+        }
+        void Cleanup()
+        {
+            lock (Locker)
+            {
+                /** Limpia las Sesiones que han expirado */
+                Sessions = Sessions.Where(s => s.Expires > DateTime.Now).Select(s => s).ToList();
+                /** Limpia las Sesiones Inactivas */
+                Sessions = Sessions.Where(s => s.LastActivityTime + IdleTime > DateTime.Now).Select(s => s).ToList();
+            }
+        }
+        int SessionsCount()
+        {
+            lock (Locker)
+            {
+                return Sessions.Count;
+            }
+        }
+        string GenetareKey(int length = 16)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
+            var randomString = new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[RandomGenerator.Next(s.Length)]).ToArray());
+            return randomString;
+        }
+        private List<Session> Sessions { get; set; } = new List<Session>();
+        private object Locker { get; set; } = new object();
+        private Random RandomGenerator { get; set; } = new Random((int)DateTime.Now.Ticks);
+    }
 }
 

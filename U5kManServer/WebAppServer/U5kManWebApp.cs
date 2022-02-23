@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 
+using U5kBaseDatos;
 using Utilities;
 namespace U5kManServer.WebAppServer
 {
@@ -106,29 +107,45 @@ namespace U5kManServer.WebAppServer
                     {
                         var user = items["username"];
                         var pass = items["password"];
-                        // TODO. De momento no cojo el semaforo....
-                        GlobalServices.GetWriteAccess((gdt) =>
+                        U5kBdtService.SystemUserInfo loggeduser = null;
+                        // Obtengo la Info de usuario
+                        GlobalServices.GetWriteAccess((gdt) => { loggeduser = gdt.SystemUsers.Where(u => u.id == user && u.pwd == pass).FirstOrDefault(); }, false);
+                        if (loggeduser == null)
                         {
-                            gdt.LoggedUser = gdt.SystemUsers.Where(u => u.id == user && u.pwd == pass).FirstOrDefault();
-                            response(gdt.LoggedUser != null, gdt.LoggedUser != null ? "" : "Usuario o password incorrecta");
-                            Task.Run(() =>
+                            response(false, "Usuario o password incorrecta", null);
+                            return;
+                        }
+                        // Miro si hay sesiones.
+                        var sessionDuration = TimeSpan.FromMinutes(U5kManService.cfgSettings.WebInactivityTimeout);
+                        Sessions.GetAccess(sessionDuration, loggeduser.id, loggeduser.ProfileId, (haysesiones, cookie) =>
+                        {
+                            if (haysesiones)
                             {
-                            // TODO Generar el historico....
-                            //RecordEvent<U5kManWebApp>(DateTime.Now,
-                            //    U5kBaseDatos.eIncidencias.IEE_CAIDA,
-                            //    U5kBaseDatos.eTiposInci.TEH_SISTEMA,
-                            //    "MTTO", new object[] { user });
+                                response(true, "", cookie);
+                                Task.Run(() =>
+                                {
+                                    // TODO Generar el historico....
+                                    //RecordEvent<U5kManWebApp>(DateTime.Now,
+                                    //    U5kBaseDatos.eIncidencias.IEE_CAIDA,
+                                    //    U5kBaseDatos.eTiposInci.TEH_SISTEMA,
+                                    //    "MTTO", new object[] { user });
+                                    LogTrace<WebServerBase>($"Acceso Usuario {loggeduser.id}, {loggeduser.ProfileId}");
+                                });
+                            }
+                            else
+                            {
+                                response(false, "Maximo numero de Sesiones alcanzado", null);
+                            }
                         });
-                        }, false);
                     }
                     else
                     {
-                        response(false, "No ha introducido usuario o password");
+                        response(false, "No ha introducido usuario o password", null);
                     }
                 }
                 else
                 {
-                    response(false, $"Servicio Web Inhabilitado: {DisableCause}");
+                    response(false, $"Servicio Web Inhabilitado: {DisableCause}", null);
                 }
             };
             try
@@ -156,7 +173,6 @@ namespace U5kManServer.WebAppServer
             context.Response.ContentType = "application/json";
             if (context.Request.HttpMethod == "POST")
             {
-                gdt.LoggedUser = null;
                 Task.Run(() =>
                 {
                     // TODO Generar el historico....
@@ -164,9 +180,10 @@ namespace U5kManServer.WebAppServer
                     //    U5kBaseDatos.eIncidencias.IEE_CAIDA,
                     //    U5kBaseDatos.eTiposInci.TEH_SISTEMA,
                     //    "MTTO", new object[] { user });
+                    //LogTrace<WebServerBase>($"Salida Usuario {gdt.LoggedUser.id}, {gdt.LoggedUser.ProfileId}");
+                    //gdt.LoggedUser = null;
                 });
-                gdt.LoggedUser = null;
-                SessionExpiredAt = DateTime.Now;
+                Sessions.Logout(context.Request);
                 context.Response.Redirect("/login.html");
             }
             else

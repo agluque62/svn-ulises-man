@@ -390,10 +390,8 @@ angular
             , GatewayDualityType: function (newtype) {
                 return gwDualityType(newtype);
             }
-            , logged_user: (user) => {
-                if (user) {
-                    LoggedUser = user;
-                }
+            , logged_user: () => {
+                getLoggedUser();
                 var strUser = sprintf("%(id)s: (%(prf)s)", LoggedUser);
                 return strUser;
             }
@@ -453,7 +451,22 @@ angular
         function ufrec_val(value) {
             return value.match(regx_fid_uhf) != null;
         }
-
+        /**
+         * 
+         * @param {any} key
+         * @param {any} value
+         */
+        function getLoggedUser() {
+            var login = $cookies.get("login");
+            if (login) {
+                var keyvalues = login.split("#");
+                if (keyvalues.length >= 2) {
+                    LoggedUser = { id: keyvalues[0], prf: keyvalues[1] };
+                    return;
+                }
+            }
+            LoggedUser = { id: "???", prf: "???" };
+        }
         /** Gestion de la cookie ndfls (almacenamiento local)*/
         //** Formato es p1=v1##p2=v2## ... */
         function ndfls(key, value) {
