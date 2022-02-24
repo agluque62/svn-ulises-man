@@ -81,7 +81,7 @@ namespace Utilities
                         var lan2 = data["lan2"].ToObject<int>();
                         var mss = data["Seleccionada"].ToObject<bool>();
                         var fa = data["stdFA"].ToObject<int>();
-                        var ntpdata = data["ntp"]["LastInfoFromClient"].ToObject<string>();
+                        var ntpdata = data["NtpInfo"]["LastInfoFromClient"].ToObject<string>();
                         response(std, lan1, lan2, mss, fa, ntpdata);
                     }
                     return mod;

@@ -568,6 +568,23 @@ namespace U5kManServer
                 tipo == LegacyPhoneResource_AgentType ||
                 tipo == ATSPhoneResource_AgentType ? true : false;
         }
+
+        enum GwGlobalTransitions { ToInactive, ToActiveNoError, ToActiveError };
+        void ManageGlobalTransition(std previus, std actual, Action<GwGlobalTransitions> respond)
+        {
+            var AllowedTransitions = new List<System.Tuple<std, std, GwGlobalTransitions>>()
+            {
+                new System.Tuple<std, std, GwGlobalTransitions>(std.NoInfo, std.Ok, GwGlobalTransitions.ToActiveNoError),
+                new System.Tuple<std, std, GwGlobalTransitions>(std.NoInfo, std.Error, GwGlobalTransitions.ToActiveError),
+                new System.Tuple<std, std, GwGlobalTransitions>(std.Error, std.NoInfo, GwGlobalTransitions.ToInactive),
+                new System.Tuple<std, std, GwGlobalTransitions>(std.Error, std.Ok, GwGlobalTransitions.ToActiveNoError),
+                new System.Tuple<std, std, GwGlobalTransitions>(std.Ok, std.NoInfo, GwGlobalTransitions.ToInactive),
+                new System.Tuple<std, std, GwGlobalTransitions>(std.Ok, std.Error, GwGlobalTransitions.ToActiveError)
+            };
+            var found = AllowedTransitions.Where(t => t.Item1 == previus && t.Item2 == actual).FirstOrDefault();
+            if (found != null)
+                respond(found.Item3);
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -581,25 +598,30 @@ namespace U5kManServer
                 gw.Reset();
             gw.std = gw.presente == false ? std.NoInfo : gw.Errores == true ? std.Error : std.Ok;
 
-            if (std_old != gw.std)
+            ManageGlobalTransition(std_old, gw.std, (transition) =>
             {
-                switch (gw.std)           // Ha habido un cambio de estado global...
+                switch (transition)
                 {
-                    case std.NoInfo:        // Desconectado o No Operativo.
-                                            //U5kEstadisticaProc.Estadisticas.EventoPasarela(gw.name, false);
-                        RecordEvent<GwExplorer>(DateTime.Now, eIncidencias.IGW_CAIDA, eTiposInci.TEH_TIFX, gw.name, Params(idiomas.strings.GW_GLOBAL_MODULE));
+                    case GwGlobalTransitions.ToInactive:
+                        RecordEvent<GwExplorer>(
+                            DateTime.Now, eIncidencias.IGW_CAIDA, 
+                            eTiposInci.TEH_TIFX, gw.name, 
+                            Params(idiomas.strings.GW_GLOBAL_MODULE));
                         break;
-
-                    case std.Error:         // Conectado pero en Fallo.
-                    case std.Ok:            // Plenamente operativo.
-                        //U5kEstadisticaProc.Estadisticas.EventoPasarela(gw.name, true);
-                        RecordEvent<GwExplorer>(DateTime.Now, eIncidencias.IGW_ENTRADA, eTiposInci.TEH_TIFX, gw.name, Params(idiomas.strings.GW_GLOBAL_MODULE));
+                    case GwGlobalTransitions.ToActiveNoError:
+                        RecordEvent<GwExplorer>(
+                            DateTime.Now, eIncidencias.IGW_ENTRADA,
+                            eTiposInci.TEH_TIFX, gw.name,
+                            Params(idiomas.strings.GW_GLOBAL_MODULE + " sin Errores."));
                         break;
-
-                    default:
+                    case GwGlobalTransitions.ToActiveError:
+                        RecordEvent<GwExplorer>(
+                            DateTime.Now, eIncidencias.IGW_ENTRADA, 
+                            eTiposInci.TEH_TIFX, gw.name, 
+                            Params(idiomas.strings.GW_GLOBAL_MODULE + " con Errores."));
                         break;
                 }
-            }
+            });
         }
         /// <summary>
         /// 
@@ -657,15 +679,35 @@ namespace U5kManServer
         /// <param name="status"></param>
         public void PhGwLanStatusSet(/*stdGw gw, */stdPhGw pgw, int status)
         {
+            var oldlan1 = pgw.lan1;
+            var oldlan2 = pgw.lan2;
+
             int bond = (status & 0x4) >> 2;
             int eth1 = (status & 0x2) >> 1;
             int eth0 = (status & 0x1);
 
             pgw.lan1 = eth0 == 1 ? std.Ok : std.Error;
             pgw.lan2 = bond == 0 ? std.NoInfo : eth1 == 1 ? std.Ok : std.Error;
+
+            /** 20220224. Historicos de Activacion / Desactivacion LAN */
+            if (oldlan1 != pgw.lan1){
+                PushEvent(pgw,
+                    pgw.lan1 == std.Error ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA,
+                    eTiposInci.TEH_TIFX,
+                    pgw.name,
+                    Params("Lan1"));
+            }
+            if (oldlan2 != pgw.lan2)
+            {
+                PushEvent(pgw,
+                    pgw.lan2 == std.Error ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA,
+                    eTiposInci.TEH_TIFX,
+                    pgw.name,
+                    Params("Lan2"));
+            }
         }
 
-#region Threads de Exploracion en Paralelo.
+        #region Threads de Exploracion en Paralelo.
 
         /// <summary>
         /// Explora una pasarela logica.
@@ -856,10 +898,14 @@ namespace U5kManServer
                 DebuggingHelper.SimulatedGw.SnmpRecursoGet(gw.ParentName, gw.name, nslot, ires,
                     (tipo, status) =>
                     {
-                        int AgentType = NotifiedAgentType(tipo);
-                        SlotRecursoTipoAgenteSet(gw, rec, AgentType);
-                        SlotRecursoTipoInterfazSet(gw, rec, tipo);
-                        SlotRecursoEstadoSet(gw, rec, status, (trc)AgentType);
+                        if ((tipo >= 0 && tipo < 9) || tipo == 13)
+                        {
+                            int AgentType = NotifiedAgentType(tipo);
+                            SlotRecursoTipoAgenteSet(gw, rec, AgentType);
+                            SlotRecursoTipoInterfazSet(gw, rec, tipo);
+                            SlotRecursoEstadoSet(gw, rec, status, (trc)AgentType);
+
+                        }
                     });
             }
             else

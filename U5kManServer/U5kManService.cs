@@ -31,7 +31,7 @@ namespace U5kManServer
 #if DEBUG
     class DebugHelper
     {
-        public static bool checkEquals { get; set; }
+        public static bool checkEquals { get; set; } = true;
     }
 #endif
     /// <summary>
@@ -942,7 +942,7 @@ namespace U5kManServer
         {
             bool retorno = tipo == other.tipo && bdt == other.bdt && name == other.name;
 #if DEBUG
-            if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en StdRecurso");
+            if (!retorno && DebugHelper.checkEquals) Console.WriteLine($"Hallada Discrepancia en StdRecurso <{name}>");
 #endif
             return retorno;
         }
@@ -1147,12 +1147,8 @@ namespace U5kManServer
                     NtpInfo.GlobalStatus.StartsWith("Sync")==false)
                     return true;
 #endif
-                foreach (stdSlot slot in slots)
-                {
-                    if (slot.Errores == true)
-                        return true;
-                }
-                return false;
+                /** 20220223. Solo se evaluan los errores de slot en la seleccionada */
+                return (Seleccionada && slots.Where(s => s.Errores).Count() > 0);
             }
         }
 
@@ -1270,7 +1266,7 @@ namespace U5kManServer
             NtpInfo,
             slots = new List<object>()
             {
-                slots[0].Data, slots[1].Data, slots[2].Data, slots[3]
+                slots[0].Data, slots[1].Data, slots[2].Data, slots[3].Data
             }
         };
 
@@ -1314,67 +1310,11 @@ namespace U5kManServer
         public stdPhGw gwA = new stdPhGw();
         [DataMember]
         public stdPhGw gwB = new stdPhGw();
-        //        [DataMember]
-        //        public List<string> _ntp_client_status = new List<string>();
-        //        /// <summary>
-        //        /// 
-        //        /// </summary>
-        //        public List<string> ntp_client_status
-        //        {
-        //            get
-        //            {
-        //                return _ntp_client_status;
-        //            }
-        //            set
-        //            {
-        //#if !_TESTING_
-        //                List<string> Value = NormalizeNtpStatusList(value);
-        //                _ntp_client_status.Clear();
-
-        //                if (Value.Count < 2)
-        //                    _ntp_client_status.Add("Error...");
-        //                else if (Value.Count < 3)
-        //                    _ntp_client_status.Add("No NTP Server");
-        //                else
-        //                {
-        //                    Value.RemoveAt(0);
-        //                    Value.RemoveAt(0);
-        //                    foreach (String line in Value)
-        //                    {
-        //                        string[] array = line.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-        //                        if (array.Length == 10)
-        //                        {
-        //                            _ntp_client_status.Add(String.Format("{0}: {1}", array[0].Trim('*'), array[0].StartsWith("*") ? idiomas.strings.Sincronizado/*"Sincronizado"*/ : 
-        //                                idiomas.strings.NoSincronizado/*"No Sincronizado"*/));
-        //                        }
-        //                        else
-        //                        {
-        //#if DEBUG
-        //                            _ntp_client_status.Add("Line Error");
-        //#endif
-        //                        }
-        //                    }
-        //                }
-        //#endif
-        //            }
-        //        }
         public string status_sync => cpu_activa.NtpInfo.GlobalStatus;
         /// <summary>
-        /// 
+        /// 20220223. Los error de CPU en reserva computan en el Error de la Pasarela
         /// </summary>
-        public bool Errores
-        {
-            get
-            {
-                //if (gwA.Errores == true)
-                //    return true;
-                //else if (Dual && gwB.Errores == true)
-                //    return true;
-                //return false;
-                return gwA.Seleccionada ? gwA.Errores : gwB.Seleccionada ? gwB.Errores : true;
-            }
-        }
-
+        public bool Errores => gwA.Errores || (Dual && gwB.Errores);
         /// <summary>
         /// 
         /// </summary>
