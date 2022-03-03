@@ -532,15 +532,15 @@ namespace U5kBaseDatos
                     ulong? rxortx = null;
                     try
                     {
-                        id = row.Field<string>("IDEQUIPOS");
-                        ip = row.Field<string>("IPRED1");
-                        ip2 = row.Field<string>("IPRED2");
-                        iddestino = ver < 2 ? "" : row.Field<string>("IDDESTINO");
-                        idrecurso = ver < 2 ? "" : row.Field<string>("IDRECURSO");
-                        tipo = (int)row.Field<uint>("TIPOEQUIPO");
-                        sip_port = ver < 2 ? 5060 : row.Field<int>("SIPPORT");
-                        modelo = ver < 1 ? 0 : row.Field<long?>("MODELOEQUIPO");
-                        rxortx = ver < 1 ? 0 : row.Field<ulong?>("TIPORADIO");
+                        id = row.Field<string>("IDEQUIPOS");                            // Nombre del Equipo Externo.
+                        ip = row.Field<string>("IPRED1");                               // Ip del Equipo Externo
+                        ip2 = row.Field<string>("IPRED2");                              // Ip2 (no se utiliza) del Equipo externo.
+                        iddestino = ver < 2 ? "" : row.Field<string>("IDDESTINO");      //
+                        idrecurso = ver < 2 ? "" : row.Field<string>("IDRECURSO");      //
+                        tipo = (int)row.Field<uint>("TIPOEQUIPO");                      // 2: Radio, 3: Telefonia, 5: Grabadores
+                        sip_port = ver < 2 ? 5060 : row.Field<int>("SIPPORT");          // Puerto SIP del equipo.
+                        modelo = ver < 1 ? 0 : row.Field<long?>("MODELOEQUIPO");        // Modelo Equipo Radio
+                        rxortx = ver < 1 ? 0 : row.Field<ulong?>("TIPORADIO");          // Tipo de equipo Radio (Rx, Tx o RxTx)
                     }
                     catch (Exception x)
                     {

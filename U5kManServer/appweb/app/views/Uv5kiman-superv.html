@@ -390,22 +390,54 @@
 
     <!-- Pantalla de Estado de Equipos Externos (Voip) -->
     <div id="spvEquiposExt" data-ng-show="ctrl.pagina()==5">
-        <h1><strong translate>Recursos Externos</strong></h1>
-        <div class="row" ng-repeat="equ in ctrl.exteq_grps track by $index" ng-if="$index % 6 == 0">
-            <div class="col-md-2" ng-repeat="i in [$index, $index + 1, $index + 2, $index + 3, $index + 4, $index + 5]"
-                 ng-if="ctrl.exteq_grps[i] != null">
-                <a ng-href="" class="thumbnail" ng-show="true" >
-                    <img ng-src="{{ctrl.exteq_img(ctrl.exteq_grps[i])}}" alt="" style="width:80%; height:64px;"
-                         class="{{ctrl.exteq_std_class(ctrl.exteq_grps[i])}}"
-                         width="70" height="35"
-                         bs-popover
-                         data-content="{{ctrl.exteq_detail(ctrl.exteq_grps[i])}}"
-                         ng-click="ctrl.popover_click($event)">
-                    <p class="text-info text-center mt-1" style="margin-bottom:0px;">{{ctrl.exteq_grps[i].name}}</p>
-                </a>
+        <div class="row ext-res-main-div">
+            <div class="col-md-2"><label>Filtrar por</label></div>
+            <div class="col-md-4">
+                <label>Tipo de Equipo Externo</label>
+                <select class="form-control ext-res-filter" ng-model="ctrl.ext_selected_type" ng-change="ctrl.ext_equ_reset()">
+                    <option value="0">Todos</option>
+                    <option value="3">Telefonia</option>
+                    <option value="2">Radio</option>
+                    <option value="5">Grabadores</option>
+                </select>
+            </div>
+            <!--<div class="col-md-2">{{ctrl.ext_selected_type}}</div>-->
+            <div class="col-md-1"></div>
+            <div class="col-md-4">
+                <label>Equipo Externo</label>
+                <select class="form-control ext-res-filter" ng-model="ctrl.ext_selected_eq" multiple>
+                    <option ng-repeat="equ in ctrl.ext_equ()" value="{{equ}}">{{equ}}</option>
+                </select>
+            </div>
+            <!--<div class="col-md-2">{{ctrl.ext_selected_eq}}</div>-->
+        </div>
+        <div class="row" hidden>
+            <div class="col-md-12">Recursos mostrados: {{ctrl.ext_res_show_names()}}</div>
+        </div>
+        <div class="row ext-res-main-div">
+            <div class="col-md-12">
+                <label>Recursos Externos</label>
+                <div class="row" ng-repeat="equ in ctrl.ext_res_show() track by $index" ng-if="$index % 6 == 0">
+                    <div class="col-md-2" ng-repeat="i in [$index, $index + 1, $index + 2, $index + 3, $index + 4, $index + 5]"
+                         ng-if="ctrl.ext_res_show()[i] != null">
+                        <a ng-href="" class="thumbnail" ng-show="true">
+                            <img ng-src="{{ctrl.exteq_img(ctrl.ext_res_show()[i])}}" alt="" style="width:80%; height:64px;"
+                                 class="{{ctrl.exteq_std_class(ctrl.ext_res_show()[i])}}"
+                                 width="70" height="35"
+                                 bs-popover
+                                 data-content="{{ctrl.ext_res_detail(ctrl.ext_res_show()[i])}}"
+                                 ng-click="ctrl.popover_click($event)">
+                            <p class="text-info text-center mt-1 ext-res-equipo">{{'(' + ctrl.ext_res_show()[i].equipo+')'}}</p>
+                            <p class="text-info text-center mt-1 ext-res-name">{{ctrl.ext_res_show()[i].name}}</p>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="text-center">
+
+        <!--<h1><strong translate>Recursos Externos</strong></h1>-->
+
+        <div class="text-center" hidden>
             <ul class="pagination">
                 <li ng-class="{'active': ctrl.exteq_grp==-1}"><a href="" ng-click='ctrl.exteq_grupo(-1)' translate>Todos</a></li>
                 <li ng-class="{'active': ctrl.exteq_grp==0}"><a href="" ng-click='ctrl.exteq_grupo(0)' translate>Telefonia</a></li>

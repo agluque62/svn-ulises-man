@@ -808,6 +808,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         public class itemEqu
         {
+            public string equipo { get; set; }
             public string name { get; set; }
             public string ip1 { get; set; }
             public string ip2 { get; set; }
@@ -853,6 +854,7 @@ namespace U5kManServer.WebAppServer
 #else
                 lista = gdata.STDEQS.Select(equipo => new itemEqu()
                     {
+                        equipo = equipo.Id,
                         name = equipo.sip_user ?? equipo.Id,
                         ip1 = equipo.Ip1,
                         ip2 = equipo.Ip2,
