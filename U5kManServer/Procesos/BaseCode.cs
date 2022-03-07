@@ -77,6 +77,7 @@ namespace NucleoGeneric
         /// </summary>
         static private void Log<T>(String key, LogLevel level, String message,
             eIncidencias type, eTiposInci thw, string idhw, Object[] issueMessages,
+            DateTime when,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
             try
@@ -96,7 +97,7 @@ namespace NucleoGeneric
                     if (HistThread.hproc != null)
 #endif
                     {
-                        HistThread.hproc.AddInci(DateTime.Now, 0, type, (int)thw, idhw, issueMessages);
+                        HistThread.hproc.AddInci(when, 0, type, (int)thw, idhw, issueMessages);
                     }
                 }
             }
@@ -122,7 +123,7 @@ namespace NucleoGeneric
                 (inci == eIncidencias.IGW_EVENTO &&
                 Array.FindIndex(parametros, e => (e as string).ToLower().Contains("ptt") || (e as string).ToLower().Contains("sqh")) >= 0) ? LogLevel.Trace : LogLevel.Debug;
 
-            Log<T>(key, level, String.Format("Historico [{0},{1}] de {2}", inci, thw, idhw), inci, thw, idhw, parametros, lineNumber, caller);
+            Log<T>(key, level, String.Format("Historico [{0},{1}] de {2}", inci, thw, idhw), inci, thw, idhw, parametros, when, lineNumber, caller);
         }
         /// <summary>
         /// 
@@ -152,7 +153,7 @@ namespace NucleoGeneric
                 msgInci = String.Format("{0},{1},{2}", (Int32)type, msgOrg, message);
             }
             string key = string.Format("{0}_{1}_{2}", (Int32)type, "MTTO", msgInci);
-            Log<T>(key, level, message, type, eTiposInci.TEH_SISTEMA, "MTTO", new Object[] { msgInci }, lineNumber, caller);
+            Log<T>(key, level, message, type, eTiposInci.TEH_SISTEMA, "MTTO", new Object[] { msgInci }, DateTime.Now, lineNumber, caller);
         }
 
         /// <summary>
