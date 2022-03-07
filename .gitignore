@@ -346,3 +346,4 @@ healthchecksdb
 /Entorno de Pruebas/TWR/logs
 /U5kManServer/appweb/mongoose-free-6.1.exe
 /U5kManServer/appweb/mongoose.conf
+/Setup/U5kManServerSetup/appweb.wxs

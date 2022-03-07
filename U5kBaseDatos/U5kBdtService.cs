@@ -2062,7 +2062,7 @@ namespace U5kBaseDatos
                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) }, "mysqldump.exe", fileVersion);
                 if (sqldumpfile != String.Empty)
                 {
-                    string dumpCmd = string.Format("\"{3}\" -u{0} -p{1} -h{2} --database new_cd40 new_cd40_trans",
+                    string dumpCmd = string.Format("\"{3}\" -u{0} -p{1} -h{2} --routines --triggers --events --databases new_cd40 new_cd40_trans",
                         user, pwd, host, sqldumpfile);
                     string cmd = "cmd.exe";
                     string fileout = String.Format("{0:yyyyMMddHHmm}-{1}-bkp.sql", DateTime.Now, bdt);
