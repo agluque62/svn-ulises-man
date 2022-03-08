@@ -322,7 +322,7 @@
                         <div class="col-md-10"><label class="form-control">{{ctrl.translate("Seleccione la Frecuencia")}}</label></div>
                         <div class="col-sm-2">
                             <select class="form-control" data-ng-model="ctrl.dtUnoMasUnoSelectedFrec">
-                                <option data-ng-repeat="fr in ctrl.dtUnoMasUno" value="{{fr.fr}}">
+                                <option data-ng-repeat="fr in ctrl.dtUnoMasUno" value="{{fr.idDestino}}">
                                     {{fr.fr}}
                                 </option>
                             </select>
@@ -338,7 +338,7 @@
                         <div class="col-md-4 level-1">{{ctrl.translate("Receptores")}}</div>
                     </div>
                 </li>
-                <li class="list-group-item text-primary" ng_repeat="fr in ctrl.dtUnoMasUno | filter: {fr: ctrl.dtUnoMasUnoSelectedFrec}" ng-init="ifrec = $index">
+                <li class="list-group-item text-primary" ng_repeat="fr in ctrl.dtUnoMasUno | filter: ctrl.rdUnoMasUnoHtmlFilter" ng-init="ifrec = $index">
                     <div class="row">
                         <div class="col-md-2">
                             {{fr.fr}}<br />

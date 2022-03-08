@@ -452,9 +452,9 @@ angular.module("Uv5kiman")
             var sorted = new Object();
             for (i = 0; i < ctrl.sessions.length; i++) {
                 var session = ctrl.sessions[i];
-                var frec = session.frec.toString();
-                if (sorted[frec] == undefined) {
-                    sorted[frec] = {
+                var fkey = session.idDestino ? session.idDestino.toString() : session.frec.toString();
+                if (sorted[fkey] == undefined) {
+                    sorted[fkey] = {
                         frec: session.frec,
                         ftipo: session.ftipo,
                         prio: session.prio,
@@ -473,18 +473,8 @@ angular.module("Uv5kiman")
                         ses: new Object()
                     };
                 }
-                // sorted[frec].ses.push({
-                //     uri: session.uri,
-                //     tipo: session.tipo,
-                //     std: session.std,
-                //     tx_rtp: session.tx_rtp,
-                //     tx_cld: session.tx_cld,
-                //     tx_owd: session.tx_owd,
-                //     rx_rtp: session.rx_rtp,
-                //     rx_qidx: session.rx_qidx
-                // });
                 var sindex = session.uri.toString();
-                sorted[frec].ses[sindex] = {
+                sorted[fkey].ses[sindex] = {
                     uri: session.uri,
                     site: session.site,
                     tipo: session.tipo,
@@ -653,7 +643,7 @@ angular.module("Uv5kiman")
                     console.log("Cambio en tabla de 1+1");
                     ctrl.dtUnoMasUno = normalizedData;
                     ctrl.dtUnoMasUnoSelectedFrec = ctrl.dtUnoMasUnoSelectedFrec == "" ?
-						ctrl.dtUnoMasUno.length > 0 ? ctrl.dtUnoMasUno[0].fr : "" :
+                        ctrl.dtUnoMasUno.length > 0 ? ctrl.dtUnoMasUno[0].idDestino : "" :
 						ctrl.dtUnoMasUnoSelectedFrec;
                 }
             }
@@ -675,8 +665,8 @@ angular.module("Uv5kiman")
             var res = Enumerable.from(data)
                 .orderBy('$.fr')
                 .groupBy(
-                    '$.fr', '$',
-                    function (fr, grp) {
+                    '$.idDestino', '$',
+                    function (idDestino, grp) {
                         //console.log("grp =>", grp);
                         var tmp = Enumerable.from(grp.getSource()).select(t => t).toArray();
                         var res1 = Enumerable.from(/*grp.getSource()*/tmp)
@@ -688,7 +678,7 @@ angular.module("Uv5kiman")
                                 return { site: site, txs: txs, rxs: rxs };
                             })
                             .toArray();
-                        return { fr: fr, fdata: tmp[0].fdata, sites: res1 };
+                        return { idDestino: idDestino, fr: tmp[0].fr, fdata: tmp[0].fdata, sites: res1 };
                     }
                 )
                 .toArray();
@@ -764,6 +754,7 @@ angular.module("Uv5kiman")
                 return "";
             return fr.fdata.txs == site ? "bg-warning" : "";
         };
+        ctrl.rdUnoMasUnoHtmlFilter = (item) => item.idDestino === ctrl.dtUnoMasUnoSelectedFrec;
 
     /** Al Iniciarse */
         $scope.$on('$viewContentLoaded', function () {
