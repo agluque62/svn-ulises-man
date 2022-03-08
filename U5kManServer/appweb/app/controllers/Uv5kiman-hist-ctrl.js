@@ -343,10 +343,11 @@ angular.module("Uv5kiman")
         doc.setFont("verdana");
 
         /** La Cabecera ... */
-        doc.addImage(imgData, 'JPEG', 10, 10, 15, 15);
+        doc.addImage(imgData, 'JPEG', 20, 10, 30, 15);
         doc.setFontSize(14);
-        doc.setTextColor(0xC1, 0x02, 0x2C);
-        doc.text(45, 15, $lserv.translate("ULISES-5000 I. INFORME ESTADISTICO"));
+        //doc.setTextColor(0xC1, 0x02, 0x2C);
+        doc.setTextColor(0x4A, 0x77, 0x29);
+        doc.text(60, 22, $lserv.translate("ULISES-5000 I. INFORME ESTADISTICO"));
 
         /** El Filtro */
         doc.setFontSize(11);
@@ -365,7 +366,8 @@ angular.module("Uv5kiman")
         /** Los Calculos */
         doc.setFontSize(9);
         for (ival = 0; ival < ctrl.est.lest.length; ival++) {
-            doc.setTextColor(0xC1, 0x02, 0x2C);
+            //doc.setTextColor(0xC1, 0x02, 0x2C);
+            doc.setTextColor(0x4A, 0x77, 0x29);
             doc.text(40, 80 + 10 * ival, ctrl.est.lest[ival].texto);
             doc.setTextColor(0, 0, 0);      // Negro
             doc.text(110, 80 + 10 * ival, ctrl.est.lest[ival].valor.toString());
