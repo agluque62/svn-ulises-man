@@ -182,16 +182,16 @@
                     </td>
                 </tr>
             </table>
-            <div class="row">
+            <div class="row" style="margin-top: 10px; padding: 5px;">
                 <div class="col-md-3" translate>HST_TB1_01</div>
                 <div class="col-md-3" translate>HST_TB1_02</div>
                 <div class="col-md-2" translate>HST_TB1_03</div>
                 <div class="col-md-2" translate>HST_TB1_04</div>
                 <div class="col-md-1" translate></div>
             </div>
-            <div class="row">
-                <div class="col-md-3" ><input type="datetime-local" class="form-control" ng-model="ctrl.ls.StsFilter().dtDesde" /></div>
-                <div class="col-md-3" ><input type="datetime-local" class="form-control" ng-model="ctrl.ls.StsFilter().dtHasta" /></div>
+            <div class="row" style="margin-bottom: 10px;">
+                <div class="col-md-3" ><input type="date" class="form-control" ng-model="ctrl.ls.StsFilter().dtDesde" /></div>
+                <div class="col-md-3" ><input type="date" class="form-control" ng-model="ctrl.ls.StsFilter().dtHasta" /></div>
                 <div class="col-md-2" >
                     <select ng-model="ctrl.ls.StsFilter().tpMat" class="form-control" ng-change="ctrl.OnEstTpMatChange()">
                         <option value="0" translate>HST_TB2_02</option>

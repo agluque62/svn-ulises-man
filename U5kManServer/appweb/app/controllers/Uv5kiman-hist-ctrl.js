@@ -309,10 +309,10 @@ angular.module("Uv5kiman")
             tipo: (ctrl.ls.StsFilter().tpMat).toString(),
             elementos: elemento == undefined ? [] : [elemento]
         };
-        console.log(filtro);
         /** Normalizar el filtro. */
         ctrl.clearest();
         if (StatsFilterNormalize(filtro) == true) {
+            console.log(filtro);
             $serv.db_esta_get(filtro).then(function (response) {
                 //ctrl.lhis = response.data.lista;
                 console.log(response.data);
