@@ -40,6 +40,9 @@
             <Component Id="cmp47E90FB58ACC10ADB6B518D141C87E90" Directory="dirFF886818DC70C18C5F6F734D8ACBD8C6" Guid="*">
                 <File Id="filC8205539F3EFD19E09CB9AF3F5678098" KeyPath="yes" Source="$(var.SourcePath)\mongoose-free-6.1.exe" />
             </Component>
+            <Component Id="cmp6253A9A0D3C916DF13E6F3B0CC779ECE" Directory="dirFF886818DC70C18C5F6F734D8ACBD8C6" Guid="*">
+                <File Id="fil8DA68704C1FE1A223762EBBAC96F8ED5" KeyPath="yes" Source="$(var.SourcePath)\mongoose-ppal.conf" />
+            </Component>
             <Component Id="cmp390F1189A19840F6AB6319C30124DDD7" Directory="dirFF886818DC70C18C5F6F734D8ACBD8C6" Guid="*">
                 <File Id="fil40DD657428127AEFD569AE9F8B6180FB" KeyPath="yes" Source="$(var.SourcePath)\mongoose.conf" />
             </Component>
@@ -382,6 +385,12 @@
             <Component Id="cmpADEE72A968BB83C2E3FA0E04CFE83C98" Directory="dir15E5A606D27196E6CF36F679414075D0" Guid="*">
                 <File Id="fil3F14FE906137B7219E5D1324CE5F72D3" KeyPath="yes" Source="$(var.SourcePath)\scripts\BootstrapMenu.min.js" />
             </Component>
+            <Component Id="cmpC9CB6707546BF532CA1246F5C24D4358" Directory="dir15E5A606D27196E6CF36F679414075D0" Guid="*">
+                <File Id="filC4AB5DEB47A5496423992950CE02C994" KeyPath="yes" Source="$(var.SourcePath)\scripts\datatables.js" />
+            </Component>
+            <Component Id="cmp9A52FF628A5B9C083C05E52285C907DE" Directory="dir15E5A606D27196E6CF36F679414075D0" Guid="*">
+                <File Id="fil6ADAE069412AA67B8B7928942EF8258C" KeyPath="yes" Source="$(var.SourcePath)\scripts\datatables.min.js" />
+            </Component>
             <Component Id="cmp5CA2950F6429A605F4A2CC7920994346" Directory="dir15E5A606D27196E6CF36F679414075D0" Guid="*">
                 <File Id="fil60C42392442D73A6D4EC0F9FCEBFDEB0" KeyPath="yes" Source="$(var.SourcePath)\scripts\daterangepicker.js" />
             </Component>
@@ -639,6 +648,12 @@
             </Component>
             <Component Id="cmpAE567F1C115E157828D967E9D707F162" Directory="dir2B728ADD8E22FBEFDBA2D65B6F772139" Guid="*">
                 <File Id="fil0042369B8D2E7F9D99C4061BFCA1925D" KeyPath="yes" Source="$(var.SourcePath)\simulate\rdhf\Equipo 1.json" />
+            </Component>
+            <Component Id="cmp2C710EFB7FCE435A0F599282A22BE38C" Directory="dir473E297042B39BD17FA23AC20D28D103" Guid="*">
+                <File Id="fil416FFF51E85F30D5094A1E9184A4A8F9" KeyPath="yes" Source="$(var.SourcePath)\styles\datatables.css" />
+            </Component>
+            <Component Id="cmp79D37F9FCC5C15FCE1AA04D2410E594C" Directory="dir473E297042B39BD17FA23AC20D28D103" Guid="*">
+                <File Id="fil624F10B5249E17FE21054BD9334BF033" KeyPath="yes" Source="$(var.SourcePath)\styles\datatables.min.css" />
             </Component>
             <Component Id="cmp5BBC0C245BADC18B1A10AE2A90A334C6" Directory="dir473E297042B39BD17FA23AC20D28D103" Guid="*">
                 <File Id="fil9447D8F9C9834A4A6FDE8F4ACCE04DB1" KeyPath="yes" Source="$(var.SourcePath)\styles\daterangepicker.css" />
