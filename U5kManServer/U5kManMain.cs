@@ -306,6 +306,11 @@ namespace U5kManServer
                     finally
                     {
                     }
+                    LogTrace<U5kServiceMain>(
+                        $"Total memory: {MemoryHelper.FormatSize(MemoryHelper.GetTotalPhys())}, " +
+                        $"Has been used: {MemoryHelper.FormatSize(MemoryHelper.GetUsedPhys())}, " +
+                        $"It can be used: {MemoryHelper.FormatSize(MemoryHelper.GetAvailPhys())}");
+                    LogTrace<U5kServiceMain>($"Used by App: Total => {MemoryHelper.FormatSize(Process.GetCurrentProcess().PrivateMemorySize64)} GC => {MemoryHelper.FormatSize(GC.GetTotalMemory(true))}");
                     GoToSleepInTimer();
                 }
             }
