@@ -1094,7 +1094,7 @@ namespace U5kManServer
                             MyStdServer.lanes[lan.Key] = lan.Value;
                         }
                         // MyStdServer.ntp_sync = TestingServer.ntp_sync;
-                        MyStdServer.NtpInfo.Actualize((connected, ip) =>
+                        MyStdServer.NtpInfo.Actualize("LocalServer", (connected, ip) =>
                         {
                             if (bMaster)
                             {

@@ -1207,7 +1207,7 @@ namespace U5kManServer
                     //gw.ntp_client_status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
                     var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
                     status = NormalizeNtpStatusList(status);
-                    gw.NtpInfo.Actualize(status);
+                    gw.NtpInfo.Actualize(gw.name, status);
                     LogTrace<GwExplorer>($"{gw.name}, NtpInfo OUT     => <<{gw.NtpInfo}>>");
                 }
             }
@@ -1511,7 +1511,7 @@ namespace U5kManServer
                         var result = HttpHelper.GetSync(phgw.ip, "8080", "/ntpstatus", timeout);
                         var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
                         status = NormalizeNtpStatusList(status);
-                        phgw.NtpInfo.Actualize(status);
+                        phgw.NtpInfo.Actualize(phgw.name, status);
                         LogTrace<GwExplorer>($"{phgw.name}, NtpInfo OUT     => <<{phgw.NtpInfo}>>");
                     }
                 }
@@ -1551,7 +1551,7 @@ namespace U5kManServer
                         {
                             ExploraSlot_unificada(new KeyValuePair<stdPhGw, int>(phgw, slot));
                         }
-                        phgw.NtpInfo.Actualize(ntpdata, 78);
+                        phgw.NtpInfo.Actualize(phgw.name, ntpdata, 78);
                     });
                 response(res);
             }

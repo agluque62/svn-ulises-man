@@ -253,7 +253,9 @@ namespace UnitTesting
             var info4Ok = new NtpMeinbergClientInfo(OkResp);
             var info4Empty = new NtpMeinbergClientInfo(EmptyResp);
             var info4NoServers = new NtpMeinbergClientInfo(NoServersResp);
-            var infor4Live = new NtpMeinbergClientInfo();
+            var infor4Live = new NtpMeinbergClientInfo(null, (sender, ev)=>
+            {
+            });
 
             var len = OkResp.ElementAt(0).Length;
             var GwResp = string.Join("", OkResp);
@@ -268,6 +270,21 @@ namespace UnitTesting
             var pdata = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(data4Gw)).lines;
             List<string> Value = NormalizeNtpStatusList(pdata);
 
+        }
+        [TestMethod]
+        public void TestMeinbergData4()
+        {
+            var ntpInfo = new NtpInfoClass();
+            var loop = new int[] { 1, 2, 3, 4, 5, 6, 7 };
+            loop.ToList().ForEach(l =>
+            {
+                Debug.WriteLine($"Checking {l}");
+                ntpInfo.Actualize("Testing", (connected, ip) =>
+                {
+                    Debug.WriteLine($"ChangeDetected {connected}, {ip}");
+                }, 0);
+                Task.Delay(TimeSpan.FromSeconds(10)).Wait();
+            });
         }
         protected List<string> NormalizeNtpStatusList(List<string> input)
         {

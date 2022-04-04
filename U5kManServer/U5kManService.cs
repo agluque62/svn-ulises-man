@@ -2146,7 +2146,7 @@ namespace U5kManServer
         }
 #endif
     }
-    public class NtpInfoClass
+    public class NtpInfoClass : BaseCode
     {
         public string LastInfoFromClient { get; set; } = default;
         public string Ip { get; set; } = default;
@@ -2166,19 +2166,33 @@ namespace U5kManServer
                 return "No sync. info";
             } 
         }
-        public void Actualize(Action<bool, string> notifyChange)
+        public string Whois { get; set; } = "none";
+        public NtpInfoClass()
         {
-            if (Actualize(new NtpMeinbergClientInfo()))
+        }
+        public NtpInfoClass(NtpInfoClass from)
+        {
+            CopyFrom(from);
+        }
+        public void Actualize(string who, Action<bool, string> notifyChange)
+        {
+            Whois = who;
+            if (Actualize(new NtpMeinbergClientInfo(null, (sender, ev)=>
             {
-                notifyChange(Connected, Ip);
+                LogError<NtpInfoClass>($"NtpInfoClass. Error obteniendo estado cliente => {ev.Error}");
+            })))
+            {
+                    notifyChange(Connected, Ip);
             }
         }
-        public void Actualize(string data, int len=-1)
+        public void Actualize(string who, string data, int len=-1)
         {
+            Whois = who;
             Actualize(new NtpMeinbergClientInfo(data, len));
         }
-        public void Actualize(List<string> data)
+        public void Actualize(string who, List<string> data)
         {
+            Whois = who;
             Actualize(new NtpMeinbergClientInfo(data));
         }
         public void CopyFrom(NtpInfoClass from)
@@ -2187,19 +2201,25 @@ namespace U5kManServer
             Ip = from.Ip;
             Connected = from.Connected;
             Precision = from.Precision;
+            Whois = from.Whois;
         }
         protected bool Actualize(NtpMeinbergClientInfo info)
         {
+            var last = new NtpInfoClass(this);
             var change = info.MainUrl != Ip || info.Connected != Connected;
             LastInfoFromClient = info.LastClientResponse;
             Ip = info.MainUrl;
             Connected = info.Connected;
             Precision = info.Offset;
+            if (change)
+            {
+                LogTrace<NtpInfoClass>($"NtpInfoClass change detected on {Whois}. Last = [{last}], Next = [{this}]");
+            }
             return change;
         }
         public override string ToString()
         {
-            return $"{Ip}, {Connected}, {Precision}, {GlobalStatus}, <<{LastInfoFromClient}>>";
+            return $"{Whois} => {Ip}, {Connected}, {Precision}, {GlobalStatus}, <<{LastInfoFromClient}>>";
         }
     }
 

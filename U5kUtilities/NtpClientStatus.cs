@@ -202,12 +202,20 @@ namespace Utilities
         #endregion
     }
 
+    public class NtpClientErrorArgs : EventArgs
+    {
+        public string Error { get; set; }
+    }
     public class NtpMeinbergClientInfo : IDisposable
     {
         #region Clases Publicas
         public enum NtpServerClass { Unknow, NoConnected, Candidate, SystemPeer, FalseTicker }
+        public event EventHandler<NtpClientErrorArgs> NotifyErrorEvent;
+        protected void NotifyError(string error) => NotifyErrorEvent?.Invoke(this, new NtpClientErrorArgs() { Error = error });
         public class NtpServerInfo
         {
+            public event EventHandler<NtpClientErrorArgs> NotifyErrorEvent;
+            protected void NotifyError(string error) => NotifyErrorEvent?.Invoke(this, new NtpClientErrorArgs() { Error = error });
             public NtpServerClass Class { get; set; }
             public string Remote { get; set; }
             public string Refif { get; set; }
@@ -233,8 +241,10 @@ namespace Utilities
             {
                 SetToDefault();
             }
-            public NtpServerInfo(string line)
+            public NtpServerInfo(string line, EventHandler<NtpClientErrorArgs> ErrorHandler=null)
             {
+                StrIn = line;
+                NotifyErrorEvent = ErrorHandler;
                 if (line?.Length > 0)
                 {
                     Class = DecodeClass(line.ElementAt(0));
@@ -298,18 +308,27 @@ namespace Utilities
                         return NtpServerClass.Unknow;
                 }
             }
-            private int DecodeStratum(string input)
+            private int DecodeStratum(string input, bool forceError=false)
             {
                 var value = DecodeInt(input);
                 if (value < 0 || value > 16)
-                    Class = NtpServerClass.Unknow;
+                {
+                    NotifyError($"NtpServerInfo. Error al decodificar stratum => [<<{value}>> in <<{StrIn}>>]");
+                    if (forceError)
+                        Class = NtpServerClass.Unknow;
+                }
                 return value;
             }
-            private int DecodeInt(string input)
+            private int DecodeInt(string input, bool forceError=false)
             {
                 if (int.TryParse(input, out int res))
                     return res;
-                Class = NtpServerClass.Unknow;
+
+                NotifyError($"NtpServerInfo. Error al decodificar Entero => [<<{input}>> in <<{StrIn}>>]");
+
+                if (forceError)
+                    Class = NtpServerClass.Unknow;
+
                 return default;
             }
             private double DecodeDouble(string input)
@@ -321,9 +340,13 @@ namespace Utilities
                 
                 if (double.TryParse(input, System.Globalization.NumberStyles.Any, provider, out double res))
                     return res;
+
+                NotifyError($"NtpServerInfo. Error al decodificar Double  => [<<{input}>> in <<{StrIn}>>]");
+
                 Class = NtpServerClass.Unknow;
                 return default;
             }
+            private string StrIn { get; set; }
         }
         #endregion
         const string CommandErrorKey = "ntpc Error";
@@ -333,8 +356,9 @@ namespace Utilities
         const string SecondLineKey = "==========";
         const string LineSeparator = "##";
         #region Public Members
-        public NtpMeinbergClientInfo(string formattedClientResponse, int len=-1)
+        public NtpMeinbergClientInfo(string formattedClientResponse, int len=-1, EventHandler<NtpClientErrorArgs> ErrorHandler = null)
         {
+            NotifyErrorEvent = ErrorHandler;
             if (len == -1)
             {
                 string[] separatingStrings = { LineSeparator };
@@ -347,8 +371,9 @@ namespace Utilities
                 ProcessClientResponse(clientLines ?? InfoFromCommandLine);
             }
         }
-        public NtpMeinbergClientInfo(List<string> clientResponse = null)
+        public NtpMeinbergClientInfo(List<string> clientResponse = null, EventHandler<NtpClientErrorArgs> ErrorHandler = null)
         {
+            NotifyErrorEvent = ErrorHandler;
             ProcessClientResponse(clientResponse ?? InfoFromCommandLine);
         }
         public void Dispose()
@@ -475,9 +500,13 @@ namespace Utilities
             var discard = check.Where(item => line.ToLower().Contains(item.ToLower())).ToList().Count > 0;
             if (discard) return;
             // Decodifica datos del servidor, y filtra los erróneos...
-            var info = new NtpMeinbergClientInfo.NtpServerInfo(line);
+            var info = new NtpMeinbergClientInfo.NtpServerInfo(line, (sender, ev) => NotifyError(ev.Error));
             if (info.Valid)
                 addServer(info);
+            else
+            {
+                NotifyError($"{this.GetType().Name}. Error al decodificar línea => {line}"); 
+            }
         }
         #region Private Members
         List<string> LastClientResponseProcessed { get; set; }

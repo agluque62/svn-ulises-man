@@ -509,7 +509,7 @@ namespace U5kManServer
 
         static public void PosicionSyncStatusSet(string name, stdPos pos, string status)
         {
-            pos.NtpInfo.Actualize(status);
+            pos.NtpInfo.Actualize(pos.name, status);
         }
 
         /// <summary>
