@@ -1276,10 +1276,14 @@ namespace U5kManServer
                                     if (deviation < TimeSpan.FromSeconds(-settings.GwsHistMaxSecondsInAdvance) || 
                                         deviation > TimeSpan.FromHours(settings.GwsHistMaxHoursDelayed))
                                     {
-                                        LogWarn<GwExplorer>($"GW-HISTORICO NO SINCRONIZADO: De {pgw.ip}, " +
-                                            $"UTC date => {date}, Local date => {DateTime.Now}, " +
-                                            $"Inci => {inci}", 
-                                            eIncidencias.IGRL_U5KI_SERVICE_ERROR, new Object[] { "De Generacion de Historicos de Pasarela" });
+                                        var msg = $" Historico fuera de sincronismo: GW => [{pgw.name},{pgw.ip}], " +
+                                            $"GW UTC date => {date}, Local date => {DateTime.Now}, " +
+                                            $"Inci => {inci}";
+                                        LogWarn<GwExplorer>(msg);
+                                        RecordEvent<GwExplorer>(DateTime.Now, 
+                                            eIncidencias.IGRL_U5KI_SERVICE_ERROR,
+                                            eTiposInci.TEH_SISTEMA, "SPV",
+                                            new Object[] { "Supervision Pasarelas", msg });
                                     }
                                     else
                                     {
