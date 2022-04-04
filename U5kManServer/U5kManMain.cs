@@ -49,9 +49,9 @@ namespace U5kManServer
         {
 #if MASTER_SLAVE
             // thMainService.Start(this);
-            BaseCode.Log<U5kManMain>(NLog.LogLevel.Info, String.Format("Starting Service"), eIncidencias.IGNORE);
+            BaseCode.LogInfo<U5kManMain>($"Starting Service");
             thMainService.Start();
-            BaseCode.Log<U5kManMain>(NLog.LogLevel.Info, String.Format("Service Active"), eIncidencias.IGNORE);
+            BaseCode.LogInfo<U5kManMain>($"Service Active");
 #else
             _started = ActivateService();
             if (_started == true)
@@ -69,9 +69,9 @@ namespace U5kManServer
 #if MASTER_SLAVE
             //bMainServiceThreadExit = true;
             //thMainService.Join(5000);
-            BaseCode.Log<U5kManMain>(NLog.LogLevel.Info, String.Format("Finishing service"), eIncidencias.IGNORE);
+            BaseCode.LogInfo<U5kManMain>($"Finishing service");
             thMainService.Stop(TimeSpan.FromSeconds(20));
-            BaseCode.Log<U5kManMain>(NLog.LogLevel.Info, String.Format("Service Finished"), eIncidencias.IGNORE);
+            BaseCode.LogInfo<U5kManMain>($"Service Finished");
 #else
             if (_started)
             {

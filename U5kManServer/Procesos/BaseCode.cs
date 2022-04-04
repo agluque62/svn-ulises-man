@@ -15,7 +15,6 @@ namespace NucleoGeneric
     /// <summary>
     /// Objecto inicial del arbol de objetos.
     /// </summary>
-    // [DataContract]
     public class BaseCode
     {
 
@@ -37,12 +36,7 @@ namespace NucleoGeneric
             _logLevelLocal = LogLevel.FromString("Debug");
         }
 
-        #region Logs
-
-#region Logs - Base
-#if _FILTER_V1_
-        private static BaseStoreFilter filter = new BaseStoreFilter();
-#endif
+        #region Logs - Base
 
         /// <summary>
         /// Utiliza esta funcion para escribir en la consola.
@@ -58,7 +52,6 @@ namespace NucleoGeneric
             Console.WriteLine(" [" + DateTime.Now + "][" + level + "] [" + typeof(T).Name.ToUpper() + "] " + message);
             Console.ForegroundColor = ConsoleColor.White;
         }
-
         /// <summary>
         /// Utiliza esta funcion para escribir en el Fichero Log.
         /// </summary>
@@ -72,13 +65,14 @@ namespace NucleoGeneric
             return String.Format("[{0}:{1}]", caller, line);
         }
         /// <summary>
-        /// Utiliza esta función para realizar un log, y adicionalmente enviar una incidencia, con mensajes diferentes entre el del Log y el de la incidencia.
-        /// La funcion coge cada uno de los parametros y los separa con comas para que el software en el destino los interprete.
+        /// Utiliza esta función para realizar un log, y adicionalmente enviar una incidencia, 
+        /// con mensajes diferentes entre el del Log y el de la incidencia.
         /// </summary>
         static private void Log<T>(String key, LogLevel level, String message,
             eIncidencias type, eTiposInci thw, string idhw, Object[] issueMessages,
             DateTime when,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
             try
             {
@@ -109,25 +103,6 @@ namespace NucleoGeneric
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="scv"></param>
-        /// <param name="inci"></param>
-        /// <param name="thw"></param>
-        /// <param name="idhw"></param>
-        /// <param name="parametros"></param>
-        public static void RecordEvent<T>(DateTime when, eIncidencias inci, eTiposInci thw, string idhw, object[] parametros,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            string key = string.Format("{0}_{1}_{2}", (Int32)inci, idhw, StrParams(parametros));
-            /** 20181210. Para que el filtro de incidencias repetidas no afecte a los eventos de PTT y SQH */
-            LogLevel level = inci == eIncidencias.ITO_PTT ||
-                (inci == eIncidencias.IGW_EVENTO &&
-                Array.FindIndex(parametros, e => (e as string).ToLower().Contains("ptt") || (e as string).ToLower().Contains("sqh")) >= 0) ? LogLevel.Trace : LogLevel.Debug;
-
-            Log<T>(key, level, String.Format("Historico [{0},{1}] de {2}", inci, thw, idhw), inci, thw, idhw, parametros, when, lineNumber, caller);
-        }
-        /// <summary>
-        /// 
-        /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="level"></param>
         /// <param name="message"></param>
@@ -136,8 +111,10 @@ namespace NucleoGeneric
         /// <param name="lineNumber"></param>
         /// <param name="caller"></param>
         static protected void Log<T>(LogLevel level, String message,
-            eIncidencias type, Object[] issueMessages,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+            eIncidencias type = eIncidencias.IGNORE,
+            Object[] issueMessages = null,
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
             String msgOrg = String.Format("{0}[{1}]", typeof(T).Name, From(caller, lineNumber));
             String msgInci = String.Format("{0},{1}", (Int32)type, msgOrg);
@@ -155,267 +132,122 @@ namespace NucleoGeneric
             string key = string.Format("{0}_{1}_{2}", (Int32)type, "MTTO", msgInci);
             Log<T>(key, level, message, type, eTiposInci.TEH_SISTEMA, "MTTO", new Object[] { msgInci }, DateTime.Now, lineNumber, caller);
         }
+        #endregion
+
+        #region Log - Public
 
         /// <summary>
-        /// Utiliza esta función para realizar un log, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
+        /// 
         /// </summary>
-        static public void Log<T>(/*String from, */LogLevel level, String message, eIncidencias type,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+        /// <param name="scv"></param>
+        /// <param name="inci"></param>
+        /// <param name="thw"></param>
+        /// <param name="idhw"></param>
+        /// <param name="parametros"></param>
+        public static void RecordEvent<T>(DateTime when, eIncidencias inci, eTiposInci thw, string idhw, object[] parametros,
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
-            Log<T>(level, message, type, null, lineNumber, caller);
+            string key = string.Format("{0}_{1}_{2}", (Int32)inci, idhw, StrParams(parametros));
+            /** 20181210. Para que el filtro de incidencias repetidas no afecte a los eventos de PTT y SQH */
+            LogLevel level = inci == eIncidencias.ITO_PTT ||
+                (inci == eIncidencias.IGW_EVENTO &&
+                Array.FindIndex(parametros, e => (e as string).ToLower().Contains("ptt") || (e as string).ToLower().Contains("sqh")) >= 0) ? LogLevel.Trace : LogLevel.Debug;
+            var msgInci = StrRegHistorico(when, inci, thw, idhw, parametros);
+            Log<T>(key, level, msgInci, inci, thw, idhw, parametros, when, lineNumber, caller);
         }
-
         /// <summary>
-        /// Utiliza esta función para realizar un log, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
-        static private void Log<T>(/*String from, */LogLevel level, String message,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            Log<T>(level, message, eIncidencias.IGNORE, lineNumber, caller);
-        }
-
-#endregion
-
-#region Trace
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo TRACE, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
+        /// Utiliza esta función para realizar un log de tipo TRACE, 
+        /// y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
         /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
         /// </summary>        
-        static protected void LogTrace<T>(/*String from, */String message,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+        static public void LogTrace<T>(String message,
+            eIncidencias type = eIncidencias.IGNORE,
+            Object[] issueMessages = null,
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
-            Log<T>(LogLevel.Trace, message, eIncidencias.IGNORE, lineNumber, caller);
-        }
-
-        ///// <summary>
-        ///// Utiliza esta función para realizar un log de tipo TRACE, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        ///// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        ///// </summary>
-        //static protected void LogTrace<T>(/*String from, */String message, eIncidencias type,
-        //    [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        //{
-        //    Log<T>(LogLevel.Trace, message, type, lineNumber, caller);
-        //}
-
-        ///// <summary>
-        ///// Utiliza esta función para realizar un log de tipo TRACE y adicionalmente enviar una incidencia, con mensajes diferentes entre el del Log y el de la incidencia.
-        ///// La funcion coge cada uno de los parametros y los separa con comas para que el software en el destino los interprete.
-        ///// </summary>
-        //static protected void LogTrace<T>(/*String from, */String message, eIncidencias type, Object[] issueMessages,
-        //    [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        //{
-        //    Log<T>(LogLevel.Trace, message, type, issueMessages, lineNumber, caller);
-        //}
-
-#endregion
-
-#region Debug
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo DEBUG, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
-        static protected void LogDebug<T>(/*String from, */String message,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            Log<T>(LogLevel.Debug, message, eIncidencias.IGNORE, lineNumber, caller);
-        }
-
-        ///// <summary>
-        ///// Utiliza esta función para realizar un log de tipo DEBUG, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        ///// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        ///// </summary>
-        //static protected void LogDebug<T>(/*String from, */String message, eIncidencias type,
-        //    [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        //{
-        //    Log<T>(LogLevel.Debug, message, type, lineNumber, caller);
-        //}
-
-        ///// <summary>
-        ///// Utiliza esta función para realizar un log de tipo DEBUG y adicionalmente enviar una incidencia, con mensajes diferentes entre el del Log y el de la incidencia.
-        ///// La funcion coge cada uno de los parametros y los separa con comas para que el software en el destino los interprete.
-        ///// </summary>
-        //static protected void LogDebug<T>(/*String from, */String message, eIncidencias type, Object[] issueMessages,
-        //    [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        //{
-        //    Log<T>(LogLevel.Debug, message, type, issueMessages, lineNumber, caller);
-        //}
-
-#endregion
-
-#region Info
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo INFO, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
-        static protected void LogInfo<T>(/*String from, */String message,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            Log<T>(LogLevel.Info, message, eIncidencias.IGNORE, lineNumber, caller);
+            Log<T>(LogLevel.Trace, message, type, issueMessages, lineNumber, caller);
         }
 
         /// <summary>
-        /// Utiliza esta función para realizar un log de tipo INFO, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
+        /// Utiliza esta función para realizar un log de tipo DEBUG, 
+        /// y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
         /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
         /// </summary>
-        static protected void LogInfo<T>(/*String from, */String message, eIncidencias type,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+        static public void LogDebug<T>(String message,
+            eIncidencias type = eIncidencias.IGNORE,
+            Object[] issueMessages = null,
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, 
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
-            Log<T>(LogLevel.Info, message, type, lineNumber, caller);
+            Log<T>(LogLevel.Debug, message, type, issueMessages, lineNumber, caller);
         }
 
         /// <summary>
-        /// Utiliza esta función para realizar un log de tipo INFO, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
+        /// Utiliza esta función para realizar un log de tipo INFO, 
+        /// y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
         /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
         /// </summary>
-        static protected void LogInfo<T>(/*String from, */String message, eIncidencias type, Object[] issueMessages,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+        static public void LogInfo<T>(String message,
+            eIncidencias type = eIncidencias.IGNORE,
+            Object[] issueMessages = null,
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
             Log<T>(LogLevel.Info, message, type, issueMessages, lineNumber, caller);
         }
-
-#endregion
-
-#region Warn
-
         /// <summary>
-        /// Utiliza esta función para realizar un log de tipo WARN, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
+        /// Utiliza esta función para realizar un log de tipo WARN, 
+        /// y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
         /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
         /// </summary>
-        static protected void LogWarn<T>(/*String from, */String message,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            Log<T>(LogLevel.Warn, message, eIncidencias.IGNORE, lineNumber, caller);
-        }
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo WARN, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
-        static protected void LogWarn<T>(/*String from, */String message, eIncidencias type,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            Log<T>(LogLevel.Warn, message, type, lineNumber, caller);
-        }
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo WARN, y adicionalmente enviar una incidencia, con mensajes diferentes entre el del Log y el de la incidencia.
-        /// La funcion coge cada uno de los parametros y los separa con comas para que el software en el destino los interprete.
-        /// </summary>
-        static protected void LogWarn<T>(/*String from, */String message, eIncidencias type, Object[] issueMessages,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+        static public void LogWarn<T>(String message,
+            eIncidencias type = eIncidencias.IGNORE,
+            Object[] issueMessages = null,
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
             Log<T>(LogLevel.Warn, message, type, issueMessages, lineNumber, caller);
         }
-
-#endregion
-
-#region Error
-
         /// <summary>
-        /// Utiliza esta función para realizar un log de tipo ERROR, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
+        /// Utiliza esta función para realizar un log de tipo ERROR, 
+        /// y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
         /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
         /// </summary>
-        static protected void LogError<T>(/*String from, */Exception ex, String header = "",
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            if (!String.IsNullOrEmpty(header))
-                header = "[" + header + "] ";
-            Log<T>(/*from, */LogLevel.Error, header + ex.Message/*, U5kiIncidencias.U5kiIncidencia.U5KI_ERROR_GENERIC*/, lineNumber, caller);
-        }
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo ERROR, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
-        static protected void LogError<T>(/*String from, */String message,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            Log<T>(/*from, */LogLevel.Error, message/*, U5kiIncidencias.U5kiIncidencia.U5KI_ERROR_GENERIC*/, lineNumber, caller);
-        }
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo ERROR, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
-        static protected void LogError<T>(/*String from, */String message, eIncidencias type,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            Log<T>(/*from, */LogLevel.Error, message, type, lineNumber, caller);
-        }
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo ERROR, y adicionalmente enviar una incidencia, con mensajes diferentes entre el del Log y el de la incidencia.
-        /// La funcion coge cada uno de los parametros y los separa con comas para que el software en el destino los interprete.
-        /// </summary>
-        static protected void LogError<T>(/*String from, */String message, eIncidencias type, Object[] issueMessages,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+        static public void LogError<T>(String message,
+            eIncidencias type = eIncidencias.IGNORE,
+            Object[] issueMessages = null,
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
             Log<T>(LogLevel.Error, message, type, issueMessages, lineNumber, caller);
         }
-
-#endregion
-
-#region Fatal
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo ERROR, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
-        static protected void LogFatal<T>(/*String from, */Exception ex,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            Log<T>(/*from, */LogLevel.Error, ex.Message/*, U5kiIncidencias.U5kiIncidencia.U5KI_ERROR_GENERIC*/, lineNumber, caller);
-        }
-
         /// <summary>
         /// Utiliza esta función para realizar un log de tipo FATAL, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
         /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
         /// </summary>
-        static protected void LogFatal<T>(/*String from, */String message,
+        static public void LogFatal<T>(String message,
+            eIncidencias type = eIncidencias.IGNORE,
+            Object[] issueMessages = null,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
-            Log<T>(/*from, */LogLevel.Fatal, message/*, U5kiIncidencias.U5kiIncidencia.U5KI_ERROR_GENERIC*/, lineNumber, caller);
+            Log<T>(LogLevel.Fatal, message, type, issueMessages, lineNumber, caller);
         }
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo FATAL, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
-        static protected void LogFatal<T>(/*String from, */String message, eIncidencias type,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            Log<T>(/*from, */LogLevel.Fatal, message, type, lineNumber, caller);
-        }
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo FATAL, y adicionalmente enviar una incidencia, con mensajes diferentes entre el del Log y el de la incidencia.
-        /// La funcion coge cada uno de los parametros y los separa con comas para que el software en el destino los interprete.
-        /// </summary>
-        static protected void LogFatal<T>(/*String from, */String message, eIncidencias type, Object[] issueMessages,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            Log<T>(/*from, */LogLevel.Fatal, message, type, issueMessages, lineNumber, caller);
-        }
-
-#endregion
-
         /// <summary>
         /// Utiliza esta función para realizar un log de tipo ERROR, y adicionalmente enviar una incidencia, con mensajes diferentes entre el del Log y el de la incidencia.
         /// La funcion coge cada uno de los parametros y los separa con comas para que el software en el destino los interprete.
         /// </summary>
-        static public void LogException<T>(String message, Exception ex, bool severity = false, bool bRegistroHistorico = false,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+        static public void LogException<T>(String message, Exception ex,
+            bool severity = false, bool bRegistroHistorico = false,
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
             message += " [EXCEPTION ERROR]: " + ex.Message;
             if (null != ex.InnerException)
                 message += " [INNER EXCEPTION ERROR]" + ex.InnerException.Message;
 
-            Log<T>(severity ? LogLevel.Error : LogLevel.Warn, message, eIncidencias.IGNORE, lineNumber, caller);
+            Log<T>(severity ? LogLevel.Error : LogLevel.Warn, message, eIncidencias.IGNORE, null, lineNumber, caller);
 
             /** */
             if (bRegistroHistorico == true)
@@ -423,6 +255,7 @@ namespace NucleoGeneric
                 Log<T>(severity ? LogLevel.Error : LogLevel.Warn, "EXCEPTION ERROR", eIncidencias.IGRL_U5KI_SERVICE_ERROR, new object[] { ex.Message }, lineNumber, caller);
             }
         }
+        #endregion
 
         /** */
         protected static Object[] Params(params Object[] objs)
@@ -444,57 +277,9 @@ namespace NucleoGeneric
             return str.ToString();
         }
 
+        protected static string StrRegHistorico(DateTime when, eIncidencias cd, eTiposInci tp, string who,
+            object[] p) => $"Registro Historico => {when}, [{tp}, {cd} from {who}], data => {p.ToList().Select(e => e.ToString()).Aggregate("", (c, n) => c + ", " + n)}";
 
-#if _PARA_BORRAR_
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="from"></param>
-        /// <param name="x"></param>
-        /// <param name="message"></param>
-        public void LogException<T>(String Key, Exception x, String message="")
-        {
-            Exception last_exception = last_exceptions.ContainsKey(Key) ? last_exceptions[Key] : null;
-            if (last_exception==null || last_exception.GetType() != x.GetType())
-            {
-                Logger _logger = LogManager.GetLogger(typeof(T).Name);
-
-                message = Key + " " + message + " " + x.Message;
-                _logger.Error(message);
-                _logger.Trace(x, message);
-
-                last_exceptions[Key] = x;
-            }
-        }
-        Dictionary<String, Exception> last_exceptions = new Dictionary<string, Exception>();
-#endif
-#endregion
-
-#if _PARA_BORRAR_
-        static Dictionary<String, Tuple<String, int>> _lastLogCollection = new Dictionary<string, Tuple<string, int>>();
-        static bool PrintLog(String quien, String Message)
-        {
-            if (_lastLogCollection.ContainsKey(quien) == false)
-            {
-                _lastLogCollection[quien] = new Tuple<string, int>(Message, 0);
-                return true;
-            }
-            Tuple<String, int> lastLog = _lastLogCollection[quien];
-            if (lastLog.Item1 != Message)
-            {
-                _lastLogCollection[quien] = new Tuple<string, int>(Message, 0);
-                return true;
-            }
-            if (lastLog.Item2 > 3)
-            {
-                _lastLogCollection[quien] = new Tuple<string, int>(Message, 0);
-                return true;
-            }
-            _lastLogCollection[quien] = new Tuple<string, int>(Message, lastLog.Item2 + 1);
-            return false;
-        }
-#endif
         /// <summary>
         /// 
         /// </summary>

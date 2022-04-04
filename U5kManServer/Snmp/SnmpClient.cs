@@ -24,17 +24,6 @@ namespace U5kManServer
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="message"></param>
-        /// <param name="lineNumber"></param>
-        /// <param name="caller"></param>
-        void LogError(string message, 
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            LogWarn<SnmpClient>(message, lineNumber, caller);
-        }
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="x"></param>
         /// <param name="lineNumber"></param>
         /// <param name="caller"></param>
