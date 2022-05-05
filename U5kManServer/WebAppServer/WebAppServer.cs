@@ -163,6 +163,7 @@ namespace U5kManServer.WebAppServer
                 //U5kGenericos.SetCurrentCulture();
 
                 ConfigCultureSet();
+
                 if (Listener == null || Listener.IsListening == false)
                     return;
                 HttpListenerContext context = Listener.EndGetContext(result);
@@ -529,6 +530,9 @@ namespace U5kManServer.WebAppServer
             {
                 if (Listener == null || Listener.IsListening == false)
                     return;
+                
+                ConfigCultureSet();
+
                 HttpListenerContext context = Listener.EndGetContext(result);
                 Logrequest(context);
                 try

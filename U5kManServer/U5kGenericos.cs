@@ -207,10 +207,12 @@ namespace U5kManServer
             if (U5kManService.cfgSettings != null)
             {
                 string idioma = U5kManService.cfgSettings/* Properties.u5kManServer.Default*/.Idioma;
-                Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(idioma == "en" ? "en-US" : idioma == "fr" ? "fr-FR" : "es-ES");
-#if DEBUG
-                Trace(idioma);
-#endif
+                string cultureName = idioma == "en" ? "en-US" : idioma == "fr" ? "fr-FR" : "es-ES";
+                CultureInfo culture = CultureInfo.CreateSpecificCulture(cultureName);
+                //Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(cultureName);
+                Thread.CurrentThread.CurrentCulture = culture;
+                Thread.CurrentThread.CurrentUICulture = culture;
+                Trace($"{idioma} => {cultureName} => {culture} ");
             }
         }
         /// <summary>
