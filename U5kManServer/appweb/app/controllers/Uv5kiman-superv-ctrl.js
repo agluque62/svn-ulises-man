@@ -352,7 +352,7 @@ angular.module("Uv5kiman")
             //    item.tipo == 2 ? "./images/gw-tipo2.png" : "./images/gwoff.png";
 
             if (item.tipo == 0) {
-                return "./images/gw-tipo0.png";
+                return item.std != 0 ? "./images/gw-tipo0.png" : "./images/gw-tipo0-1.png";
             }
             else if (item.tipo == 2) {
                 return "./images/gw-tipo2.png";
