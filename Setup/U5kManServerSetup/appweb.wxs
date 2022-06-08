@@ -121,6 +121,9 @@
             <Component Id="cmpEF15030CFC501C8B74092EBF5837CF0D" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
                 <File Id="filCFF6D5D616467279EE8AAE3A8914D7F0" KeyPath="yes" Source="$(var.SourcePath)\images\extern2.png" />
             </Component>
+            <Component Id="cmp0E13B6415CE28359C841354DA6EF83CC" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
+                <File Id="fil12908347B8D2192A8C19E3EF5C5FFE9C" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo0-1.png" />
+            </Component>
             <Component Id="cmp2C27ACD2DBAFC9696E8D0D2EC6DBFFE3" Directory="dir9F06252D5912B57914914FB0DADAED3A" Guid="*">
                 <File Id="filA70750C23AB956599285817C0F8D2B09" KeyPath="yes" Source="$(var.SourcePath)\images\gw-tipo0.png" />
             </Component>
