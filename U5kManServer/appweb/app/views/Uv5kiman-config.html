@@ -24,12 +24,13 @@
       <div class="text-left">
         <table class="table table-condensed table-bordered">
           <tr>
-            <td translate class=" text-primary col-xs-3"><label class="form-control-static">CFG_ETQ_02</label></td>
+            <td class=" text-primary col-xs-3"><label class="form-control-static" translate>CFG_ETQ_02</label></td>
             <td class="text-success col-xs-6">{{ctrl.options.version}}</td>
-              <td class="text-right"><button type="button" class="btn btn-default" ng-click="ctrl.VersionDetailShow()" translate>Detalle</button></td>
+            <td class="text-right"><button type="button" class="btn btn-default" ng-click="ctrl.VersionDetailShow()" translate>Detalle</button></td>
           </tr>
           <tr >
-            <td translate class="text-primary col-xs-3">CFG_ETQ_03</td><td class="text-success col-xs-6">{{ctrl.options.bdt}}</td><td></td>
+            <td class="text-primary col-xs-3"><label class="form-control-static" translate>CFG_ETQ_03</label></td>
+            <td class="text-success col-xs-6">{{ctrl.options.bdt}}</td><td></td>
           </tr>
         </table>
       </div>
@@ -181,9 +182,9 @@
       <h1><strong translate>Configuracion de Servicio SACTA</strong></h1>
       <form name="sacta_form" class="text-left text-primary" ng-show="ctrl.sacta_cfg!=null">
           <div class="row">
-              <div class="col-md-3" translate>Tick Presencia</div>
+              <div class="col-md-3"><label class="form-control-static" translate>Tick Presencia</label></div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.TickPresencia" ng-disabled="!ctrl.optionAllowed()" nu-number min="1000" max="9999" /></div>
-              <div class="col-md-3" translate>Timeout Presencia</div>
+              <div class="col-md-3"><label class="form-control-static" translate>Timeout Presencia</label></div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.TimeoutPresencia" ng-disabled="!ctrl.optionAllowed()" nu-number min="15000" max="60000" /></div>
           </div>
           <div class="row sacta-cab bg-primary">
@@ -191,33 +192,33 @@
               <div class="col-md-7" translate>SACTA</div>
           </div>
           <div class="row">
-              <div class="col-md-2" translate>Dominio</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Dominio</label></div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.Domain" ng-disabled="!ctrl.optionAllowed()" nu-number min="1" max="9999" /></div>
-              <div class="col-md-2" translate>Dominio</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Dominio</label></div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.Domain" ng-disabled="!ctrl.optionAllowed()" nu-number min="1" max="9999" /></div>
           </div>
           <div class="row">
-              <div class="col-md-2" translate>Centro</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Centro</label></div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.Center" ng-disabled="!ctrl.optionAllowed()" nu-number min="1" max="9999" /></div>
-              <div class="col-md-2" translate>Centro</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Centro</label></div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.Center" ng-disabled="!ctrl.optionAllowed()" nu-number min="1" max="9999" /></div>
           </div>
           <div class="row">
-              <div class="col-md-2" translate>Usuario</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Usuario</label></div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.User" ng-disabled="!ctrl.optionAllowed()" nu-number min="1" max="65536" /></div>
-              <div class="col-md-2" translate>Grupo</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Grupo</label></div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.GrpUser" ng-disabled="!ctrl.optionAllowed()" nu-number min="1" max="65536" /></div>
           </div>
           <div class="row">
-              <div class="col-md-2" translate>Ignorar Sectores</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Ignorar Sectores</label></div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.Ignore" ng-disabled="!ctrl.optionAllowed()" nu-numberlist min="1" max="9999"/></div>
-              <div class="col-md-2" translate>SPSI</div>
+              <div class="col-md-2"><label class="form-control-static" translate>SPSI</label></div>
               <div class="col-md-5"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.spsi_users" ng-disabled="!ctrl.optionAllowed()" nu-numberlist min="1" max="65536"/></div>
           </div>
           <div class="row">
               <div class="col-md-2"></div>
               <div class="col-md-3"></div>
-              <div class="col-md-2" translate>SPV</div>
+              <div class="col-md-2"><label class="form-control-static" translate>SPV</label></div>
               <div class="col-md-5"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.spv_users" ng-disabled="!ctrl.optionAllowed()" nu-numberlist min="1" max="65536"/></div>
           </div>
           <div class="row sacta-cab2 bg-info">
@@ -229,27 +230,27 @@
               <div class="col-md-2"></div>
           </div>
           <div class="row">
-              <div class="col-md-2" translate>Puerto</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Puerto</label></div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.udpport" ng-disabled="!ctrl.optionAllowed()" nu-number min="10000" max="20000" /></div>
-              <div class="col-md-2" translate>Puerto</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Puerto</label></div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan1.udpport" ng-disabled="!ctrl.optionAllowed()" nu-number min="10000" max="20000"/></div>
 <!--              <div class="col-md-1">Puerto</div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan2.udpport" nu-number min="10000" max="20000"/></div>-->
           </div>
           <div class="row">
-              <div class="col-md-2" translate>Interfaz</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Interfaz</label></div>
               <div class="col-md-3"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.scv.Interfaz" ng-disabled="!ctrl.optionAllowed()" nu-ipadd/></div>
-              <div class="col-md-2" translate>Unicast</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Unicast</label></div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan1.ipmask" ng-disabled="!ctrl.optionAllowed()" nu-ipadd/></div>
-              <div class="col-md-1" translate>Unicast</div>
+              <div class="col-md-1"><label class="form-control-static" translate>Unicast</label></div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan2.ipmask" ng-disabled="!ctrl.optionAllowed()" nu-ipadd/></div>
           </div>
           <div class="row">
               <div class="col-md-2"></div>
               <div class="col-md-3"></div>
-              <div class="col-md-2" translate>Multicast</div>
+              <div class="col-md-2"><label class="form-control-static" translate>Multicast</label></div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan1.mcast" ng-disabled="!ctrl.optionAllowed()" nu-ipadd/></div>
-              <div class="col-md-1" translate>Multicast</div>
+              <div class="col-md-1"><label class="form-control-static" translate>Multicast</label></div>
               <div class="col-md-2"><input class="form-control input-sm text-success" type="text" ng-model="ctrl.sacta_cfg.sacta.lan2.mcast" ng-disabled="!ctrl.optionAllowed()" nu-ipadd/></div>
           </div>
           <div class="row text-right ctrl">  
