@@ -150,6 +150,16 @@ namespace U5kManServer.WebAppServer
             };
             try
             {
+                _sync_server.Start(Properties.u5kManServer.Default.MiDireccionIP,
+                    Properties.u5kManServer.Default.MainStandByMcastAdd,
+                    Properties.u5kManServer.Default.SyncserverPort);
+            }
+            catch (Exception x)
+            {
+                LogException<U5kManWebApp>("Arrancando SyncServer", x);
+            }
+            try
+            {
                 base.Start(port, new CfgServer()
                 {
                     DefaultDir = "/appweb",
@@ -165,7 +175,7 @@ namespace U5kManServer.WebAppServer
             }
             catch (Exception x)
             {
-                LogException<U5kManWebApp>("", x);
+                LogException<U5kManWebApp>("Arrancando HttpServer", x);
             }
         }
         protected void RestLogout(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
@@ -1189,12 +1199,14 @@ namespace U5kManServer.WebAppServer
                 if (U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual == true)
                 {
                     string MyName = System.Environment.MachineName;
-                    if (MyName == stdg.stdServ1.name)
-                    {
+                    //if (MyName == stdg.stdServ1.name)
+                    if (stdg.stdServ1.name.StartsWith(MyName))
+                        {
                         stdg.stdServ1.jversion = VersionDetails.SwVersions.ToString();
                         _sync_server.QueryVersionData();
                     }
-                    else if (MyName == stdg.stdServ2.name)
+                    //else if (MyName == stdg.stdServ2.name)
+                    if (stdg.stdServ2.name.StartsWith(MyName))
                     {
                         stdg.stdServ2.jversion = VersionDetails.SwVersions.ToString();
                         _sync_server.QueryVersionData();

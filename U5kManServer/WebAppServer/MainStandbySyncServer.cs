@@ -78,7 +78,7 @@ namespace U5kManServer.WebAppServer
                     }
                 }
             });
-            LogDebug<MainStandbySyncServer>($"{Id} Started...");
+            LogInfo<MainStandbySyncServer>($"{Id} Started...");
         }
         public void Stop()
         {
