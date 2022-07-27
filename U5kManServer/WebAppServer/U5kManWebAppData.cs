@@ -1333,6 +1333,9 @@ namespace U5kManServer.WebAppServer
                         case 6:             // Solo Incidencias que son alarmas.
                             strFiltro = HistThread.SqlFilterForAlarms;
                             break;
+                        case 8:
+                            strFiltro = " AND (IDHW LIKE 'ProxySacta%')";
+                            break;
                         default:
                             strFiltro = " AND ( (IDINCIDENCIA < 5000) )";
                             break;

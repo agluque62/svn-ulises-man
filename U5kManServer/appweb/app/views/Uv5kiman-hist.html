@@ -22,8 +22,10 @@
                 <div class="col-md-1 bg-info" translate>...</div>
             </div>
             <div class="row">
-                <div class="col-md-1 text-info">{{ctrl.ls.LogFilter().dtDesde.toLocaleString()}}</div>
-                <div class="col-md-1 text-info">{{ctrl.ls.LogFilter().dtHasta.toLocaleString()}}</div>
+                <!--<div class="col-md-2 text-info">{{ctrl.ls.LogFilter().dtDesde.toLocaleString()}}</div>
+                <div class="col-md-2 text-info">{{ctrl.ls.LogFilter().dtHasta.toLocaleString()}}</div>-->
+                <div class="col-md-1 text-info">{{ctrl.dt2string(ctrl.ls.LogFilter().dtDesde)}}</div>
+                <div class="col-md-1 text-info">{{ctrl.dt2string(ctrl.ls.LogFilter().dtHasta)}}</div>
                 <div class="col-md-2 text-info">{{ctrl.textoGrpSel()}}</div>
                 <div class="col-md-2 text-info">{{ctrl.ls.LogFilter().Mat}}</div>
                 <div class="col-md-3 text-info">{{ctrl.textoInciSel()}}</div>
@@ -320,6 +322,7 @@
                                     <option value="3" ng-show="ctrl.show_hf" translate>HST_TB2_04</option>
                                     <option value="4" translate>HST_TB2_05</option>
                                     <option value="5" translate>HST_TB2_06</option>
+                                    <option value="8" translate>Proxy Sacta</option>
                                 </select>
                             </div>
                         </div>

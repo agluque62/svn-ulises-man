@@ -227,9 +227,10 @@ angular.module("Uv5kiman")
             $lserv.translate("Radio M+N"),
             $lserv.translate("Equipos Externos"),
             $lserv.translate("Alarmas"),
-            $lserv.translate("Todos")
+            $lserv.translate("Todos"),
+            $lserv.translate("Proxy Sacta")
         ];
-        return ctrl.ls.LogFilter().tpMat < 8 ? txtGrupos[ctrl.ls.LogFilter().tpMat] : sprintf($lserv.translate("Error %1$d"), ctrl.ls.LogFilter().tpMat);
+        return ctrl.ls.LogFilter().tpMat < 9 ? txtGrupos[ctrl.ls.LogFilter().tpMat] : sprintf($lserv.translate("Error %1$d"), ctrl.ls.LogFilter().tpMat);
     };
 
     /** Generacion de Informe PDF de Historicos */
@@ -340,6 +341,7 @@ angular.module("Uv5kiman")
         ctrl.ls.LogFilter().Mat = id;
     };
 
+    ctrl.dt2string = (dt) => moment(dt).format("DD-MM-YY HH:mm:ss");
     /** */
     // OLD
     ctrl.lest = [];     // Listado Estadistico.
