@@ -455,6 +455,11 @@ body .modal
     /*font-size: 90%;*/
 }
 
+.histButtom {
+    float: right;
+    margin: 10px, 10px, 5px, 0;
+}
+
 #hfiltroModal .row
 {
     margin-bottom: 3px;

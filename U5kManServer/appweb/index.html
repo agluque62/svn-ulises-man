@@ -2,7 +2,7 @@
 <html lang="es" data-ng-app="Uv5kiman">
 <head>
     <meta name="generator"
-        content="HTML Tidy for HTML5 (experimental) for Windows https://github.com/w3c/tidy-html5/tree/c63cc39" />
+          content="HTML Tidy for HTML5 (experimental) for Windows https://github.com/w3c/tidy-html5/tree/c63cc39" />
     <meta charset="windows-1252" />
     <meta name="description" content="Plantilla Ulises 5000" />
     <meta name="keywords" content="HTML5, CSS3, JavaScript" />
@@ -13,9 +13,10 @@
     <link rel="stylesheet" type="text/css" href="./styles/daterangepicker.css" />
     <link rel="stylesheet" type="text/css" href="./styles/alertify/alertify.min.css" />
     <link rel="stylesheet" type="text/css" href="./styles/alertify/themes/bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="./styles/datatables.min.css" />
 </head>
 <body>
-    <div id="agrupar" data-ng-controller="uv5kiGlobalCtrl as ctrl" >
+    <div id="agrupar" data-ng-controller="uv5kiGlobalCtrl as ctrl">
         <div data-ng-click="ctrl.global_click()">
             <header id="cabecera">
                 <div id="_contSupIzq">
@@ -90,11 +91,13 @@
                                 <div>{{ctrl.inci_desc(inci.inci)}}</div>
                             </td>
                             <td style="text-align: right;">
-                                <button type="button" 
-                                        ng-click="ctrl.reconoce(inci, true)" 
-                                        class="btn btn-default" 
+                                <button type="button"
+                                        ng-click="ctrl.reconoce(inci, true)"
+                                        class="btn btn-default"
                                         ng-show="ctrl.showExceptSpv()"
-                                        translate>INDEX_INCI_RECONOCER</button>
+                                        translate>
+                                    INDEX_INCI_RECONOCER
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -165,11 +168,11 @@
                 </div>
             </footer>
         </div>
-        </div>
+    </div>
 
     <!-- inject-vendor:js -->
     <script src="./scripts/jquery/jquery-2.1.3.min.js"></script>
-<!--    <script src="./scripts/jquery/jquery-ui.min.js"></script>-->
+    <!--    <script src="./scripts/jquery/jquery-ui.min.js"></script>-->
     <script src="./scripts/angular/angular.js"></script>
     <script src="./scripts/angular/angular-cookies.min.js"></script>
     <script src="./scripts/angular/angular-locale_es.js"></script>
@@ -183,37 +186,38 @@
     <script src="./scripts/bootsstrap/ui-bootstrap-tpls-1.2.4.min.js"></script>
     <script src="./scripts/linq_3.2.1/linq.min.js"></script>
     <script src="./scripts/smart-table.js"></script>
-<!--     <script src="./scripts/datetime-picker.min.js"></script>
- -->
-<!--    <script type="text/javascript" src="./scripts/moment-with-locales.min.js"></script>-->
+    <!--     <script src="./scripts/datetime-picker.min.js"></script>
+     -->
+    <!--    <script type="text/javascript" src="./scripts/moment-with-locales.min.js"></script>-->
     <script type="text/javascript" src="./scripts/moment.min.js"></script>
     <script type="text/javascript" src="./scripts/daterangepicker.js"></script>
-    <script type="text/javascript" src="./scripts/alertify.min.js""></script>
+    <script type="text/javascript" src="./scripts/alertify.min.js" "></script>
     <script type="text/javascript" src="./scripts/sprintf/sprintf.min.js"></script>
     <script type="text/javascript" src="./scripts/jsoneditor.min.js"></script>
+    <script type="text/javascript" src="./scripts/datatables.min.js"></script>
 
-    <!-- inject-app:js -->	
+    <!-- inject-app:js -->
     <script src="./app/modules/Uv5kiman.js"></script>
-    <script src="./app/routes/Uv5kiRoutes.js"></script>	
- 
- <!-- 
-    <script src="./app/services/uv5kMantService.js"></script>
-    <script src="./app/services/ug5kValidationService.js"></script>
-    <script src="./app/services/Simulador.js"></script>
-    <script src="./app/services/logger.js"></script>
+    <script src="./app/routes/Uv5kiRoutes.js"></script>
 
-    <script src="./scripts/u5k-prog.js"></script>
-	-->
+    <!--
+       <script src="./app/services/uv5kMantService.js"></script>
+       <script src="./app/services/ug5kValidationService.js"></script>
+       <script src="./app/services/Simulador.js"></script>
+       <script src="./app/services/logger.js"></script>
+
+       <script src="./scripts/u5k-prog.js"></script>
+       -->
 
     <script src="./app/services/Uv5kiman-CommService.js"></script>
     <script src="./app/services/Uv5kiman-LocalService.js"></script>
 
-	<script src="./app/controllers/Uv5kiman-global-ctrl.js"></script>
-	<script src="./app/controllers/Uv5kiman-superv-ctrl.js"></script>
-	<script src="./app/controllers/Uv5kiman-ope-ctrl.js"></script>
-	<script src="./app/controllers/Uv5kiman-config-ctrl.js"></script>
-	<script src="./app/controllers/Uv5kiman-hist-ctrl.js"></script>
-	<script src="./app/controllers/Uv5kiman-tlf-ctrl.js"></script>
+    <script src="./app/controllers/Uv5kiman-global-ctrl.js"></script>
+    <script src="./app/controllers/Uv5kiman-superv-ctrl.js"></script>
+    <script src="./app/controllers/Uv5kiman-ope-ctrl.js"></script>
+    <script src="./app/controllers/Uv5kiman-config-ctrl.js"></script>
+    <script src="./app/controllers/Uv5kiman-hist-ctrl.js"></script>
+    <script src="./app/controllers/Uv5kiman-tlf-ctrl.js"></script>
 
- </body>
+</body>
 </html>

@@ -936,7 +936,7 @@ namespace U5kBaseDatos
                         date = row.Field<DateTime>("FechaHora").ToString(),
                         idhw = row.Field<string>("IdHw"),
                         desc = row.Field<string>("Descripcion"),
-                        acknw = row.IsNull("Reconocida") ? "" : row.Field<DateTime>("Reconocida").ToString(),
+                        acknw = row.IsNull("Reconocida") ? "" : row.Field<DateTime>("Reconocida").ToString("G"),
                         user = row.Field<string>("Usuario")
                     });
 

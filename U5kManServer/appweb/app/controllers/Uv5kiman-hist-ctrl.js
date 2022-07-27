@@ -22,15 +22,96 @@ angular.module("Uv5kiman")
     /** */
     ctrl.show_hf = $lserv.ConfigServerHf();
 
-    // ctrl.pagina = 0;
-    /** Control de la Pagina */
-    //ctrl.setPagina = function (pag) {
-    //    ctrl.pagina = pag;
-    //    filtro_reset(pag);
-    //}
+    // Nueva tabla de historicos basada en DataTables.
+    ctrl.history = null;
+    function showHistorico() {
+
+        if (ctrl.history) {
+            ctrl.history.destroy();
+            ctrl.history = null;
+        }
+
+        ctrl.history = $('#history').DataTable({
+            data: ctrl.lhis,
+            autoWidth: false,
+            searchBuilder: false,
+            pageLength: 25,
+            pagingType: "full_numbers",
+            ordering: false,
+            columns: [
+                { "data": "date", "width": "15%" },
+                { "data": "idhw", "width": "10%", },
+                { "data": "desc", "width": "50%" },
+                { "data": "acknw", "width": "15%" },
+                { "data": "user", "width": "10%" }
+            ],
+            dom: 
+                "<'row'<'col-md-12 small text-info'tr>>" +
+                "<'row'<'col-md-2'l><'col-md-2'i><'col-md-8'p>>" ,
+            language: {
+                "decimal": "",
+                "emptyTable": "No hay datos disponibles",
+                "info": "Registros _START_ - _END_ de _TOTAL_",
+                "infoEmpty": "0 Registros",
+                "infoFiltered": "(_MAX_ Registros filtrados)",
+                "infoPostFix": "",
+                "thousands": ".",
+                "lengthMenu": "Mostrar _MENU_ Reg.",
+                "loadingRecords": "Loading...",
+                "processing": "Processing...",
+                "search": "Buscar:",
+                "zeroRecords": "No se han encontrado registros",
+                "paginate": {
+                    first: "Primera",
+                    last: "Ultima",
+                    next: "Siguiente",
+                    previous: "Anterior"
+                },
+                aria: {
+                    sortAscending: ": Activar ordenado por conlumna ascendente",
+                    sortDescending: ": Activar ordenado por columna descendente"
+                },
+                searchBuilder: {
+                    add: 'Add Condicion',
+                    condition: 'Condicion',
+                    clearAll: 'Limpiar',
+                    deleteTitle: 'Borrar',
+                    data: 'Columna',
+                    leftTitle: 'Left',
+                    logicAnd: '&',
+                    logicOr: '|',
+                    rightTitle: 'Right',
+                    title: {
+                        0: 'Filtro',
+                        _: 'Filtro (%d)'
+                    },
+                    value: 'Opcion',
+                    valueJoiner: 'y',
+                    conditions: {
+                        string: {
+                            contains: 'Contiene',
+                            empty: 'Vacio',
+                            endsWith: 'Acaba en ',
+                            equals: 'Igual a',
+                            not: 'Distinto de ',
+                            notEmpty: 'No Vacio',
+                            startsWith: 'Comienza con'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     ctrl.pagina = function (pagina) {
-        //if (pagina != undefined)
-        //    filtro_reset(pagina);
+    //// Nueva tabla de historicos basada en DataTables.
+    //    if (pagina != undefined) {
+
+    //        if (ctrl.history) {
+    //            ctrl.history.destroy();
+    //            ctrl.history = null;
+    //        }
+    //    }
         var menu = $lserv.Submenu(pagina);
         return menu ? menu : 0;
     };
@@ -41,17 +122,6 @@ angular.module("Uv5kiman")
         startingDay: 1,
         maxDate: new Date()
     };
-
-    /** Control del Filtro de Historico*/
-    // filtro_reset(ctrl.pagina());
-    //ctrl.fil = {
-    //    dtDesde: moment().startOf('day').toDate(),
-    //    dtHasta: moment().startOf('minute').toDate(),
-    //    tpMat: "0",
-    //    Mat: "",
-    //    txt: "",
-    //    Inci: []
-    //};
 
     /** Control de las Fechas */
     ctrl.dtDesdeOpen = false;
@@ -96,6 +166,9 @@ angular.module("Uv5kiman")
                   $("body").css("cursor", "default");
                   if (ctrl.lhis.length == 0) {
                       alertify.warning($lserv.translate("No se han encontrado registros"));
+                      }
+                  else {
+                      showHistorico();
                   }
               },
               function (response) {
@@ -260,6 +333,7 @@ angular.module("Uv5kiman")
     ctrl.clearhis = function () {
         // TODO. Leer la Fecha / Hora introducida.
         ctrl.lhis = [];
+        showHistorico();
     };
 
     ctrl.filmat = function (id) {
@@ -496,8 +570,6 @@ angular.module("Uv5kiman")
             ctrl.ls.LogFilter().limit = default_logs_limit;
             ctrl.ls.LogFilter().Inci = [];
 
-            //ctrl.fil.dtDesde.setMilliseconds(0);
-            //ctrl.fil.dtHasta.setMilliseconds(0);
             ctrl.inci = ctrl.linci.filter($lserv.inci_filter_all);
         }
         else if (pag == 1) {
@@ -514,8 +586,6 @@ angular.module("Uv5kiman")
             ctrl.mat = [{ id: $lserv.translate('HCT_MSG_00')/*"Todos"*/ }].concat(ctrl.pict);
             ctrl.ls.LogFilter().Mat = $lserv.translate('HCT_MSG_00')/*"Todos"*/;
             ctrl.ls.LogFilter().Inci = [];
-            //ctrl.fil.dtDesde.setMilliseconds(0);
-            //ctrl.fil.dtHasta.setMilliseconds(0);
         }
     }
 
@@ -571,7 +641,6 @@ angular.module("Uv5kiman")
             console.log(response.data);
             ctrl.linci = response.data.lista;
             fhis_prepare(false);
-            // ctrl.inci = ctrl.linci.filter($lserv.inci_filter_genonly);
         }
         , function (response) {
             console.log(response);
