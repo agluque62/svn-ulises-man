@@ -324,7 +324,7 @@ namespace U5kManServer
                                         }
                                         catch (Exception x)
                                         {
-                                            LogException<GwExplorer>("Supervisando Pasarela " + newGw.name, x);
+                                            LogException<GwExplorer>($"In ({newGw.name}, {newGw.ip}) Exception when monitoring", x);
                                         }
                                         finally
                                         {
@@ -869,7 +869,7 @@ namespace U5kManServer
 
             catch (Exception x)
             {
-                LogException<GwExplorer>(String.Format(" Explorando Slot. CGW {0}.{1}",
+                    LogException<GwExplorer>(String.Format(" Explorando Slot. CGW {0}.{1}",
                     obj == null ? "null" : ((KeyValuePair<stdPhGw, int>)obj).Key.ip,
                     obj == null ? "null" : ((KeyValuePair<stdPhGw, int>)obj).Value.ToString()), x);
             }
@@ -1406,7 +1406,7 @@ namespace U5kManServer
             }
             catch (Exception x)
             {
-                LogException<GwExplorer>(phgw.name, x);
+                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when Exploring", x);
                 if (phgw.IpConn.ProcessResult(false) == true)
                 {
                     phgw.IpConn.Std = std.NoInfo;
@@ -1457,8 +1457,8 @@ namespace U5kManServer
             }
             catch (Exception x)
             {
-                // Error en los OPTIONS...
-                LogException<GwExplorer>(phgw.name, x);
+                    // Error en los OPTIONS...
+                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when SipModuleTest", x);
                 response(false, std.NoInfo);
             }
         }
@@ -1502,24 +1502,38 @@ namespace U5kManServer
                     /** Obtiene la version unificada */
                     if (stdRes == std.Ok && (phgw.version == string.Empty || phgw.version == idiomas.strings.GWS_VersionError))
                     {
-                        var resp = HttpHelper.GetSync(phgw.ip, "8080", "/mant/lver", timeout);
-                        phgw.version = resp ?? idiomas.strings.GWS_VersionError;
+                        try
+                        {
+                            var resp = HttpHelper.GetSync(phgw.ip, "8080", "/mant/lver", timeout);
+                            phgw.version = resp ?? idiomas.strings.GWS_VersionError;
+                        }
+                        catch (Exception x)
+                        {
+                            LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when getting version", x);
+                        }
                     }
                     /** Obtiene la información NTP */
                     if (stdRes == std.Ok)
                     {
-                        var result = HttpHelper.GetSync(phgw.ip, "8080", "/ntpstatus", timeout);
-                        var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
-                        status = NormalizeNtpStatusList(status);
-                        phgw.NtpInfo.Actualize(phgw.name, status);
-                        LogTrace<GwExplorer>($"{phgw.name}, NtpInfo OUT     => <<{phgw.NtpInfo}>>");
+                        try
+                        {
+                            var result = HttpHelper.GetSync(phgw.ip, "8080", "/ntpstatus", timeout);
+                            var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
+                            status = NormalizeNtpStatusList(status);
+                            phgw.NtpInfo.Actualize(phgw.name, status);
+                            LogTrace<GwExplorer>($"{phgw.name}, NtpInfo OUT     => <<{phgw.NtpInfo}>>");
+                        }
+                        catch (Exception x)
+                        {
+                            LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when getting ntp info", x);
+                        }
                     }
                 }
                 catch (Exception x)
                 {
                     // Error en Modulo de Configuracion Local...
                     stdRes = std.NoInfo;
-                    LogException<GwExplorer>(phgw.name, x);
+                    LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when CfgModuleTest", x);
                 }
                 finally
                 {
@@ -1581,7 +1595,7 @@ namespace U5kManServer
             {
                 // Error en la Exploracion SNMP....
                 response(false);
-                LogException<GwExplorer>(phgw.name, x);
+                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when SnmpModuleTest", x);
             }
         }
         /// <summary>
@@ -1639,7 +1653,7 @@ namespace U5kManServer
             catch (Exception x)
             {
                 // Error en la consolidacion.
-                LogException<GwExplorer>(last.name, x);
+                LogException<GwExplorer>($"In ({last.name}, {last.ip}) Exception when ConsolidateData", x);
             }
             finally
             {
