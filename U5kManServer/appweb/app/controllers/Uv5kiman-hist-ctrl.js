@@ -35,7 +35,7 @@ angular.module("Uv5kiman")
             data: ctrl.lhis,
             autoWidth: false,
             searchBuilder: false,
-            pageLength: 25,
+            pageLength: 10,
             pagingType: "full_numbers",
             ordering: false,
             columns: [
@@ -46,8 +46,8 @@ angular.module("Uv5kiman")
                 { "data": "user", "width": "10%" }
             ],
             dom: 
-                "<'row'<'col-md-12 small text-info'tr>>" +
-                "<'row'<'col-md-2'l><'col-md-2'i><'col-md-8'p>>" ,
+                "<'row hdiv'<'col-md-12 htext text-info'tr>>" +
+                "<'row hdiv'<'col-md-2 text-info'l><'col-md-2 text-info'i><'col-md-8'p>>" ,
             language: {
                 "decimal": "",
                 "emptyTable": "No hay datos disponibles",
@@ -791,6 +791,11 @@ angular.module("Uv5kiman")
         cwp_gws_ext_get();
         /** */
         dateRangeInit();
+
+        //setTimeout(ctrl.clearhis, 5000);
+
+        ctrl.clearhis();
+        
     });
 
     /** Funcion Periodica del controlador */

@@ -434,17 +434,14 @@ body .modal
         font-size: 80%;
     }
 
-    #fhis .btn
+/*    #fhis .btn
     {
         padding-top: 1px;
         padding-bottom: 1px;
         padding-left: 6px;
         padding-right: 6px;
-        /*float: right;*/
-        /*margin-right: 5px;*/
-        /*font-size: 80%;*/
     }
-
+*/
 #chis .btn
 {
     padding-top: 1px;
@@ -1334,3 +1331,57 @@ a.disabled {
     padding: 0;
 }
 
+.htext {
+    font-size: 80%;
+}
+
+.hdiv{
+    margin-bottom: 8px;
+}
+
+table.dataTable td {
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+table.dataTable th {
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.btnhist{
+    width: 100%;
+    float:right;
+    margin-bottom: 4px;
+    font-size: 80%;
+}
+
+div.dataTables_length {
+    font-size: 80%;
+}
+
+ div.dataTables_length select {
+    font-size: 80%;
+    padding: 2px;
+    width: 50px;
+    height: 20px;
+    line-height: 20px;
+}
+
+#history_info {
+    font-size: 80%;
+    padding-top: 3px;
+}
+
+#history_paginate {
+    font-size: 80%;
+}
+
+.inciTitle{
+    margin-top: 4px;
+    margin-bottom: 4px;
+}

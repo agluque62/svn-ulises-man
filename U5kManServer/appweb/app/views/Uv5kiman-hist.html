@@ -18,8 +18,8 @@
                 <div class="col-md-2 bg-info" translate>HST_TB1_03</div>
                 <div class="col-md-2 bg-info" translate>HST_TB1_04</div>
                 <div class="col-md-3 bg-info" translate>Eventos</div>
-                <div class="col-md-2 bg-info" translate>Contiene</div>
-                <div class="col-md-1 bg-info" translate>...</div>
+                <div class="col-md-2 bg-info" style="padding-right: 4px;" translate>Contiene</div>
+                <div class="col-md-1 bg-info" style="padding-left: 2px;" translate>...</div>
             </div>
             <div class="row">
                 <!--<div class="col-md-2 text-info">{{ctrl.ls.LogFilter().dtDesde.toLocaleString()}}</div>
@@ -30,8 +30,8 @@
                 <div class="col-md-2 text-info">{{ctrl.ls.LogFilter().Mat}}</div>
                 <div class="col-md-3 text-info">{{ctrl.textoInciSel()}}</div>
                 <div class="col-md-2 text-info">{{ctrl.textoTexto()}}</div>
-                <div class="col-md-1 text-info">
-                    <button id="btnFil1" type="button" class="btn btn-default" ng-click="ctrl.setfiltro()"><i translate>Filtro</i></button>
+                <div class="col-md-1 text-info" style="padding-left: 6px;">
+                    <button type="button" class="btn btn-default btnhist" ng-click="ctrl.setfiltro()"><i translate>Filtro</i></button>
                 </div>
             </div>
         </div>
@@ -112,46 +112,46 @@
 
         <div data-ng-show="true" style="padding: 10px;">
             <div class="row">
-                <div class="col-md-12">
-                    <table id="history" class="table table-striped table-bordered" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th translate>HST_TB3_01</th>
-                                <th translate>HST_TB3_02</th>
-                                <th translate>HST_TB3_03</th>
-                                <th translate>HST_TB3_04</th>
-                                <th translate>HST_TB3_05</th>
-                            </tr>
-                        </thead>
-                    </table>
+                <div class="col-md-11" style="padding-right: 4px;">
+                        <table id="history" class=" table-striped table-bordered" style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th translate>HST_TB3_01</th>
+                                    <th translate>HST_TB3_02</th>
+                                    <th translate>HST_TB3_03</th>
+                                    <th translate>HST_TB3_04</th>
+                                    <th translate>HST_TB3_05</th>
+                                </tr>
+                            </thead>
+                        </table>
                 </div>
-                <div class="row">
-                    <div class="col-md-4"></div>
-                    <div class="col-md-6" >
-                        <button id="btnConsulta1" type="button"
-                                class="btn btn-default "
-                                ng-click="ctrl.getHistorico()">
-                            <i translate>HST_BT1_01</i>
-                        </button>
-                        <button type="button"
-                                class="btn btn-default "
-                                ng-show="ctrl.lhis.length > 0"
-                                ng-click="ctrl.clearhis()">
-                            <i translate>HST_BT1_02</i>
-                        </button>
-                        <button type="button"
-                                class="btn btn-default "
-                                ng-show="ctrl.lhis.length > 0"
-                                ng-click="ctrl.toPdf()">
-                            <i translate>HST_BT1_03</i>
-                        </button>
-                        <button type="button"
-                                class="btn btn-default "
-                                ng-show="ctrl.lhis.length > 0"
-                                ng-click="ctrl.toExcel()">
-                            <i translate>Excel</i>
-                        </button>
-                    </div>
+                <div class="col-md-1" style="padding-left: 2px;">
+                    <button type="button"
+                            class="btn btn-default btnhist"
+                            ng-click="ctrl.getHistorico()">
+                        <i translate>HST_BT1_01</i>
+                    </button>
+                    <br />
+                    <button type="button"
+                            class="btn btn-default btnhist"
+                            ng-show="ctrl.lhis.length > 0"
+                            ng-click="ctrl.clearhis()">
+                        <i translate>HST_BT1_02</i>
+                    </button>
+                    <br />
+                    <button type="button"
+                            class="btn btn-default btnhist"
+                            ng-show="ctrl.lhis.length > 0"
+                            ng-click="ctrl.toPdf()">
+                        <i translate>HST_BT1_03</i>
+                    </button>
+                    <br />
+                    <button type="button"
+                            class="btn btn-default btnhist"
+                            ng-show="ctrl.lhis.length > 0"
+                            ng-click="ctrl.toExcel()">
+                        <i translate>Excel</i>
+                    </button>
                 </div>
         </div>
 
