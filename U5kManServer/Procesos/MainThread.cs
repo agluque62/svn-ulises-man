@@ -134,7 +134,7 @@ namespace U5kManServer
                     {
                         eIncidencias inci = alarma == true ? eIncidencias.IGRL_NBXMNG_ALARM : eIncidencias.IGRL_NBXMNG_EVENT;
                         RecordEvent<Services.CentralServicesMonitor>(DateTime.Now, inci, eTiposInci.TEH_SISTEMA, "SPV",
-                            new object[] { str1, " Server en " + str2, str3, "", "", "", "", "" });
+                            new object[] { str1, str2, str3, "", "", "", "", "" });
                     },
                     (m, x) =>
                     {

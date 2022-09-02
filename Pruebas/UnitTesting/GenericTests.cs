@@ -279,10 +279,10 @@ namespace UnitTesting
             loop.ToList().ForEach(l =>
             {
                 Debug.WriteLine($"Checking {l}");
-                ntpInfo.Actualize("Testing", (connected, ip) =>
-                {
-                    Debug.WriteLine($"ChangeDetected {connected}, {ip}");
-                }, 0);
+                //ntpInfo.Actualize("Testing", (connected, ip) =>
+                //{
+                //    Debug.WriteLine($"ChangeDetected {connected}, {ip}");
+                //}, 0);
                 Task.Delay(TimeSpan.FromSeconds(10)).Wait();
             });
         }

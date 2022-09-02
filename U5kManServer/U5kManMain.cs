@@ -159,13 +159,54 @@ namespace U5kManServer
                 });
             U5kEstadisticaProc.Estadisticas.Start();
             /*****************************************************/
-#if DEBUG1
-            DateTime now = DateTime.Now.AddMinutes(1);
-            SetUpTimerBackup(new TimeSpan(now.Hour, now.Minute, 0));
-            //SetupTimerTest(new TimeSpan(0, 0, 20));
-#else
-            SetUpTimerBackup(new TimeSpan(0, 15, 0));
-#endif
+//#if DEBUG1
+//            DateTime now = DateTime.Now.AddMinutes(1);
+//            SetUpTimerBackup(new TimeSpan(now.Hour, now.Minute, 0));
+//            //SetupTimerTest(new TimeSpan(0, 0, 20));
+//#else
+//            SetUpTimerBackup(new TimeSpan(0, 15, 0));
+//#endif
+            BackupAt.Setup(new TimeSpan(0, 15, 0), () =>
+            {
+                ConfigCultureSet();
+                Properties.u5kManServer cfg = Properties.u5kManServer.Default;
+                if (cfg.TipoBdt == 0)
+                {
+                    List<U5kiDbHelper.BackupInciItem> items =
+                        U5kiDbHelper.NewBackup(cfg.MySqlServer, cfg.BdtSchema, cfg.MySqlUser, cfg.MySqlPwd, Properties.u5kManServer.Default.MySqlDumpVersion);
+                    items.ForEach(item =>
+                    {
+                        LogDebug<U5kServiceMain>(item.What);
+                        RecordEvent<U5kServiceMain>(item.When, item.IsError == false ? eIncidencias.IGRL_NBXMNG_EVENT : eIncidencias.IGRL_NBXMNG_ALARM,
+                            eTiposInci.TEH_SISTEMA, "BKP", Params(item.What));
+                    });
+                }
+            });
+
+            ChangeOfDay.Setup(new TimeSpan(0, 0, 0), () =>
+              {
+                  if (U5kManService._Master == true)
+                  {
+                      RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
+                      eIncidencias.IGRL_CAMBIO_DE_DIA, eTiposInci.TEH_SISTEMA, "SPV",
+                      new object[] { });
+
+                      if (U5kManService.Database != null)
+                      {
+                          long borrados = U5kManService.Database.SupervisaTablaIncidencia(U5kManService.cfgSettings.DiasEnHistorico);
+                          RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
+                              eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, "SPV",
+                              new object[] { "Supervision Tabla Historicos", borrados, "Registros Eliminados" });
+                      }
+                      else
+                      {
+                          RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
+                              eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, "SPV",
+                              new object[] { "Supervision Tabla Historicos. No es posible eliminar registros. No hay acceso a la base de datos" });
+                      }
+                  }
+              });
+
             Decimal interval = Properties.u5kManServer.Default.SpvInterval;
             using (timer = new TaskTimer(new TimeSpan(0, 0, 0, 0, Decimal.ToInt32(interval)), this.Cancel))
             {
@@ -777,49 +818,49 @@ namespace U5kManServer
         /// <summary>
         /// Para el Backup de Base de Datos...
         /// </summary>
-        private System.Threading.Timer timerBackup = null;
-        private void SetUpTimerBackup(TimeSpan alertTime)
-        {
-            DateTime current = DateTime.Now;
-            TimeSpan timeToGo = alertTime - current.TimeOfDay;
-            if (timeToGo < TimeSpan.Zero)
-            {   // time already passed
-                timeToGo = new TimeSpan(24, 0, 0) + timeToGo;
-            }
-            LogInfo<U5kServiceMain>(
-                String.Format("Programando Backup para {0:MM/dd HH:mm}", current + timeToGo));
-            this.timerBackup = new System.Threading.Timer(x =>
-            {
-                ConfigCultureSet();
-                Properties.u5kManServer cfg = Properties.u5kManServer.Default;
-                if (cfg.TipoBdt == 0)
-                {
-                    List<U5kiDbHelper.BackupInciItem> items =
-                        U5kiDbHelper.NewBackup(cfg.MySqlServer, cfg.BdtSchema, cfg.MySqlUser, cfg.MySqlPwd, Properties.u5kManServer.Default.MySqlDumpVersion);
-                    items.ForEach(item =>
-                    {
-                        LogDebug<U5kServiceMain>(item.What);
-                        RecordEvent<U5kServiceMain>(item.When, item.IsError==false ? eIncidencias.IGRL_NBXMNG_EVENT : eIncidencias.IGRL_NBXMNG_ALARM,
-                            eTiposInci.TEH_SISTEMA, "BKP", Params(item.What));
-                    });
-                }
+//        private System.Threading.Timer timerBackup = null;
+//        private void SetUpTimerBackup(TimeSpan alertTime)
+//        {
+//            DateTime current = DateTime.Now;
+//            TimeSpan timeToGo = alertTime - current.TimeOfDay;
+//            if (timeToGo < TimeSpan.Zero)
+//            {   // time already passed
+//                timeToGo = new TimeSpan(24, 0, 0) + timeToGo;
+//            }
+//            LogInfo<U5kServiceMain>(
+//                String.Format("Programando Backup para {0:MM/dd HH:mm}", current + timeToGo));
+//            this.timerBackup = new System.Threading.Timer(x =>
+//            {
+//                ConfigCultureSet();
+//                Properties.u5kManServer cfg = Properties.u5kManServer.Default;
+//                if (cfg.TipoBdt == 0)
+//                {
+//                    List<U5kiDbHelper.BackupInciItem> items =
+//                        U5kiDbHelper.NewBackup(cfg.MySqlServer, cfg.BdtSchema, cfg.MySqlUser, cfg.MySqlPwd, Properties.u5kManServer.Default.MySqlDumpVersion);
+//                    items.ForEach(item =>
+//                    {
+//                        LogDebug<U5kServiceMain>(item.What);
+//                        RecordEvent<U5kServiceMain>(item.When, item.IsError==false ? eIncidencias.IGRL_NBXMNG_EVENT : eIncidencias.IGRL_NBXMNG_ALARM,
+//                            eTiposInci.TEH_SISTEMA, "BKP", Params(item.What));
+//                    });
+//                }
 
-                SetUpTimerBackup(alertTime);
+//                SetUpTimerBackup(alertTime);
 
-            }, null, timeToGo, Timeout.InfiniteTimeSpan);
-        }
-#if DEBUG
-        private System.Threading.Timer timerTest = null;
-        private void SetupTimerTest(TimeSpan interval)
-        {
-            this.timerTest = new System.Threading.Timer(x =>
-            {
-                LogDebug<U5kServiceMain>(String.Format("TOTAL MEMORY  [{0:n}].....", (double)GC.GetTotalMemory(true)));
-                SetupTimerTest(interval);
-            }
-            , null, interval, Timeout.InfiniteTimeSpan);
-        }
-#endif
+//            }, null, timeToGo, Timeout.InfiniteTimeSpan);
+//        }
+//#if DEBUG
+//        private System.Threading.Timer timerTest = null;
+//        private void SetupTimerTest(TimeSpan interval)
+//        {
+//            this.timerTest = new System.Threading.Timer(x =>
+//            {
+//                LogDebug<U5kServiceMain>(String.Format("TOTAL MEMORY  [{0:n}].....", (double)GC.GetTotalMemory(true)));
+//                SetupTimerTest(interval);
+//            }
+//            , null, interval, Timeout.InfiniteTimeSpan);
+//        }
+//#endif
         /// <summary>
         /// 
         /// </summary>
@@ -1397,6 +1438,9 @@ namespace U5kManServer
 
             List<OnCLusterServerData> servers = new List<OnCLusterServerData>();
         };
+
+        private HourNotifier BackupAt = new HourNotifier();
+        private HourNotifier ChangeOfDay = new HourNotifier();
     }
 
 

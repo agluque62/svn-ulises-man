@@ -85,6 +85,7 @@
     <Compile Include="FSBindingList.cs" />
     <Compile Include="FtpClient.cs" />
     <Compile Include="GeneralHelper.cs" />
+    <Compile Include="HourNotifier.cs" />
     <Compile Include="HttpHelper.cs" />
     <Compile Include="IPHelper.cs" />
     <Compile Include="JsonHelper.cs" />

@@ -287,6 +287,9 @@ namespace U5kManServer.Services
             if (SpvTask != null && GetDataAccess())
             {
                 SpvTask = null;
+                
+                Events.Stop();
+
                 UdpServer.Close();
                 ReleaseDataAccess();
             }
@@ -302,6 +305,8 @@ namespace U5kManServer.Services
             {
                 UdpServer.BeginReceive(ReceiveCallback, null);
                 SpvTask = Task.Factory.StartNew(SupervisionCallback);
+
+                Events.Start();
             }
         }
 
@@ -387,7 +392,8 @@ namespace U5kManServer.Services
                                 if (DataAndStates.Keys.Contains(key) == false)
                                 {
                                     /** Evento de Activacion de server */
-                                    RaiseInternalEvent(false, not.ServerType, not.Machine, "Activado");
+                                    //RaiseInternalEvent(false, not.ServerType, not.Machine, "Activado");
+                                    RaiseInternalEvent(false, "Detectado NBX en ", not.Machine);
                                 }
                                 /** Actualizo la tabla */
                                 not.TimeStamp = DateTime.Now;
@@ -443,8 +449,6 @@ namespace U5kManServer.Services
                     {
                         lastNotRespondingSupervision = NotRespondingSupervision(lastNotRespondingSupervision);
 
-                        lastGlobalStateSupervision = GlobalStateSupervision(lastGlobalStateSupervision);
-
                         lastOperationalRadioData = OperationalRadioDataGet(lastOperationalRadioData);
 
                         lastOperationalPhoneData = OperationalPhoneDataGet(lastOperationalPhoneData);
@@ -455,6 +459,11 @@ namespace U5kManServer.Services
                     }
 
                     ReleaseDataAccess();
+                }
+                else if (!MasterStateInfo())
+                {
+                    // Si es Slave limpia las tablas...
+                    ClearDataOnSlave();
                 }
                 Task.Delay(mainTick).Wait();
 
@@ -474,51 +483,39 @@ namespace U5kManServer.Services
             TimeSpan ElapsedTime = DateTime.Now - lastSup;
             if (ElapsedTime > notResponingTick)
             {
-                var quiets = DataAndStates.Where(e => DateTime.Now - e.Value.TimeStamp > notResponingTimeout).
+                var silents = DataAndStates.Where(e => DateTime.Now - e.Value.TimeStamp > notResponingTimeout).
                     Select(e => e.Key).ToList();
-                quiets.ForEach(k =>
+                silents.ForEach(k =>
                 {
                     /** Evento de Desactivacion de server */
                     var not = DataAndStates[k];
-                    RaiseInternalEvent(false, not.ServerType, not.Machine, "Desactivado");
+                    //RaiseInternalEvent(false, not.ServerType, not.Machine, "Desactivado");
+                    RaiseInternalEvent(false, "Perdida de contacto con NBX de ", not.Machine);
 
                     DataAndStates.Remove(k);
 
                     TraceMsg(2, String.Format("{0} Desactivado...", k));
                 });
 
-                lastSup = DateTime.Now;
-            }
-            return lastSup;
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="lastSup"></param>
-        /// <returns></returns>
-        DateTime GlobalStateSupervision(DateTime lastSup)
-        {
-            TimeSpan ElapsedTime = DateTime.Now - lastSup;
-            if (ElapsedTime > globalStateTick)
-            {
                 /** Supervisa el Radio Server */
-                RadioServerState.Supervises(RadioServer, () =>
+                RadioServerState.Supervises(RadioServer, (state) =>
                 {
-                    RaiseInternalEvent(true, "RadioServer", "", "No Server Found");
-                    TraceMsg(2, String.Format("No RadioServer Found"));
+                    var msg = state ? "Servicios Radio activos" : "No se detectan servicios de radio";
+                    RaiseInternalEvent(true, msg, "", "");
+                    TraceMsg(2, msg);
                 });
 
                 /** Supervisa el servidor de telefonia (presencia) */
-                PhoneServerState.Supervises(PhoneServer, () =>
+                PhoneServerState.Supervises(PhoneServer, (state) =>
                 {
-                    RaiseInternalEvent(true, "PhoneServer", "", "No Server Found");
-                    TraceMsg(2, String.Format("No PhoneServer Found"));
+                    var msg = state ? "Servicios de Telefonía activos" : "No se detectan servicios de telefonia";
+                    RaiseInternalEvent(true, msg, "", "");
+                    TraceMsg(2, msg);
                 });
 
                 lastSup = DateTime.Now;
             }
             return lastSup;
-
         }
         /// <summary>
         /// 
@@ -716,6 +713,13 @@ namespace U5kManServer.Services
             }
         }
 
+        private void ClearDataOnSlave()
+        {
+            RadioServerState.Clear();
+            PhoneServerState.Clear();
+            DataAndStates.Clear();
+        }
+
         string data_access_owner = "";
         protected bool GetDataAccess([CallerLineNumber] int lineNumber = 0, [CallerMemberName] string caller = null)
         {
@@ -750,7 +754,11 @@ namespace U5kManServer.Services
 
         protected void RaiseInternalEvent(bool alarma = false, string str1 = "", string str2 = "", string str3 = "")
         {
-            Task.Factory.StartNew(() =>
+            //Task.Factory.StartNew(() =>
+            //{
+            //    InternalEvent?.Invoke(alarma, str1, str2, str3);
+            //});
+            Events.Enqueue("RaiseInternalEvent", () =>
             {
                 InternalEvent?.Invoke(alarma, str1, str2, str3);
             });
@@ -771,7 +779,7 @@ namespace U5kManServer.Services
         {
             public GlobalStates State { get; set; }
             public DateTime DateOfChange { get; set; }
-            public void Supervises(ServerDataAndState ItemServer, Action cb)
+            public void Supervises(ServerDataAndState ItemServer, Action<bool> cb)
             {
                 switch (State)
                 {
@@ -783,7 +791,7 @@ namespace U5kManServer.Services
                                 // Alarma No tenemos servidor de Radio
                                 State = GlobalStates.Fallo;
                                 DateOfChange = DateTime.Now;
-                                cb();
+                                cb(false);
                             }
                         }
                         else
@@ -797,7 +805,7 @@ namespace U5kManServer.Services
                         {
                             State = GlobalStates.Fallo;
                             DateOfChange = DateTime.Now;
-                            cb();
+                            cb(false);
                         }
                         break;
 
@@ -806,10 +814,16 @@ namespace U5kManServer.Services
                         {
                             State = GlobalStates.Ok;
                             DateOfChange = DateTime.Now;
+                            cb(true);
                         }
                         break;
                 }
 
+            }
+            public void Clear()
+            {
+                State = GlobalStates.Inicio;
+                DateOfChange = DateTime.Now;
             }
         };
         GlobalStateItem RadioServerState = new GlobalStateItem() { State = GlobalStates.Inicio, DateOfChange = DateTime.Now };
@@ -819,6 +833,8 @@ namespace U5kManServer.Services
         readonly Action<bool, string, string, string> InternalEvent;
         readonly Func<bool> MasterStateInfo;
         readonly Action<int, string> Trace;
+
+        private EventQueue Events { get; } = new EventQueue();
 
 #endregion Atributos Privados
     }

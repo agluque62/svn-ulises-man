@@ -84,6 +84,7 @@
     <Compile Include="GwCallLogsParseTest.cs" />
     <Compile Include="TinyMessengerTest.cs" />
     <Compile Include="SyncServersTest.cs" />
+    <Compile Include="HourNotifierTests.cs" />
     <Compile Include="WebServerTests.cs" />
   </ItemGroup>
   <ItemGroup>

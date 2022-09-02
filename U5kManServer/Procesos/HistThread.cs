@@ -146,25 +146,8 @@ namespace U5kManServer
                             _init = Init();
                         else
                         {
-#if _HV00_
-                            lock (_incidencias)
-                            {
-                                if (U5kManService._Master == true)
-                                {
-                                    SupervisaCambioDeDia();
-                                }
-                                
-                                if (_incidencias.Count > 0)
-                                {
-                                    U5kIncidencia inci = _incidencias.Dequeue();
-                                    StoreInci(inci);
-                                }
-                            }
-#else
                             if (U5kManService._Master == true)
                             {
-                                SupervisaCambioDeDia();
-
                                 U5kIncidencia inci = null;
                                 lock (_incidencias)
                                 {
@@ -178,7 +161,6 @@ namespace U5kManServer
                                     StoreInci(inci);
                                 }
                             }
-#endif
                         }
                     }
                     catch (Exception x)
@@ -265,41 +247,6 @@ namespace U5kManServer
         public static string[] strInci2Descr(string strInci)
         {
             return strInci.Split(new string[] { ">: " }, StringSplitOptions.None);
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        void SupervisaCambioDeDia()
-        {
-            if (_hoy.Day != DateTime.Today.Day)
-            {
-                _hoy = DateTime.Today;
-#if _HV00_
-                _bdt.SupervisaTablaIncidencia(U5kManService.cfgSettings/* Properties.u5kManServer.Default*/.DiasEnHistorico);
-                /** Genero Incidencia Cambio de Dia */
-                U5kIncidencia tinci = new U5kIncidencia()
-                {
-                    fecha = DateTime.Now + new TimeSpan(0, 1, 0),             // Añado un minuto para evitar problemas de filtro en 00:00:00
-                    id = (int)eIncidencias.IGRL_CAMBIO_DE_DIA,
-                    tipo = (int)eTiposInci.TEH_SISTEMA,
-                    idhw = "SPV",
-                    sistema = Properties.u5kManServer.Default.stringSistema,
-                    desc = string.Format(_inciDescr.Where(rr => rr.id == (int)eIncidencias.IGRL_CAMBIO_DE_DIA).First().strformat),
-                    scv = 0,
-                    reconocida = DateTime.MinValue
-                };
-                _incidencias.Enqueue(tinci);
-#else
-                RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
-                    eIncidencias.IGRL_CAMBIO_DE_DIA, eTiposInci.TEH_SISTEMA, "SPV",
-                    new object[] { });
-
-                long borrados = _bdt.SupervisaTablaIncidencia(U5kManService.cfgSettings.DiasEnHistorico);
-                RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
-                    eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, "SPV",
-                    new object[] {"Supervision Tabla Historicos", borrados, "Registros Eliminados" });
-#endif
-            }
         }
         /// <summary>
         /// 
