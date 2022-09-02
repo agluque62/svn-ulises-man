@@ -10,6 +10,7 @@
     </ul>
 </section>
 <section id="_contenido">
+
     <div id="hisGestor" data-ng-show="ctrl.pagina()==0">
         <div id="fhis">
             <div class="row">
@@ -113,17 +114,17 @@
         <div data-ng-show="true" style="padding: 10px;">
             <div class="row">
                 <div class="col-md-11" style="padding-right: 4px;">
-                        <table id="history" class=" table-striped table-bordered" style="width:100%;">
-                            <thead>
-                                <tr>
-                                    <th translate>HST_TB3_01</th>
-                                    <th translate>HST_TB3_02</th>
-                                    <th translate>HST_TB3_03</th>
-                                    <th translate>HST_TB3_04</th>
-                                    <th translate>HST_TB3_05</th>
-                                </tr>
-                            </thead>
-                        </table>
+                    <table id="history" class=" table-striped table-bordered" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th translate>HST_TB3_01</th>
+                                <th translate>HST_TB3_02</th>
+                                <th translate>HST_TB3_03</th>
+                                <th translate>HST_TB3_04</th>
+                                <th translate>HST_TB3_05</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
                 <div class="col-md-1" style="padding-left: 2px;">
                     <button type="button"
@@ -153,9 +154,9 @@
                         <i translate>Excel</i>
                     </button>
                 </div>
+            </div>
+
         </div>
-
-
     </div>
 
     <div id="estGestor" data-ng-show="ctrl.pagina()==1">
@@ -181,9 +182,9 @@
                     <td>
                         <div class="input-group">
                             <select name="tpMat"
-                                ng-model="ctrl.ls.StsFilter().tpMat"
-                                class="form-control"
-                                ng-change="ctrl.OnTpMatChange()">
+                                    ng-model="ctrl.ls.StsFilter().tpMat"
+                                    class="form-control"
+                                    ng-change="ctrl.OnTpMatChange()">
                                 <option value="0" translate>HST_TB2_02</option>
                                 <option value="1" translate>HST_TB2_03</option>
                                 <option value="2" translate>Radios IP</option>
@@ -195,14 +196,14 @@
                     <td>
                         <div class="input-group">
                             <select name="Mat" ng-model="ctrl.ls.StsFilter().Mat" class="form-control"
-                                ng-options="obj.id as obj.id for obj in ctrl.est.mat">
+                                    ng-options="obj.id as obj.id for obj in ctrl.est.mat">
                             </select>
                         </div>
                     </td>
                     <td>
                         <button type="button"
-                            class="btn btn-default btnhis"
-                            ng-click="ctrl.getEstadistica()">
+                                class="btn btn-default btnhis"
+                                ng-click="ctrl.getEstadistica()">
                             <i translate>HST_BT1_01</i>
                         </button>
                     </td>
@@ -216,9 +217,9 @@
                 <div class="col-md-1" translate></div>
             </div>
             <div class="row" style="margin-bottom: 10px;">
-                <div class="col-md-3" ><input type="date" class="form-control" ng-model="ctrl.ls.StsFilter().dtDesde" /></div>
-                <div class="col-md-3" ><input type="date" class="form-control" ng-model="ctrl.ls.StsFilter().dtHasta" /></div>
-                <div class="col-md-2" >
+                <div class="col-md-3"><input type="date" class="form-control" ng-model="ctrl.ls.StsFilter().dtDesde" /></div>
+                <div class="col-md-3"><input type="date" class="form-control" ng-model="ctrl.ls.StsFilter().dtHasta" /></div>
+                <div class="col-md-2">
                     <select ng-model="ctrl.ls.StsFilter().tpMat" class="form-control" ng-change="ctrl.OnEstTpMatChange()">
                         <option value="0" translate>HST_TB2_02</option>
                         <option value="1" translate>HST_TB2_03</option>
@@ -227,7 +228,7 @@
                         <option value="4" translate>Grabadores</option>
                     </select>
                 </div>
-                <div class="col-md-2" >
+                <div class="col-md-2">
                     <select ng-model="ctrl.ls.StsFilter().Mat" class="form-control" ng-options="obj as obj for obj in ctrl.est.mat">
                     </select>
                 </div>
@@ -259,15 +260,15 @@
             </table>
             <div id="btest">
                 <button type="button"
-                    class="btn btn-default"
-                    ng-show="ctrl.est.lest.length > 0"
-                    ng-click="ctrl.clearest()">
+                        class="btn btn-default"
+                        ng-show="ctrl.est.lest.length > 0"
+                        ng-click="ctrl.clearest()">
                     <i translate>HST_BT1_02</i>
                 </button>
                 <button type="button"
-                    class="btn btn-default"
-                    ng-show="ctrl.est.lest.length > 0"
-                    ng-click="ctrl.toPDFest()">
+                        class="btn btn-default"
+                        ng-show="ctrl.est.lest.length > 0"
+                        ng-click="ctrl.toPDFest()">
                     <i translate>HST_BT1_03</i>
                 </button>
 
@@ -285,24 +286,24 @@
                 </div>
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-7" id="datepicker" >
+                        <div class="col-md-7" id="datepicker">
                             <i translate>Rango de Fechas</i>
                             <div class="input-group">
                                 <input class="form-control" type="text" id="daterange" style="font-size: 85%" />
                             </div>
-<!--                            <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>-->
+                            <!--                            <i class="glyphicon glyphicon-calendar fa fa-calendar"></i>-->
                         </div>
                         <div class="col-md-5">
                             <i translate>Limite Registros</i>
                             <div class="input-group col-xs-8">
-                            <select class="form-control" ng-model = "ctrl.ls.LogFilter().limit">
-                                <option value="1000" translate>1000</option>
-                                <option value="2000" translate>2000</option>
-                                <option value="3000" translate>3000</option>
-                                <option value="4000" translate>4000</option>
-                                <option value="5000" translate>5000</option>
-                            </select>
-                        </div>
+                                <select class="form-control" ng-model="ctrl.ls.LogFilter().limit">
+                                    <option value="1000" translate>1000</option>
+                                    <option value="2000" translate>2000</option>
+                                    <option value="3000" translate>3000</option>
+                                    <option value="4000" translate>4000</option>
+                                    <option value="5000" translate>5000</option>
+                                </select>
+                            </div>
                         </div>
 
                     </div>
@@ -329,16 +330,18 @@
                         <div class="col-md-5">
                             <i translate>HST_TB1_04</i>
                             <div class="input-group col-xs-8">
-                              <input type="text" class="form-control input-sm" ng-model="ctrl.ls.LogFilter().Mat" />
-                              <div class="dropdown input-group-btn">
-                                <button type="button" class="btn btn-default dropdown-toggle input-sm" 
-                                    data-toggle="dropdown" 
-                                    booaria-haspopup="true" aria-expanded="false"
-                                    ng-disabled="ctrl.mat.length==0"><span class="caret"></span></button>
-                                <ul class="dropdown-menu dropdown-menu-right" role="menu"">
-                                  <li ng-repeat="obj in ctrl.mat"><a href="" data-ng-click="ctrl.filmat(obj.id)">{{obj.id}}</a></li>
-                                </ul>        
-                              </div>
+                                <input type="text" class="form-control input-sm" ng-model="ctrl.ls.LogFilter().Mat" />
+                                <div class="dropdown input-group-btn">
+                                    <button type="button" class="btn btn-default dropdown-toggle input-sm"
+                                            data-toggle="dropdown"
+                                            booaria-haspopup="true" aria-expanded="false"
+                                            ng-disabled="ctrl.mat.length==0">
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-right" role="menu" ">
+                                        <li ng-repeat="obj in ctrl.mat"><a href="" data-ng-click="ctrl.filmat(obj.id)">{{obj.id}}</a></li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -347,14 +350,14 @@
                             <i translate>Eventos</i>
                             <div class="input-group">
                                 <select id="list_inci" name="Inci" ng-model="ctrl.ls.LogFilter().Inci" class="form-control"
-                                    ng-options="obj.id as obj.desc for obj in ctrl.inci" multiple>
+                                        ng-options="obj.id as obj.desc for obj in ctrl.inci" multiple>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-5">
                             <i translate>Contiene</i>
                             <div class="input-group col-xs-8">
-                                <input type="text"  class="form-control input-sm" ng-model="ctrl.ls.LogFilter().txt"</input>
+                                <input type="text" class="form-control input-sm" ng-model="ctrl.ls.LogFilter().txt"</input>
                             </div>
                         </div>
                     </div>
@@ -370,5 +373,6 @@
     <script src="./jsPDF/dist/jspdf.min.js"></script>
     <script type="text/javascript">
     </script>
+
 
 </section>
