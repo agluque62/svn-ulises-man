@@ -300,5 +300,26 @@ namespace UnitTesting
 
             return output;
         }
+        [TestMethod]
+        public void ThreadTesting()
+        {
+            Thread thread = new Thread(() =>
+            {
+                Task.Delay(TimeSpan.FromSeconds(3)).Wait();
+                throw new Exception("Internal exception");
+
+            })
+            { IsBackground = true };
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+            thread.Start();
+
+            Task.Delay(TimeSpan.FromSeconds(10)).Wait();
+            if (!thread.IsAlive)
+            {
+                thread.Start();
+            }
+            Task.Delay(TimeSpan.FromSeconds(10)).Wait();
+
+        }
     }
 }

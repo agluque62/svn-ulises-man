@@ -103,6 +103,7 @@ namespace U5kManServer
                             reconocida = DateTime.MinValue
                         };
 
+                        LogTrace<HistThread>($"Adding Inci=>{strTrcInci(tinci)}=>Trep = ({inciDesc.Trep})=>Pendientes: {_incidencias.Count}.");
                         if (_inciFilter.ToStore(tinci, inciDesc.Trep) == true)
                         {
                             _incidencias.Enqueue(tinci);
@@ -239,6 +240,7 @@ namespace U5kManServer
         {
             return string.Format("[{0:D4}]. {1,-8} > {2}", inci.id, inci.idhw, inci.desc);
         }
+        string strTrcInci(U5kIncidencia i) => $"id={i.id}|tipo={i.tipo}|idhw={i.idhw}|desc={i.desc}";
         /// <summary>
         /// 
         /// </summary>
@@ -273,7 +275,6 @@ namespace U5kManServer
             }
 #else
             bool _alarma = _inciDescr.Where(e => e.id == inci.id).First().alarm;
-            LogDebug<HistThread>(strDbgInci(inci)/*strInci(inci)*/);
             // Inserto en la BDT
             if (U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.GenerarHistoricos == true)
             {
@@ -281,12 +282,13 @@ namespace U5kManServer
                 if (_alarma)
                     U5kManService.AddInci(inci.fecha, strInciNoFecha(inci));
             }
+            LogDebug<HistThread>($"Stored => {strDbgInci(inci)}. Pendientes => {_incidencias.Count}.");
 #endif
         }
         /// <summary>
         /// 
         /// </summary>
-        class StoreFilterControl
+        public class StoreFilterControl
         {
             class StoreFilterData
             {

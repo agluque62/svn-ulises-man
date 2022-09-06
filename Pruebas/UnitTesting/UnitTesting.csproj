@@ -85,12 +85,13 @@
     <Compile Include="TinyMessengerTest.cs" />
     <Compile Include="SyncServersTest.cs" />
     <Compile Include="HourNotifierTests.cs" />
+    <Compile Include="RepeatedHistoricTests.cs" />
     <Compile Include="WebServerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <Content Include="NLog.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="NLog.xsd">
       <SubType>Designer</SubType>
