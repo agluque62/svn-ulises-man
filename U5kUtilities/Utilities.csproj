@@ -87,6 +87,7 @@
     <Compile Include="GeneralHelper.cs" />
     <Compile Include="HourNotifier.cs" />
     <Compile Include="HttpHelper.cs" />
+    <Compile Include="IgmpManager.cs" />
     <Compile Include="IPHelper.cs" />
     <Compile Include="JsonHelper.cs" />
     <Compile Include="LocalFileAppSettingsProvider.cs" />
