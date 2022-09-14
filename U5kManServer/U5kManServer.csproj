@@ -99,6 +99,7 @@
     <Compile Include="Properties\u5kManServer.cs" />
     <Compile Include="Services\CentralServicesMonitor.cs" />
     <Compile Include="Services\EventBus.cs" />
+    <Compile Include="Services\IgmpMonitor.cs" />
     <Compile Include="Services\PresenceDataService.cs">
       <SubType>Code</SubType>
     </Compile>

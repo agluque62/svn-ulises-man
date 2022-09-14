@@ -77,7 +77,7 @@
       <Value Profile="(Default)">365</Value>
     </Setting>
     <Setting Name="MiDireccionIP" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">127.0.0.1</Value>
+      <Value Profile="(Default)">11.21.94.2</Value>
     </Setting>
     <Setting Name="FiltroPOS" Type="System.String" Scope="Application">
       <Value Profile="(Default)">None</Value>
@@ -371,6 +371,9 @@
       <Value Profile="(Default)">30</Value>
     </Setting>
     <Setting Name="WebMaxSessions" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">2</Value>
+    </Setting>
+    <Setting Name="IgmpMinTimeout" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">2</Value>
     </Setting>
   </Settings>

@@ -125,7 +125,7 @@ namespace U5kManServer
 #if _HAY_NODEBOX__
                 _nbx_scan = new NbxSpv();
 #else
-                MonitorOfServices = new Services.CentralServicesMonitor(() =>                
+                MonitorOfServices = new Services.CentralServicesMonitor(() => 
                     {
                         NucleoGeneric.BaseCode.ConfigCultureSet();
                         return U5kManService._Master;
@@ -152,8 +152,11 @@ namespace U5kManServer
                 MonitorOfServices.Start();
 #endif
                 _ext_sup = new ExtEquSpvSpace.ExtEquSpv();
-
                 pabxService = new PabxItfService();
+
+                Services.IgmpMonitor.Start(Properties.u5kManServer.Default.MiDireccionIP,
+                    TimeSpan.FromMinutes(Properties.u5kManServer.Default.IgmpMinTimeout),
+                    () => U5kManService._Master);
             }
             catch (Exception x)
             {
@@ -751,6 +754,7 @@ namespace U5kManServer
 #if !_HAY_NODEBOX__
             MonitorOfServices.Dispose();
 #endif
+            Services.IgmpMonitor.Stop();
             Dispose();
             LogInfo<MainThread>("Finalizado...");
         }

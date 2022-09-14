@@ -182,7 +182,13 @@ namespace Utilities
         public bool Active { get; set; }
         public Exception Error { get; set; }
     }
-    public class IgmpManager : IDisposable
+    public interface IIgmpManager : IDisposable 
+    {
+        event EventHandler<IgmpMasterPresenceArgs> IgmpMasterPresence;
+        void Start(IRawSocket rs, TimeSpan timeout);
+        List<string> Queriers { get; }
+    }
+    public class IgmpManager : IIgmpManager
     {
         public event EventHandler<IgmpMasterPresenceArgs> IgmpMasterPresence;
         public void Start(IRawSocket rawSocket2Igmp, TimeSpan timeout)
@@ -269,7 +275,7 @@ namespace Utilities
         }
         public override string ToString()
         {
-            return string.Join(", ", Queriers.ToArray());
+            return string.Join("##", Queriers.ToArray());
         }
         private Dictionary<IPAddress, DateTime> IgmpMasterActives { get; set; } = new Dictionary<IPAddress, DateTime>();
         IRawSocket RawSocket { get; set; } = null;
