@@ -71,6 +71,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="IgmpTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="LocalConfigInDbUnitTest.cs" />
     <Compile Include="JSonParsingTest.cs" />
