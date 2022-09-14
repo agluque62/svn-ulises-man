@@ -140,5 +140,6 @@
 	"lang": "es",
 	"rd_status": 2,
 	"tf_status": 2,
+	"igmp_status": "",
 	"ServiceSite": "NUCLEODF-VM01"
 }

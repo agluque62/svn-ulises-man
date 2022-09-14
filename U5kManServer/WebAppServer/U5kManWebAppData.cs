@@ -192,6 +192,7 @@ namespace U5kManServer.WebAppServer
         public string lang { get; set; }
         public int rd_status { get; set; }
         public int tf_status { get; set; }
+        public string igmp_status { get; set; }
 
         /// <summary>
         /// 
@@ -393,8 +394,8 @@ namespace U5kManServer.WebAppServer
 
                     var tfs = Services.CentralServicesMonitor.Monitor.GlobalPhoneStatus;
                     tf_status = tfs == std.Ok ? 0 /** OK */ : tfs==std.Aviso ? 1 /** DEG */ : 2 /** EMG */;
-
 #endif
+                    igmp_status = Services.IgmpMonitor.Status;
                 }
             }
         }

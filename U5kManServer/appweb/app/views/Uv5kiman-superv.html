@@ -258,7 +258,19 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div class="row" style="margin-bottom: 4px; padding: 5px 2px 5px 2px; border: 1px solid Gainsboro; border-radius: 3px 3px;">
+            <div class="col-md-1">
+                <button style="float:left;" class="{{ctrl.infoButton(ctrl.igmp_status().status).class}}"
+                         bs-popover
+                         data-content="{{ctrl.igmp_detail()}}"
+                         ng-click="ctrl.popover_click($event)"
+                        >IG</button>
+            </div>
+            <div class="col-md-10"></div>
+            <div class="col-md-1">
+                <button style="float:right; margin-left: 2px;" class="{{ctrl.infoButton(ctrl.std.tf_status).class}}">T</button>
+                <button style="float:right; margin-left: 2px;" class="{{ctrl.infoButton(ctrl.std.rd_status).class}}">R</button>
+            </div>
         </div>
     </div>
     <!-- Pantalla de Estado de Operadores -->

@@ -1385,3 +1385,16 @@ div.dataTables_length {
     margin-top: 4px;
     margin-bottom: 4px;
 }
+
+#igpmd {
+    font-size: 90%;
+    margin-left: 10%;
+    width:80%;
+}
+
+    #igpmd td {
+        text-align: center;
+    }
+    #igpmd th {
+        text-align: center;
+    }

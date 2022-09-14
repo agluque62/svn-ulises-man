@@ -512,60 +512,60 @@ angular.module("Uv5kiman")
 
         ctrl.ext_equ_reset = () => ctrl.ext_selected_eq = ["Todos"];
 
-    function ext_filter_type(item) {
-        return (ctrl.ext_selected_type == "0" || ctrl.ext_selected_type == item.tipo);
-    }
+        function ext_filter_type(item) {
+            return (ctrl.ext_selected_type == "0" || ctrl.ext_selected_type == item.tipo);
+        }
 
-    function ext_filter_equ(item) {
-        return (ctrl.ext_selected_eq.includes("Todos") && ext_filter_type(item)) || ctrl.ext_selected_eq.includes(item.equipo);
-    }
+        function ext_filter_equ(item) {
+            return (ctrl.ext_selected_eq.includes("Todos") && ext_filter_type(item)) || ctrl.ext_selected_eq.includes(item.equipo);
+        }
 
-    /** */
-    function get_exteq() {
-        $serv.exteq_get().then(function (response) {
-            ctrl.ext_res = response.data.lista;
-        }, function (response) {
+        /** */
+        function get_exteq() {
+            $serv.exteq_get().then(function (response) {
+                ctrl.ext_res = response.data.lista;
+            }, function (response) {
                 console.log(response);
-        });
-    }
-
-    //** Retorna la Imagen de Equipo Externo */
-    ctrl.exteq_img = function (item) {
-        if (item.tipo == 3)
-            return "./images/voiptel.jpg";
-        else if (item.tipo == 5)
-            return "./images/audio-recorder.jpg";
-        else if (item.tipo == 2) {
-            if (item.modelo == 1000) {
-                return item.txrx == 4 ? "./images/radiorh_rx.jpg" : item.txrx == 5 ? "./images/radiorh.jpg" : "./images/radiorh.jpg";
-            }
-            else if (item.modelo == 1001) {
-                return item.txrx == 4 ? "./images/radiojt_rx.jpg" : item.txrx == 5 ? "./images/radiojt.jpg" : "./images/radiojt.jpg";
-            }
-            else {
-                return item.txrx == 4 ? "./images/radio_rx.jpg" : item.txrx == 5 ? "./images/radio.jpg" : "./images/radio.jpg";
-            }
+            });
         }
-        return "./images/TifxGris.png";
-    };
 
-    /* */
-    ctrl.exteq_detail = function (item) {
-        var detail = "<table>";
-        detail += "<tr class='small'>" +
-            "<td style='width: 80%'>" + "<strong>Equipo: " + item.equipo + " en (" + item.ip1 + ")</strong></td>" +
-            //"<td class='hyp-none'>" + item.ip1 + "</td>" +
-            "<td>" + (item.lan1 == 1 ? $lserv.translate('Ok') : ("<i>" + $lserv.translate('Error') + "</i>")) + "</td>" +
-            "</tr > ";
-        if (item.tipo != 5) {
-            /** Los grabadores no tienen agente SIP */
-            detail += "<tr class=\"small\"><td>" + "<strong>SIP</strong>" + "</td><td class=\"hyp-none\">" + item.uri + "</td><td>" +
-                (item.std_sip == 1 ? $lserv.translate('SCT_MSG_00')/*"Ok"*/ :
-                    item.std_sip == 4 ? /*$lserv.translate('NI')*//*"Ok"*/ item.lor :
-                        ("<i>" + $lserv.translate('Error')/*"Desconectada"*/ + "</i>")) + "</td></tr>";
-        }
-        detail += "</table>";
-        return detail;
+        //** Retorna la Imagen de Equipo Externo */
+        ctrl.exteq_img = function (item) {
+            if (item.tipo == 3)
+                return "./images/voiptel.jpg";
+            else if (item.tipo == 5)
+                return "./images/audio-recorder.jpg";
+            else if (item.tipo == 2) {
+                if (item.modelo == 1000) {
+                    return item.txrx == 4 ? "./images/radiorh_rx.jpg" : item.txrx == 5 ? "./images/radiorh.jpg" : "./images/radiorh.jpg";
+                }
+                else if (item.modelo == 1001) {
+                    return item.txrx == 4 ? "./images/radiojt_rx.jpg" : item.txrx == 5 ? "./images/radiojt.jpg" : "./images/radiojt.jpg";
+                }
+                else {
+                    return item.txrx == 4 ? "./images/radio_rx.jpg" : item.txrx == 5 ? "./images/radio.jpg" : "./images/radio.jpg";
+                }
+            }
+            return "./images/TifxGris.png";
+        };
+
+        /* */
+        ctrl.exteq_detail = function (item) {
+            var detail = "<table>";
+            detail += "<tr class='small'>" +
+                "<td style='width: 80%'>" + "<strong>Equipo: " + item.equipo + " en (" + item.ip1 + ")</strong></td>" +
+                //"<td class='hyp-none'>" + item.ip1 + "</td>" +
+                "<td>" + (item.lan1 == 1 ? $lserv.translate('Ok') : ("<i>" + $lserv.translate('Error') + "</i>")) + "</td>" +
+                "</tr > ";
+            if (item.tipo != 5) {
+                /** Los grabadores no tienen agente SIP */
+                detail += "<tr class=\"small\"><td>" + "<strong>SIP</strong>" + "</td><td class=\"hyp-none\">" + item.uri + "</td><td>" +
+                    (item.std_sip == 1 ? $lserv.translate('SCT_MSG_00')/*"Ok"*/ :
+                        item.std_sip == 4 ? /*$lserv.translate('NI')*//*"Ok"*/ item.lor :
+                            ("<i>" + $lserv.translate('Error')/*"Desconectada"*/ + "</i>")) + "</td></tr>";
+            }
+            detail += "</table>";
+            return detail;
         };
 
         ctrl.ext_res_detail = (i) => {
@@ -594,29 +594,29 @@ angular.module("Uv5kiman")
 
         function ext_detail_eq_id(i) { return i.equipo + ' (' + i.ip1 + ')'; }
         function ext_detail_eq_st(i) { return i.lan1 == 1 ? $lserv.translate("Ok") : ("<i>" + $lserv.translate('Error') + "</i>"); }
-        function ext_detail_rs_id(i) { return  i.uri; }
+        function ext_detail_rs_id(i) { return i.uri; }
         function ext_detail_rs_st(i) {
             return i.std_sip == 1 ? $lserv.translate('Ok') :
                 i.std_sip == 4 ? i.lor :
                     "<i>" + $lserv.translate('Error') + "</i>";
         }
-    //** */
-    ctrl.exteq_std_class = function (item) {
-        if (item == undefined || item.std > 6 || item.std_sip > 6)
-            return stdc_class[stdc.NoInfo];
-        if (item.std == stdc.Ok) {
-            if (item.std_sip == stdc.Ok)
-                return stdc_class[stdc.Ok];
-            else if (item.std_sip == stdc.Aviso)
-                return stdc_class[stdc.Aviso];
-            else
-                return stdc_class[stdc.Error];
-        }
-        return stdc_class[item.std];
-    };
+        //** */
+        ctrl.exteq_std_class = function (item) {
+            if (item == undefined || item.std > 6 || item.std_sip > 6)
+                return stdc_class[stdc.NoInfo];
+            if (item.std == stdc.Ok) {
+                if (item.std_sip == stdc.Ok)
+                    return stdc_class[stdc.Ok];
+                else if (item.std_sip == stdc.Aviso)
+                    return stdc_class[stdc.Aviso];
+                else
+                    return stdc_class[stdc.Error];
+            }
+            return stdc_class[item.std];
+        };
 
 
-    /** Servicios Pagina de Estado */
+        /** Servicios Pagina de Estado */
         /** Retorna el Detalle de un operador 
             Texto HTML para POPOVER
         */
@@ -645,143 +645,171 @@ angular.module("Uv5kiman")
             }
         };
 
-        /** */
-    function get_std() {
-        /* Obtener el estado del servidor... */
-        $serv.stdgen_get().then(function (response) {
-            ctrl.std = response.data;
-            // console.log(ctrl.std);
-        }
-        , function (response) {
-            console.log(response);
-        });
-    }
-
-    /** */
-    function get_cwps() {
-        $serv.cwps_get().then(function (response) {
-            var sortedData = Enumerable.from(response.data.lista)
-                .orderBy("$.name")
-                .toArray();
-            if (new_cwps(sortedData)) {                
-                ctrl.cwps = sortedData;
-            }
-            // console.log(ctrl.cwps);
-        }
-        , function (response) {
-            console.log(response);
-        });
-    }
-
-    /** */
-    function get_gws() {
-        $serv.gws_get().then(function (response) {
-		
-            // ctrl.gws = response.data.lista;
-            ctrl.gws = response.data.lista.sort(function(a,b){
-				return a.name > b.name ? 1 : a.name < b.name ? -1 : 0;
-			});
-            // console.log(ctrl.gws);
-            /** Para el tipo dualidad de pasarelas */
-            localStorage.GwDualityType = response.data.gdt;
-        }
-        , function (response) {
-            console.log(response);
-        });        
-    }
-
-    function get_gwdata(gw, notifyOk) {
-        ctrl.MonitoredGw = gw;
-        $serv.gw_detail_get(gw).then(function (response) {
-            ctrl.gwdata = response.data;
-            ctrl.itfs = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].recs :
-                ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].recs : ctrl.gwdata.cpus[1].recs;
-            ctrl.tars = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].tars :
-                ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].tars : ctrl.gwdata.cpus[1].tars;
-
-            ctrl.gwgen = [];
-            ctrl.gwgen[0] = {
-                tipo: ctrl.gwdata.tipo,
-                fa: ctrl.gwdata.cpus[0].fa,            // ctrl.gwdata.fa,
-                cpu: 0,
-                ip: ctrl.gwdata.cpus[0].ip,
-                lan1: ctrl.gwdata.cpus[0].lan1,
-                lan2: ctrl.gwdata.cpus[0].lan2,
-                sipMod: ctrl.gwdata.cpus[0].sipMod,
-                cfgMod: ctrl.gwdata.cpus[0].cfgMod,
-                snmpMod: ctrl.gwdata.cpus[0].snmpMod,
-                ntp: ctrl.gwdata.cpus[0].ntp
+        /** Servicios de barra de estado */
+        ctrl.infoButton = (std) => {
+            var ret = {
+                class: "btn btn-xs " +
+                    (std == undefined ? "btn-default" :
+                    std == 0 ? "btn-success" :
+                    std == 1 ? "btn-warning" :
+                    std == 2 ? "btn-danger" : "btn-danger")
             };
-            if (ctrl.gwdata.tipo != 0) {
-                ctrl.gwgen[1] = {
-                    tipo: "",
-                    fa: ctrl.gwdata.cpus[1].fa,    // "",
-                    cpu: 1,
-                    ip: ctrl.gwdata.cpus[1].ip,
-                    lan1: ctrl.gwdata.cpus[1].lan1,
-                    lan2: ctrl.gwdata.cpus[1].lan2,
-                    sipMod: ctrl.gwdata.cpus[1].sipMod,
-                    cfgMod: ctrl.gwdata.cpus[1].cfgMod,
-                    snmpMod: ctrl.gwdata.cpus[1].snmpMod,
-                    ntp: ctrl.gwdata.cpus[1].ntp
-                };
+            return ret;
+        };
+        ctrl.igmp_status = () => {
+            return { status: ctrl.std.igmp_status != "" ? 0 : 1 };
+        };
+        ctrl.igmp_detail = () => {
+            var detail = "<table id='igpmd' class='table table-bordered'>";
+            detail += ("<tr><th>" + "IGMP Querier" + "</th></tr>");
+            if (ctrl.std.igmp_status == 0) detail += ("<tr><td>" + $lserv.translate('No Detectado') + "</td></tr>");
+            else {
+                var queriers = ctrl.std.igmp_status.split("##");
+                queriers.forEach((querier) => {
+                    detail += ("<tr><td>" + querier + "</td></tr>");
+                });
             }
-            if (notifyOk) notifyOk();
-            // console.log(response.data);
+            detail += "</table>";
+            return detail;
+        };
+
+        /** */
+        function get_std() {
+            /* Obtener el estado del servidor... */
+            $serv.stdgen_get().then(function (response) {
+                ctrl.std = response.data;
+                // console.log(ctrl.std);
+            }
+                , function (response) {
+                    console.log(response);
+                });
         }
-            , function (response) {
-                console.log(response);
-                alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
-            });
 
-    }
-
-    /** */
-    function get_pbxab() {
-        $serv.pbxab_get().then(function (response) {
-            ctrl.pbxab = response.data.lista;
-            // console.log(ctrl.pbxab);
+        /** */
+        function get_cwps() {
+            $serv.cwps_get().then(function (response) {
+                var sortedData = Enumerable.from(response.data.lista)
+                    .orderBy("$.name")
+                    .toArray();
+                if (new_cwps(sortedData)) {
+                    ctrl.cwps = sortedData;
+                }
+                // console.log(ctrl.cwps);
+            }
+                , function (response) {
+                    console.log(response);
+                });
         }
-        , function (response) {
-            console.log(response);
-        });                
-    }
 
-    //** TODO... */
-    function new_cwps(data) {
-        // return data.length != ctrl.cwps.length;
-        return true;
-    }
+        /** */
+        function get_gws() {
+            $serv.gws_get().then(function (response) {
 
-    /** Funcion Periodica del controlador */
-    var timer = $interval(function () {
-        if (ctrl.pagina()==0 || ctrl.pagina()==3)
+                // ctrl.gws = response.data.lista;
+                ctrl.gws = response.data.lista.sort(function (a, b) {
+                    return a.name > b.name ? 1 : a.name < b.name ? -1 : 0;
+                });
+                // console.log(ctrl.gws);
+                /** Para el tipo dualidad de pasarelas */
+                localStorage.GwDualityType = response.data.gdt;
+            }
+                , function (response) {
+                    console.log(response);
+                });
+        }
+
+        function get_gwdata(gw, notifyOk) {
+            ctrl.MonitoredGw = gw;
+            $serv.gw_detail_get(gw).then(function (response) {
+                ctrl.gwdata = response.data;
+                ctrl.itfs = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].recs :
+                    ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].recs : ctrl.gwdata.cpus[1].recs;
+                ctrl.tars = ctrl.gwdata.tipo == 0 ? ctrl.gwdata.cpus[0].tars :
+                    ctrl.gwdata.main == 0 ? ctrl.gwdata.cpus[0].tars : ctrl.gwdata.cpus[1].tars;
+
+                ctrl.gwgen = [];
+                ctrl.gwgen[0] = {
+                    tipo: ctrl.gwdata.tipo,
+                    fa: ctrl.gwdata.cpus[0].fa,            // ctrl.gwdata.fa,
+                    cpu: 0,
+                    ip: ctrl.gwdata.cpus[0].ip,
+                    lan1: ctrl.gwdata.cpus[0].lan1,
+                    lan2: ctrl.gwdata.cpus[0].lan2,
+                    sipMod: ctrl.gwdata.cpus[0].sipMod,
+                    cfgMod: ctrl.gwdata.cpus[0].cfgMod,
+                    snmpMod: ctrl.gwdata.cpus[0].snmpMod,
+                    ntp: ctrl.gwdata.cpus[0].ntp
+                };
+                if (ctrl.gwdata.tipo != 0) {
+                    ctrl.gwgen[1] = {
+                        tipo: "",
+                        fa: ctrl.gwdata.cpus[1].fa,    // "",
+                        cpu: 1,
+                        ip: ctrl.gwdata.cpus[1].ip,
+                        lan1: ctrl.gwdata.cpus[1].lan1,
+                        lan2: ctrl.gwdata.cpus[1].lan2,
+                        sipMod: ctrl.gwdata.cpus[1].sipMod,
+                        cfgMod: ctrl.gwdata.cpus[1].cfgMod,
+                        snmpMod: ctrl.gwdata.cpus[1].snmpMod,
+                        ntp: ctrl.gwdata.cpus[1].ntp
+                    };
+                }
+                if (notifyOk) notifyOk();
+                // console.log(response.data);
+            }
+                , function (response) {
+                    console.log(response);
+                    alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
+                });
+
+        }
+
+        /** */
+        function get_pbxab() {
+            $serv.pbxab_get().then(function (response) {
+                ctrl.pbxab = response.data.lista;
+                // console.log(ctrl.pbxab);
+            }
+                , function (response) {
+                    console.log(response);
+                });
+        }
+
+        //** TODO... */
+        function new_cwps(data) {
+            // return data.length != ctrl.cwps.length;
+            return true;
+        }
+
+        /** Funcion Periodica del controlador */
+        var timer = $interval(function () {
+            if (ctrl.pagina() == 0 || ctrl.pagina() == 3)
+                get_std();
+            else if (ctrl.pagina() == 1)
+                get_cwps();
+            else if (ctrl.pagina() == 2)
+                get_gws();
+            else if (ctrl.pagina() == 4)
+                get_pbxab();
+            else if (ctrl.pagina() == 5)
+                get_exteq();
+        }, pollingTime);
+
+        /** */
+        $scope.$on('$viewContentLoaded', function () {
+            //call it here
             get_std();
-        else if (ctrl.pagina()==1)
             get_cwps();
-        else if (ctrl.pagina()==2)
             get_gws();
-        else if (ctrl.pagina()==4)
             get_pbxab();
-        else if (ctrl.pagina()==5)
             get_exteq();
-    }, pollingTime);
+        });
 
-    /** */
-    $scope.$on('$viewContentLoaded', function() {
-        //call it here
-        get_std();
-        get_cwps();
-        get_gws();
-        get_pbxab();
-        get_exteq();
+        /** Salida del Controlador. Borrado de Variables */
+        $scope.$on("$destroy", function () {
+            $interval.cancel(timer);
+        });
+
     });
-
-    /** Salida del Controlador. Borrado de Variables */
-    $scope.$on("$destroy", function () {
-        $interval.cancel(timer);
-    });
-
-});
 
 
