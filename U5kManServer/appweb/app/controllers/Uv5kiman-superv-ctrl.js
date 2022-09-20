@@ -78,8 +78,6 @@ angular.module("Uv5kiman")
 
         //** Retorno el Detalle de los Nodebox Presentes */
         ctrl.nbx_detail = function () {
-            //ctrl.std.nbxs = [{ name: "192.168.0.10", modo: "Slave" }, { name: "192.168.0.11", modo: "Master" }, { name: "192.168.0.12", modo: "Slave" }];
-            //ctrl.std.nbx.url = "http://www.google.es";
             if (ctrl.std.nbxs != undefined &&
                 ctrl.std.nbxs.length > 0) {
                 var detail = "<table>";
@@ -132,31 +130,6 @@ angular.module("Uv5kiman")
         };
 
         /** Para el estado especifico de los NBX */
-        //ctrl.nbx_std_class = function (nbx) {
-        //    return nbx.modo == "Master" ? stdc_class[stdc.Ok] :
-        //        nbx.modo == "Slave" ? stdc_class[stdc.Aviso] : stdc_class[stdc.Error];
-        //};
-
-        ///** Para la info adicional de un NBX */
-        //ctrl.nbx_info = function (nbx) {
-        //    var info = sprintf(
-        //        "<table class='nbxtb'>" +
-        //        "<tr><td>CFG</td><td class='res'>%1$s</td><td>Radio</td><td class='res'>%2$s</td></tr>" +
-        //        "<tr><td>TIFX</td><td class='res'>%3$s</td><td>Presencia</td><td class='res'>%4$s</td></tr>" +
-        //        "</table>",
-        //        nbx_detail_std(nbx.CfgService),
-        //        nbx_detail_std(nbx.RadioService),
-        //        nbx_detail_std(nbx.TifxService),
-        //        nbx_detail_std(nbx.PresenceService));
-        //    return info;
-        //};
-
-        //function nbx_detail_std(std) {
-        //    return std == 0 ? $lserv.translate('Slave') :
-        //        std == 1 ? $lserv.translate('Master') :
-        //        std == 2 ? $lserv.translate('Stopped') : $lserv.translate('Error');
-        //}
-
         /** Nuevas funciones para el NBX SPLIT */
         ctrl.nbx_splitted_enable = nbx_splitted;
         ctrl.nbx_radio_std_class = function () {
@@ -347,10 +320,6 @@ angular.module("Uv5kiman")
 
         ctrl.gw_img = function (item) {
 
-            //return item.tipo==0 ? "./images/gw-tipo0.png" :
-            //    item.tipo == 1 ? "./images/gw-tipo1.png" : 
-            //    item.tipo == 2 ? "./images/gw-tipo2.png" : "./images/gwoff.png";
-
             if (item.tipo == 0) {
                 return item.std != 0 ? "./images/gw-tipo0.png" : "./images/gw-tipo0-1.png";
             }
@@ -452,15 +421,6 @@ angular.module("Uv5kiman")
         //** Mando de Control P/R de Pasarela */
         ctrl.gw_control_pr = function (gw) {
 
-            //if (confirm($lserv.translate('SCT_MSG_10')/*"¿Desea ejecutar una conmutacion P/R en la Pasarela "*/ + gw.name + "?") == true) {
-            //    $serv.gw_pr_change(gw).then(function (response) {
-            //        alertify.success($lserv.translate('SCT_MSG_11')/*"Operacion Efectuada Correctamente..."*/)
-            //    }
-            //    , function (response) {
-            //        console.log(response);
-            //        alertify.error($lserv.translate('SCT_MSG_09')/*"Error Comunicaciones. Mire Log Consola..."*/);
-            //    });
-            //}
             var ChangeAvailable = (gw.cpu0 == 1 && gw.cpu1 == 2) || (gw.cpu0 == 2 && gw.cpu1 == 1);
             if (ChangeAvailable == true) {
                 alertify.confirm($lserv.translate('SCT_MSG_10')/*"¿Desea ejecutar una conmutacion P/R en la Pasarela "*/ + gw.name + "?",
@@ -485,10 +445,10 @@ angular.module("Uv5kiman")
 
         /** Gestion de Equipos Externos */
         ctrl.ext_res = [];                          // Recursos Externos.
-        ctrl.ext_selected_eq = ["Todos"];
         ctrl.ext_selected_type = "0";
+        setTimeout(() => ctrl.ext_selected_eq = [ctrl.translate("Todos")], 250);    // Al depender del idioma, hay que retrasar la inicializacion.
 
-        ctrl.ext_equ = () => ["Todos"].concat(      // Lista de Equipos que se presentan,
+        ctrl.ext_equ = () => [ctrl.translate("Todos")].concat(      // Lista de Equipos que se presentan,
             Enumerable.from(ctrl.ext_res)
                 .where(function (item) {
                     return ext_filter_type(item);
@@ -510,14 +470,14 @@ angular.module("Uv5kiman")
             .select('$.name')
             .toArray();
 
-        ctrl.ext_equ_reset = () => ctrl.ext_selected_eq = ["Todos"];
+        ctrl.ext_equ_reset = () => ctrl.ext_selected_eq = [ctrl.translate("Todos")];
 
         function ext_filter_type(item) {
             return (ctrl.ext_selected_type == "0" || ctrl.ext_selected_type == item.tipo);
         }
 
         function ext_filter_equ(item) {
-            return (ctrl.ext_selected_eq.includes("Todos") && ext_filter_type(item)) || ctrl.ext_selected_eq.includes(item.equipo);
+            return (ctrl.ext_selected_eq.includes(ctrl.translate("Todos")) && ext_filter_type(item)) || ctrl.ext_selected_eq.includes(item.equipo);
         }
 
         /** */
@@ -657,32 +617,31 @@ angular.module("Uv5kiman")
             return ret;
         };
         ctrl.igmp_status = () => {
-            return { status: ctrl.std.igmp_status != "" ? 0 : 1 };
+            if (ctrl.std.hasOwnProperty('igmp_status')) {
+                return { status: ctrl.std.igmp_status != "" ? 0 : 1 };
+            }
+            return { status: 2 };
         };
         ctrl.igmp_detail = () => {
-            var detail = "<table id='igpmd' class='table table-bordered'>";
-            detail += ("<tr><th>" + "IGMP Querier" + "</th></tr>");
-            if (ctrl.std.igmp_status == 0) detail += ("<tr><td>" + $lserv.translate('No Detectado') + "</td></tr>");
-            else {
-                var queriers = ctrl.std.igmp_status.split("##");
-                queriers.forEach((querier) => {
-                    detail += ("<tr><td>" + querier + "</td></tr>");
-                });
+            if (ctrl.std.hasOwnProperty('igmp_status')) {
+                var detail = "<table id='igpmd' class='table table-bordered'>";
+                detail += ("<tr><th>" + "IGMP Querier" + "</th></tr>");
+                if (ctrl.std.igmp_status == 0) detail += ("<tr><td>" + $lserv.translate('No Detectado') + "</td></tr>");
+                else {
+                    var queriers = ctrl.std.igmp_status.split("##");
+                    queriers.forEach((querier) => {
+                        detail += ("<tr><td>" + querier + "</td></tr>");
+                    });
+                }
+                detail += "</table>";
+                return detail;
             }
-            detail += "</table>";
-            return detail;
+            return "<p translate>Error: no existe el campo de informacion IGMP</p>";
         };
 
         /** */
         function get_std() {
-            /* Obtener el estado del servidor... */
-            $serv.stdgen_get().then(function (response) {
-                ctrl.std = response.data;
-                // console.log(ctrl.std);
-            }
-                , function (response) {
-                    console.log(response);
-                });
+            ctrl.std = $lserv.GlobalStd();
         }
 
         /** */
@@ -798,11 +757,13 @@ angular.module("Uv5kiman")
         /** */
         $scope.$on('$viewContentLoaded', function () {
             //call it here
-            get_std();
-            get_cwps();
-            get_gws();
-            get_pbxab();
-            get_exteq();
+            setTimeout(() => {
+                get_std();
+                get_cwps();
+                get_gws();
+                get_pbxab();
+                get_exteq();
+            }, 200);
         });
 
         /** Salida del Controlador. Borrado de Variables */

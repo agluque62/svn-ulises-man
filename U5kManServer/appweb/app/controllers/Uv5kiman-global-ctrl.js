@@ -3,19 +3,15 @@ angular.module("Uv5kiman")
     .controller("uv5kiGlobalCtrl", function ($scope, $interval, $location, $translate, $serv, $lserv) {
         /** Inicializacion */
         var timetoinci = 0;
+        var firstLoad = true;
         var ctrl = this;
         ctrl.logged = null;
+        ctrl.translate = $lserv.translate;
 
         ctrl.pagina = function (pagina) {
             var menu = $lserv.Menu(pagina);
             return menu ? menu : 0;
         };
-
-        /** Lista de Incidencias */
-        ctrl.listainci = [];
-        ctrl.dlistainci = [].concat(ctrl.listainci);
-        ctrl.HashCode = 0;
-        load_inci();
 
         ctrl.date = (new Date()).toLocaleDateString();
         ctrl.hora = (new Date()).toLocaleTimeString();
@@ -23,10 +19,6 @@ angular.module("Uv5kiman")
         //** */
         ctrl.user = function () {
             return $lserv.logged_user();
-        };
-
-        ctrl.showExceptSpv = () => {
-            return ctrl.listainci.length > 0 && $lserv.user_access(['Spv']);
         };
 
         //** */
@@ -38,7 +30,8 @@ angular.module("Uv5kiman")
                 alertify.confirm($lserv.translate('GCT_MSG_00') /*"¿ Desea reconocer la incidencia: " */ + incidencia.inci + "?",
                     function () {
                         $serv.listinci_rec({ user: ctrl.user(), inci: incidencia });
-                        load_inci();
+                        //load_inci();
+                        timetoinci = InciPoll;
                     },
                     function () {
                         alertify.message($lserv.translate("Operacion Cancelada"));
@@ -54,11 +47,11 @@ angular.module("Uv5kiman")
         ctrl.reconoce_todas = function () {
             alertify.confirm($lserv.translate("Desea Reconocer todas las Incidencias ?"),
                 function () {
-                    ctrl.listainci.forEach(function (inci, index) {
+                    var data = InciTable.rows().data().toArray();
+                    data.forEach(function (inci, index) {
                         ctrl.reconoce(inci, false);
                     });
-
-                    load_inci();
+                    timetoinci = InciPoll;
                 },
                 function () {
                     alertify.message($lserv.translate("Operacion Cancelada"));
@@ -74,11 +67,6 @@ angular.module("Uv5kiman")
         /** */
         ctrl.manual = function () {
             window.open("/doc/Manual_de_Usuario.htm", "_blank");
-        };
-
-        //** */
-        ctrl.inci_desc = function (desc) {
-            return desc;
         };
 
         /** */
@@ -207,7 +195,6 @@ angular.module("Uv5kiman")
 
         ctrl.SoundImg = function () {
             var ret = $lserv.Sound() ? "images/speakeron.png" : "images/speakeroff.png";
-            //console.log(ret);
             return ret;
         };
 
@@ -229,6 +216,95 @@ angular.module("Uv5kiman")
             $serv.click();
         };
 
+        /** Nueva tabla de Incidencias */
+        var RemoteData = Simulate ? "/simulate/listinci.json" : "/listinci";
+        var InciTable = null;
+        function InciTableInit() {
+            var CfgData = {
+                ajax: {
+                    url: RemoteData,
+                    dataSrc: "lista"
+                },
+                autoWidth: false,
+                pageLength: 4,
+                ordering: false,
+                columns: [
+                    { "title": $lserv.translate('INDEX_INCI_FECHA'), "data": "time", "width": "10%", "class": "text-left", "render": (data) => data },
+                    { "title": $lserv.translate('INDEX_INCI_DESCRIPCION'), "data": "inci", "width": "80%", "class": "text-left", "render": (data) => data },
+                    {
+                        "title": $lserv.translate('INDEX_INCI_RECONOCER'), "width": "10%", "class": "text-left",
+                        "render": function (data, type, full) {
+                            return '<button type="button" class="btn btn-light">' + $lserv.translate("INDEX_INCI_RECONOCER") + '</button>'
+                        }
+                    }
+                ],
+                dom: "<'row'<'col-md-12 small text-info'tr>>" +
+                    "<'row '<'col-md-8'><'col-md-4 text-right'p>>",
+                language: {
+                    "decimal": "",
+                    "emptyTable": $lserv.translate("No hay datos disponibles"),
+                    "info": $lserv.translate("Registros") + " _START_ - _END_ " + $lserv.translate("de") + " _TOTAL_",
+                    "infoEmpty": $lserv.translate("0  Registros"),
+                    "infoFiltered": "(_MAX_ )" + $lserv.translate("Registros filtrados)"),
+                    "infoPostFix": "",
+                    "thousands": ".",
+                    "lengthMenu": $lserv.translate("Mostrar") + " _MENU_ Reg.",
+                    "loadingRecords": $lserv.translate("Loading..."),
+                    "processing": $lserv.translate("Processing..."),
+                    "search": $lserv.translate("Buscar:"),
+                    "zeroRecords": $lserv.translate("No se han encontrado registros"),
+                    "paginate": {
+                        first: $lserv.translate("Primera"),
+                        last: $lserv.translate("Ultima"),
+                        next: $lserv.translate("Siguiente"),
+                        previous: $lserv.translate("Anterior")
+                    },
+                    aria: {
+                        sortAscending: $lserv.translate(": Activar ordenado por columna ascendente"),
+                        sortDescending: $lserv.translate(": Activar ordenado por columna descendente")
+                    },
+                    searchBuilder: {
+                        add: $lserv.translate('Add Condicion'),
+                        condition: $lserv.translate('Condicion'),
+                        clearAll: $lserv.translate('Limpiar'),
+                        deleteTitle: $lserv.translate('Borrar'),
+                        data: $lserv.translate('Columna'),
+                        leftTitle: 'Left',
+                        logicAnd: '&',
+                        logicOr: '|',
+                        rightTitle: 'Right',
+                        title: {
+                            0: $lserv.translate('Filtro'),
+                            _: $lserv.translate('Filtro (%d)')
+                        },
+                        value: $lserv.translate('Opcion'),
+                        valueJoiner: $lserv.translate('y'),
+                        conditions: {
+                            string: {
+                                contains: $lserv.translate('Contiene'),
+                                empty: $lserv.translate('Vacio'),
+                                endsWith: $lserv.translate('Acaba en '),
+                                equals: $lserv.translate('Igual a'),
+                                not: $lserv.translate('Distinto de '),
+                                notEmpty: $lserv.translate('No Vacio'),
+                                startsWith: $lserv.translate('Comienza con')
+                            }
+                        }
+                    }
+                }
+            };
+            InciTable = $('#dtinci').DataTable(CfgData);
+            $('#dtinci tbody').on('click', 'button', function () {
+                var data = InciTable.row($(this).parents('tr')).data();
+                //console.log(data);
+                ctrl.reconoce(data, true);
+            });
+        }
+        ctrl.showExceptSpv = () => {
+            return InciTable ? InciTable.page.info().recordsTotal > 0 && $lserv.user_access(['Spv']) : false;
+        };
+
+        /** */
         function GlobalStdClass(base, std) {
             var stdClass = std == undefined ? "btn-default" :
                 std == 0 ? "btn-success" :
@@ -239,28 +315,28 @@ angular.module("Uv5kiman")
 
         /** Funciones o servicios */
         /** */
-        function load_inci() {
-            /* Obtener el estado del servidor... */
-            $serv.listinci_get().then(function (response) {
+        //function load_inci() {
+        //    /* Obtener el estado del servidor... */
+        //    $serv.listinci_get().then(function (response) {
 
-                if (response.status == 200 && (typeof response.data) == 'object') {
-                    if (new_inci(response.data) == true) {
-                        ctrl.listainci = response.data.lista;
-                        ctrl.HashCode = response.data.HashCode;
-                    }
-                    // console.log(ctrl.listainci);
-                }
-                else {
-                    /** El servidor me devuelve errores... */
-                //    console.log("Sesion Vencida...");
-                //    window.location.href = "/login.html";
-                }
-            }
-                , function (response) {
-                    // Error. No puedo conectarme al servidor.
-                    console.log("Error Peticion: ", error);
-                });
-        }
+        //        if (response.status == 200 && (typeof response.data) == 'object') {
+        //            if (new_inci(response.data) == true) {
+        //                ctrl.listainci = response.data.lista;
+        //                ctrl.HashCode = response.data.HashCode;
+        //            }
+        //            // console.log(ctrl.listainci);
+        //        }
+        //        else {
+        //            /** El servidor me devuelve errores... */
+        //        //    console.log("Sesion Vencida...");
+        //        //    window.location.href = "/login.html";
+        //        }
+        //    }
+        //        , function (response) {
+        //            // Error. No puedo conectarme al servidor.
+        //            console.log("Error Peticion: ", error);
+        //        });
+        //}
 
         /** */
         function get_std_gen() {
@@ -289,21 +365,55 @@ angular.module("Uv5kiman")
                 });
         }
 
-        //** */
-        function new_inci(newi) {
-            if (newi.HashCode != ctrl.HashCode)
-                return true;
-            return false;
+        async function StdGenGet() {
+            return new Promise((resolve)=> {
+                $serv.stdgen_get().then(function (response) {
+
+                    $lserv.GlobalStd(response.data);
+
+                    $lserv.ConfigServerHf(response.data.hf);
+                    $lserv.ConfigServerSacta(response.data.sct1.enable);
+                    $lserv.Perfil(response.data.perfil);
+
+                    ctrl.PhoneGlobalState = response.data.tf_status;
+                    ctrl.RadioGlobalState = response.data.rd_status;
+
+                    if (userLang != response.data.lang) {
+                        userLang = response.data.lang;
+
+                        var useFile = userLang.indexOf("en") == 0 ? "en_US" :
+                            userLang.indexOf("fr") == 0 ? "fr_FR" : "es_ES";
+
+                        $translate.use(useFile).then(() => resolve(true), () => resolve(false));
+                    }
+                    else {
+                        resolve(true);
+                    }
+                }, function (response) {
+                    console.log(response);
+                    resolve(false);
+                });
+            });
         }
 
         /** Funcion Periodica del controlador */
+        var HashCode = 0;
         var timer = $interval(function () {
             ctrl.date = moment().format('ll');
             ctrl.hora = moment().format('LTS');
-            if (++timetoinci == InciPoll) {
-                load_inci();
-                get_std_gen();
+            if (++timetoinci >= InciPoll) {
+                StdGenGet();
                 timetoinci = 0;
+                $.get(RemoteData, (data, status) => {
+                    console.log("$.get('/listinci'", status, data);
+                    if (status == "success") {
+                        if (HashCode != data.HashCode) {
+                            HashCode = data.HashCode;
+                            InciTable.ajax.reload();
+                            console.log('InciTable.reload');
+                        }
+                    }
+                });
             }
 
             /** Control de Audio  en Local */
@@ -319,25 +429,21 @@ angular.module("Uv5kiman")
                 }
             }
             /** Control de audio en local */
-
         }, 1000);
 
         $scope.$on('$viewContentLoaded', function () {
 
-            /** Alertify */
-            alertify.defaults.transition = 'zoom';
-            alertify.defaults.glossary = {
-                title: $lserv.translate("ULISES V 5000 I. Aplicacion de Mantenimiento"),
-                ok: $lserv.translate("Aceptar"),
-                cancel: $lserv.translate("Cancelar")
-            };
-
-            //call it here
-            get_std_gen();
-
-        //    window.location.hash = "no-back-button";
-        //    window.location.hash = "Again-No-back-button";//esta linea es necesaria para chrome
-        //    window.onhashchange = function () { window.location.hash = "no-back-button"; }
+            if (firstLoad == true) {
+                /** Alertify */
+                alertify.defaults.transition = 'zoom';
+                alertify.defaults.glossary = {
+                    title: $lserv.translate("ULISES V 5000 I. Aplicacion de Mantenimiento"),
+                    ok: $lserv.translate("Aceptar"),
+                    cancel: $lserv.translate("Cancelar")
+                };
+                StdGenGet().then(() => InciTableInit());
+            }
+            firstLoad = false;
         });
 
         /** Salida del Controlador. Borrado de Variables */

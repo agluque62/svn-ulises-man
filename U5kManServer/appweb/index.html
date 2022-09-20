@@ -72,9 +72,9 @@
             <section id="_ppal">
                 <div data-ng-view></div>
             </section>
-            <div id="inci">
+            <div id="inci" ng-show="false">
                 <h1 class="inciTitle" translate>INDEX_INCI</h1>
-                <table st-table="ctrl.dlistainci" st-safe-src="ctrl.listainci" class="table table-striped" style="margin-bottom: 0">
+                <table st-table="ctrl.dlistainci" st-safe-src="ctrl.listainci" class="table table-striped" style="margin-bottom: 0" >
                     <thead>
                         <tr>
                             <th translate>INDEX_INCI_FECHA</th>
@@ -121,7 +121,7 @@
                             </td>
                             <td style="text-align: right">
                                 <!-- Control Audio local -->
-                                <audio id="myAudio">
+                                <audio id="myAudio1">
                                     <source src="ALARM.wav" type="audio/wav">
                                     Your browser does not support the audio element.
                                 </audio>
@@ -140,6 +140,57 @@
                     </tfoot>
                 </table>
             </div>
+            <div class="row new-inci">
+                <div class="col-lg-12">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h1 class="text-info" translate>INDEX_INCI</h1>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <table id="dtinci" class="table table-striped table-bordered display">
+                                <thead>
+                                    <!--<tr>
+                                        <th>Fecha/Hora</th>
+                                        <th>Descripcion</th>
+                                        <th>Reconocer</th>
+                                    </tr>-->
+                                </thead>
+                                <tfoot>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-bottom: 4px;">
+                        <div class="col-md-2">
+                            <button style="float:left" width="24"
+                                    class="btn btn-default"
+                                    ng-show="ctrl.showExceptSpv()"
+                                    ng-click="ctrl.ToggleSound()">
+                                <img ng-src='{{ctrl.SoundImg()}}'>
+                            </button>
+                            <audio id="myAudio1" ">
+                                <source src="ALARM.wav" type="audio/wav">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                        <div class="col-md-8">
+                            <!--                        <h1 class="inciTitle" translate>INDEX_INCI</h1>-->
+                        </div>
+                        <div class="col-md-2">
+                            <button height="24px"
+                                    class="btn btn-default"
+                                    style="float: right;"
+                                    ng-click="ctrl.reconoce_todas()"
+                                    ng-show="ctrl.showExceptSpv()" translate>
+                                Reconocer Todas
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
             <!--        <footer id="_pie">
                 <div>
                     <p style="width:80%; margin:0;" translate>INDEX_PIE</p>
@@ -149,15 +200,15 @@
                             class="btn btn-default" >R</button>
                 </div>
             </footer>-->
-
             <footer id="_pie">
                 <div class="row">
                     <div class="col-md-1">
                         <!--<button style="float:left; margin-left: 2px;"
-                                class="{{ctrl.PhoneStdClass()}}">
-                            IG
-                        </button>-->
-                    </div>
+                                class="{{ctrl.PhoneStdClass()
+                                }}">
+                                IG
+                                </button>-->
+</div>
                     <div class="col-md-10">
                         <p style="margin:0;" translate>INDEX_PIE</p>
                     </div>

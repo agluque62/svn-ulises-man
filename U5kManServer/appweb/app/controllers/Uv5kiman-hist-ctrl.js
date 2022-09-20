@@ -50,52 +50,52 @@ angular.module("Uv5kiman")
                 "<'row hdiv'<'col-md-2 text-info'l><'col-md-2 text-info'i><'col-md-8'p>>" ,
             language: {
                 "decimal": "",
-                "emptyTable": "No hay datos disponibles",
-                "info": "Registros _START_ - _END_ de _TOTAL_",
-                "infoEmpty": "0 Registros",
-                "infoFiltered": "(_MAX_ Registros filtrados)",
+                "emptyTable": $lserv.translate("No hay datos disponibles"),
+                "info": $lserv.translate("Registros") + " _START_ - _END_ " + $lserv.translate("de") + " _TOTAL_",
+                "infoEmpty": $lserv.translate("0  Registros"),
+                "infoFiltered": "(_MAX_ )" + $lserv.translate("Registros filtrados)"),
                 "infoPostFix": "",
                 "thousands": ".",
-                "lengthMenu": "Mostrar _MENU_ Reg.",
-                "loadingRecords": "Loading...",
-                "processing": "Processing...",
-                "search": "Buscar:",
-                "zeroRecords": "No se han encontrado registros",
+                "lengthMenu": $lserv.translate("Mostrar") + " _MENU_ Reg.",
+                "loadingRecords": $lserv.translate("Loading..."),
+                "processing": $lserv.translate("Processing..."),
+                "search": $lserv.translate("Buscar:"),
+                "zeroRecords": $lserv.translate("No se han encontrado registros"),
                 "paginate": {
-                    first: "Primera",
-                    last: "Ultima",
-                    next: "Siguiente",
-                    previous: "Anterior"
+                    first: $lserv.translate("Primera"),
+                    last: $lserv.translate("Ultima"),
+                    next: $lserv.translate("Siguiente"),
+                    previous: $lserv.translate("Anterior")
                 },
                 aria: {
-                    sortAscending: ": Activar ordenado por conlumna ascendente",
-                    sortDescending: ": Activar ordenado por columna descendente"
+                    sortAscending: $lserv.translate(": Activar ordenado por columna ascendente"),
+                    sortDescending: $lserv.translate(": Activar ordenado por columna descendente")
                 },
                 searchBuilder: {
-                    add: 'Add Condicion',
-                    condition: 'Condicion',
-                    clearAll: 'Limpiar',
-                    deleteTitle: 'Borrar',
-                    data: 'Columna',
+                    add: $lserv.translate('Add Condicion'),
+                    condition: $lserv.translate('Condicion'),
+                    clearAll: $lserv.translate('Limpiar'),
+                    deleteTitle: $lserv.translate('Borrar'),
+                    data: $lserv.translate('Columna'),
                     leftTitle: 'Left',
                     logicAnd: '&',
                     logicOr: '|',
                     rightTitle: 'Right',
                     title: {
-                        0: 'Filtro',
-                        _: 'Filtro (%d)'
+                        0: $lserv.translate('Filtro'),
+                        _: $lserv.translate('Filtro (%d)')
                     },
-                    value: 'Opcion',
-                    valueJoiner: 'y',
+                    value: $lserv.translate('Opcion'),
+                    valueJoiner: $lserv.translate('y'),
                     conditions: {
                         string: {
-                            contains: 'Contiene',
-                            empty: 'Vacio',
-                            endsWith: 'Acaba en ',
-                            equals: 'Igual a',
-                            not: 'Distinto de ',
-                            notEmpty: 'No Vacio',
-                            startsWith: 'Comienza con'
+                            contains: $lserv.translate('Contiene'),
+                            empty: $lserv.translate('Vacio'),
+                            endsWith: $lserv.translate('Acaba en '),
+                            equals: $lserv.translate('Igual a'),
+                            not: $lserv.translate('Distinto de '),
+                            notEmpty: $lserv.translate('No Vacio'),
+                            startsWith: $lserv.translate('Comienza con')
                         }
                     }
                 }

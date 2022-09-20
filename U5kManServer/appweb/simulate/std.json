@@ -137,9 +137,9 @@
 	},
 	"perfil": 0,
 	"logged":{"id": "Prueba", "prf": "Spv"},
-	"lang": "es",
+	"lang": "en",
 	"rd_status": 2,
 	"tf_status": 2,
-	"igmp_status": "",
+	"igmp_status": "192.168.0.1",
 	"ServiceSite": "NUCLEODF-VM01"
 }

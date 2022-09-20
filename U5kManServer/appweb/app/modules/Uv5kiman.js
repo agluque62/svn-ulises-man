@@ -19,6 +19,7 @@ Uv5kiman.config(function ($translateProvider) {
         prefix: '/languages/',
         suffix: '.json'
     });
+    $translateProvider.useSanitizeValueStrategy('sanitize');
 
     // var userLang = navigator.language[0];
     // userLang = navigator.language;

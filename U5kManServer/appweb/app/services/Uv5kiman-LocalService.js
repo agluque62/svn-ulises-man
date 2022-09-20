@@ -1,3 +1,4 @@
+
 /** */
 angular
     .module('Uv5kiman')
@@ -65,6 +66,8 @@ angular
             limit: default_logs_limit,
             Inci: []
         };
+
+        var stdServData = {};
 
         return {
             StsFilter: function () { return StsF; }
@@ -403,6 +406,16 @@ angular
                         access = false;
                 });
                 return access;
+            }
+            , GlobalStd: (std) => {
+                if (std != undefined) {
+                    stdServData = std;
+                    console.log("GlobalStd => ", std);
+                }
+                else {
+                    console.log("GlobalStd <= ", stdServData);
+                }
+                return stdServData;
             }
         };
 

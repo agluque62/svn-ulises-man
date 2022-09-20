@@ -403,32 +403,28 @@
     <!-- Pantalla de Estado de Equipos Externos (Voip) -->
     <div id="spvEquiposExt" data-ng-show="ctrl.pagina()==5">
         <div class="row ext-res-main-div">
-            <div class="col-md-2"><label>Filtrar por</label></div>
+            <div class="col-md-2"><label>{{ctrl.translate('Filtrar por')}}</label></div>
             <div class="col-md-4">
-                <label>Tipo de Equipo Externo</label>
+                <label>{{ctrl.translate("Tipo de Equipo Externo")}}</label>
                 <select class="form-control ext-res-filter" ng-model="ctrl.ext_selected_type" ng-change="ctrl.ext_equ_reset()">
-                    <option value="0">Todos</option>
-                    <option value="3">Telefonia</option>
-                    <option value="2">Radio</option>
-                    <option value="5">Grabadores</option>
+                    <option value="0" translate>Todos</option>
+                    <option value="3" translate>Telefonia</option>
+                    <option value="2" translate>Radio</option>
+                    <option value="5" translate>Grabadores</option>
                 </select>
             </div>
-            <!--<div class="col-md-2">{{ctrl.ext_selected_type}}</div>-->
             <div class="col-md-1"></div>
             <div class="col-md-4">
-                <label>Equipo Externo</label>
+                <label>{{ctrl.translate("Equipo Externo")}}</label>
                 <select class="form-control ext-res-filter" ng-model="ctrl.ext_selected_eq" multiple>
                     <option ng-repeat="equ in ctrl.ext_equ()" value="{{equ}}">{{equ}}</option>
                 </select>
             </div>
             <!--<div class="col-md-2">{{ctrl.ext_selected_eq}}</div>-->
         </div>
-        <div class="row" hidden>
-            <div class="col-md-12">Recursos mostrados: {{ctrl.ext_res_show_names()}}</div>
-        </div>
         <div class="row ext-res-main-div">
             <div class="col-md-12">
-                <label>Recursos Externos</label>
+                <label>{{ctrl.translate("Recursos Externos")}}</label>
                 <div class="row" ng-repeat="equ in ctrl.ext_res_show() track by $index" ng-if="$index % 6 == 0">
                     <div class="col-md-2" ng-repeat="i in [$index, $index + 1, $index + 2, $index + 3, $index + 4, $index + 5]"
                          ng-if="ctrl.ext_res_show()[i] != null">

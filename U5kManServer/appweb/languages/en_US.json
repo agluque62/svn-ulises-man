@@ -387,5 +387,27 @@
   "Deshabilitar": "Disable",
   "No existen frecuencias con recursos 1+1": "There are no frequencies with '1+1' resources",
 
+  "No hay datos disponibles": "No data available",
+  "0  Registros": "0  Registers",
+  "Registros": "Registers",
+  "Registros filtrados)": "Filtered logs)",
+  "Loading...": "Loading...",
+  "Processing...": "Processing...",
+  "Buscar:": "Search:",
+  "Primera": "First",
+  "Ultima": "Last",
+  "Siguiente": "Next",
+  "Anterior": "Previous",
+  ": Activar ordenado por columna ascendente": ": Enable sorted by ascending column",
+  ": Activar ordenado por columna descendente": ": Enable sorted by descending column",
+  "de": "of",
+  "Mostrar": "Show",
+
+  "Filtrar por": "Filter by",
+  "Tipo de Equipo Externo": "External Equipment type",
+  "Equipo Externo": "External Equipment",
+  "Error: No existe el campo de informacion IGMP": "Error: There is no IGMP information field",
+
+
   "FINAL": "final"
 }

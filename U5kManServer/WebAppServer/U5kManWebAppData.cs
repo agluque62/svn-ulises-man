@@ -77,6 +77,7 @@ namespace U5kManServer.WebAppServer
         /// </summary>
         public List<InciData> lista = new List<InciData>();
         public int HashCode { get; set; }
+        public string lang { get; set; }
 
         /// <summary>
         /// 
@@ -99,6 +100,7 @@ namespace U5kManServer.WebAppServer
                     // La Lista ya debe estar ordenada...
                     // HashCode = lista.GetHashCode();
                     HashCode = HashCodeGet();
+                    lang = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.Idioma;
                 }
             }
         }
@@ -1892,7 +1894,7 @@ namespace U5kManServer.WebAppServer
                 "WebInactivityTimeout",
                 new itemProperty()
                 {
-                    id="Tiempo Maximo de Inactivad de sesion (minutos)",
+                    id=idiomas.strings.WAP_MSG_017 /*"Tiempo Maximo de Inactivad de sesion (minutos)"*/,
                     tp=1,
                     opt=new List<string>()
                     {

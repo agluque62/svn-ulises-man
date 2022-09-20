@@ -363,4 +363,7 @@ Error requesting data</value>
   <data name="BKP_OK" xml:space="preserve">
     <value>Database backup completed.</value>
   </data>
+  <data name="WAP_MSG_017" xml:space="preserve">
+    <value>Maximun Idle session time (minutes)</value>
+  </data>
 </root>

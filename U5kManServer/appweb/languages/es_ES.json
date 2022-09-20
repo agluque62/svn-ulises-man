@@ -339,5 +339,27 @@
   "UV5K-SGM Configuracion": "UV5K-SGM Configuracion",
   "UV5K-SGM Mantenimiento": "UV5K-SGM Mantenimiento",
 
+  "No hay datos disponibles": "No hay datos disponibles",
+  "0  Registros": "0  Registros",
+  "Registros": "Registros",
+  "Registros filtrados)": "Registros filtrados)",
+  "Loading...": "Loading...",
+  "Processing...": "Processing...",
+  "Buscar:": "Buscar:",
+  "Primera": "Primera",
+  "Ultima": "Ultima",
+  "Siguiente": "Siguiente",
+  "Anterior": "Anterior",
+  ": Activar ordenado por columna ascendente": ": Activar ordenado por columna ascendente",
+  ": Activar ordenado por columna descendente": ": Activar ordenado por columna descendente",
+  "de": "de",
+  "Mostrar": "Mostrar",
+
+  "Filtrar por": "Filtrar por",
+  "Tipo de Equipo Externo": "Tipo de Equipo Externo",
+  "Equipo Externo": "Equipo Externo",
+  "Error: no existe el campo de informacion IGMP": "Error: no existe el campo de informacion IGMP",
+
+
   "FINAL": "final"
 }

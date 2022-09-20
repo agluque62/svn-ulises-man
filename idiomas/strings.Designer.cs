@@ -685,6 +685,15 @@ namespace idiomas {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a Maximum idle session time (minutes).
+        /// </summary>
+        public static string WAP_MSG_017 {
+            get {
+                return ResourceManager.GetString("WAP_MSG_017", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a 1 Semana.
         /// </summary>
         public static string WAP_OPT_001 {

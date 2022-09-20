@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta name="generator"
           content="HTML Tidy for HTML5 (experimental) for Windows https://github.com/w3c/tidy-html5/tree/c63cc39" />
@@ -17,7 +17,11 @@
         <header>
             <div class="row cabecera">
                 <div class="col-md-2 logo"></div>
-                <div class="col-md-8 title"><span>ULISES V 5000 I. Aplicacion de Mantenimiento</span></div>
+                <div class="col-md-8 title">
+                    <span lang="es">ULISES V 5000 I. Aplicacion de Mantenimiento</span>
+                    <span lang="en">ULISES V 5000 I. Maintenance Application</span>
+                    <span lang="fr">ULISES V 5000 I. Maintenance Applicative</span>
+                </div>
                 <div class="col-md-2 fecha"></div>
             </div>
         </header>
@@ -29,20 +33,32 @@
                     <div class="col-lg-6">
                         <div class="modal-content login">
                             <div class="modal-header">
-                                <h4 class="modal-title" style="text-align:center;" translate>Introduzca Login y Password</h4>
+                                <h4 class="modal-title" style="text-align:center;">
+                                    <span lang="es">Introduzca Login y Password</span>
+                                    <span lang="en">Enter Login and Password</span>
+                                    <span lang="fr">Entrez le nom d’utilisateur et le mot de passe</span>
+                                </h4>
                             </div>
                             <div class="modal-body">
                                 <form class="form-horizontal" role="form" method="POST" action="/login.html">
                                     <div class="form-group">
-                                        <label class="control-label col-sm-4" style="text-align:left;">Usuario:</label>
+                                        <label class="control-label col-sm-4" style="text-align:left;">
+                                            <span lang="es">Usuario:</span>
+                                            <span lang="en">User:</span>
+                                            <span lang="fr">Utilisateur:</span>
+                                        </label>
                                         <div class="col-sm-8">
-                                            <input type="text" class="form-control" name="username" placeholder="Introduzca Usuario" />
+                                            <input id="username" type="text" class="form-control" name="username" placeholder="Introduzca Usuario" />
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label class="control-label col-sm-4" style="text-align:left;">Password:</label>
+                                        <label class="control-label col-sm-4" style="text-align:left;">
+                                            <span lang="es">Clave:</span>
+                                            <span lang="en">Password:</span>
+                                            <span lang="fr">Mot de Pass:</span>
+                                        </label>
                                         <div class="col-sm-8">
-                                            <input type="password" class="form-control" name="password" placeholder="Introduzca password" />
+                                            <input id="password" type="password" class="form-control" name="password" placeholder="Introduzca password" />
                                         </div>
                                     </div>
                                     <div class="form-group" style="text-align:center; color:red; font-size:120%;">
@@ -61,13 +77,17 @@
                 <div class="row">
                     <div class="col-sm-1"></div>
                     <div class="col-lg-10">
-                        <h4>Alarmas Pendientes</h4>
+                        <h4>
+                            <span lang="es">Alarmas Pendientes</span>
+                            <span lang="en">Pending Alarms</span>
+                            <span lang="fr">Alarmes en attente</span>
+                        </h4>
                         <table id="incil" class="table table-striped table-bordered display" >
                             <thead>
-                                <tr>
+                                <!--<tr>
                                     <th style="width:10%;">Fecha/Hora</th>
                                     <th>Descripcion</th>
-                                </tr>
+                                </tr>-->
                             </thead>
                             <tfoot>
                             </tfoot>
@@ -77,7 +97,11 @@
             </div>
 
             <div class="row pie">
-                <div class="col-md-12">Grupo Amper. Copyright @ 2021-2022. Todos los Derechos Reservados</div>
+                <div class="col-md-12">
+                    <span lang="es">Grupo Amper. Copyright @ 2021-2022. Todos los Derechos Reservados</span>
+                    <span lang="en">Grupo Amper. Copyright @ 2021-2022. All Rights Reserved</span>
+                    <span lang="fr">Grupo Amper. Copyright @ 2021-2022. Tous droits réservés</span>
+                </div>
             </div>
 
         </section>
@@ -89,25 +113,41 @@
     <script>
         var Simulate = location.port == 1445;
         var RemoteData = Simulate ? "/simulate/listinci.json" : "/listinci";
+        var InciTable = null;
         var HashCode = 0;
-            $(document).ready(function () {
-                console.log('on.ready');
-                setInterval(function () {
+        var language = "es";
 
-                    $('#result').html("");
+        var Dictionary = {
+            "Primera": { "es": "Primera", "en": "First", "fr": "Premier" },
+            "Ultima": { "es": "Ultima", "en": "Last", "fr": "Derniere" },
+            "Siguiente": { "es": "Siguiente", "en": "Next", "fr": "Prochaine" },
+            "Anterior": { "es": "Anterior", "en": "Previous", "fr": "Précédent" },
+            "Fecha/Hora": { "es": "Fecha/Hora", "en": "Date/Hour", "fr": "Date/Heure" },
+            "Descripcion": { "es": "Descripcion", "en": "Description", "fr": "Description" },
+            "No hay datos disponibles": { "es": "No hay datos disponibles", "en": "No data available", "fr": "Aucune donnée disponible" },
+            "No se han encontrado registros": { "es": "No se han encontrado registros", "en": "No records found", "fr": "Aucun enregistrement trouvé" },
+            "Introduzca Usuario": { "es": "Introduzca Usuario", "en": "Enter User", "fr": "Entrer l’utilisateur" },
+            "Introduzca password": { "es": "Introduzca password", "en": "Enter password", "fr": "Entrez le mot de passe" }
+        };
+        function LocalTranslate(input) {
+            var myVal = Dictionary[input];
+            if (myVal === undefined) {
+                return input;
+            }
+            var output = language === "es" ? myVal.es : language === "en" ? myVal.en : language === "fr" ? myVal.fr : input;
+            return output;
+        }
 
-                    $.get(RemoteData, (data, status) => {
-                        console.log("$.get('/listinci'", status, data);
-                        if (status == "success") {
-                            if (HashCode != data.HashCode) {
-                                HashCode = data.HashCode;
-                                InciTable.ajax.reload();
-                                console.log('InciTable.reload');
-                            }
-                        }
-                    });
+        $(document).ready(function () {
+            console.log('on.ready');
 
-                }, 5000);
+            $.get(RemoteData, (data, status) => {
+                console.log("$.get('/listinci'", status, data);
+                if (status == 'success') {
+                    if (data.hasOwnProperty('lang')) language = data.lang;
+                }
+                /** Tengo el lenguaje puedo configurar la tabla */
+                console.log('lang: ', language);
 
                 InciTable = $('#incil').DataTable(
                     {
@@ -119,14 +159,14 @@
                         pageLength: 4,
                         ordering: false,
                         columns: [
-                            { "data": "time", "width": "15%", "class": "text-left", "render": (data) => data },
-                            { "data": "inci", "width": "85%", "class": "text-left", "render": (data) => data },
+                            { "title": LocalTranslate('Fecha/Hora'), "data": "time", "width": "15%", "class": "text-left", "render": (data) => data },
+                            { "title": LocalTranslate('Descripcion'), "data": "inci", "width": "85%", "class": "text-left", "render": (data) => data },
                         ],
                         dom: "<'row'<'col-md-12 small text-info'tr>>" +
                             "<'row '<'col-md-8'><'col-md-4 text-right'p>>",
                         language: {
                             "decimal": "",
-                            "emptyTable": "No hay datos disponibles",
+                            "emptyTable": LocalTranslate("No hay datos disponibles"),
                             "info": "Registros _START_ - _END_ de _TOTAL_",
                             "infoEmpty": "0 Registros",
                             "infoFiltered": "(_MAX_ Registros filtrados)",
@@ -136,12 +176,12 @@
                             "loadingRecords": "Loading...",
                             "processing": "Processing...",
                             "search": "Buscar:",
-                            "zeroRecords": "No se han encontrado registros",
+                            "zeroRecords": LocalTranslate("No se han encontrado registros"),
                             "paginate": {
-                                first: "Primera",
-                                last: "Ultima",
-                                next: "Siguiente",
-                                previous: "Anterior"
+                                first: LocalTranslate("Primera"),
+                                last: LocalTranslate("Ultima"),
+                                next: LocalTranslate("Siguiente"),
+                                previous: LocalTranslate("Anterior")
                             },
                             aria: {
                                 sortAscending: ": Activar ordenado por conlumna ascendente",
@@ -175,9 +215,39 @@
                                     }
                                 }
                             }
-                        } 
+                        }
                     });
+
+                /** Traducir el HTML */
+                $("[lang]").each(function () {
+                    if ($(this).attr("lang") == language)
+                        $(this).show();
+                    else
+                        $(this).hide();
+                });
+                $("#username").attr('placeholder', LocalTranslate($("#username").attr('placeholder')));
+                $("#password").attr('placeholder', LocalTranslate($("#password").attr('placeholder')));
+
             });
+
+            setInterval(function () {
+
+                $('#result').html("");
+
+                $.get(RemoteData, (data, status) => {
+                    console.log("$.get('/listinci'", status, data);
+                    if (status == "success") {
+                        if (HashCode != data.HashCode) {
+                            HashCode = data.HashCode;
+                            InciTable.ajax.reload();
+                            console.log('InciTable.reload');
+                        }
+                    }
+                });
+
+            }, 5000);
+        });
+
     </script>
 </body>
 </html>

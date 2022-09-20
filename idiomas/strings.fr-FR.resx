@@ -357,4 +357,7 @@ Erreur de demande des infos</value>
   <data name="BKP_OK" xml:space="preserve">
     <value>Sauvegarde de base de données terminée.</value>
   </data>
+  <data name="WAP_MSG_017" xml:space="preserve">
+    <value>Durée maximale de la session inactive (minutes)</value>
+  </data>
 </root>

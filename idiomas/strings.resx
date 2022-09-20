@@ -357,4 +357,7 @@ Error Solicitando Info</value>
   <data name="BKP_OK" xml:space="preserve">
     <value>Backup de Base de Datos completado.</value>
   </data>
+  <data name="WAP_MSG_017" xml:space="preserve">
+    <value>Maximum idle session time (minutes)</value>
+  </data>
 </root>
