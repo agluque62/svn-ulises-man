@@ -1197,12 +1197,12 @@ namespace U5kManServer.WebAppServer
                     string MyName = System.Environment.MachineName;
                     //if (MyName == stdg.stdServ1.name)
                     if (stdg.stdServ1.name.StartsWith(MyName))
-                        {
+                    {
                         stdg.stdServ1.jversion = VersionDetails.SwVersions.ToString();
                         _sync_server.QueryVersionData();
                     }
                     //else if (MyName == stdg.stdServ2.name)
-                    if (stdg.stdServ2.name.StartsWith(MyName))
+                    else if (stdg.stdServ2.name.StartsWith(MyName))
                     {
                         stdg.stdServ2.jversion = VersionDetails.SwVersions.ToString();
                         _sync_server.QueryVersionData();
