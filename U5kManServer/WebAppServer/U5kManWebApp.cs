@@ -124,12 +124,9 @@ namespace U5kManServer.WebAppServer
                                 response(true, "", cookie);
                                 Task.Run(() =>
                                 {
-                                    // TODO Generar el historico....
-                                    //RecordEvent<U5kManWebApp>(DateTime.Now,
-                                    //    U5kBaseDatos.eIncidencias.IEE_CAIDA,
-                                    //    U5kBaseDatos.eTiposInci.TEH_SISTEMA,
-                                    //    "MTTO", new object[] { user });
-                                    LogTrace<WebServerBase>($"Acceso Usuario {loggeduser.id}, {loggeduser.ProfileId}");
+                                    var msg = $"Usuario {loggeduser.id}, {loggeduser.ProfileId}, Inicia session";
+                                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                                        new object[] { msg, "", "", "", "", "", "", "" });
                                 });
                             }
                             else
@@ -183,17 +180,16 @@ namespace U5kManServer.WebAppServer
             context.Response.ContentType = "application/json";
             if (context.Request.HttpMethod == "POST")
             {
-                Task.Run(() =>
+                Sessions.Logout(context.Request, (user)=>
                 {
-                    // TODO Generar el historico....
-                    //RecordEvent<U5kManWebApp>(DateTime.Now,
-                    //    U5kBaseDatos.eIncidencias.IEE_CAIDA,
-                    //    U5kBaseDatos.eTiposInci.TEH_SISTEMA,
-                    //    "MTTO", new object[] { user });
-                    //LogTrace<WebServerBase>($"Salida Usuario {gdt.LoggedUser.id}, {gdt.LoggedUser.ProfileId}");
-                    //gdt.LoggedUser = null;
+                    Task.Run(() =>
+                    {
+                        var msg = $"Usuario {user}, Finaliza session";
+                        RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                            new object[] { msg, "", "", "", "", "", "", "" });
+                    });
                 });
-                Sessions.Logout(context.Request);
+
                 context.Response.Redirect("/login.html");
             }
             else

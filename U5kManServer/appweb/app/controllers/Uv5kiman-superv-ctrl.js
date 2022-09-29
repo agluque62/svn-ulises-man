@@ -1,6 +1,7 @@
 /** */
 angular.module("Uv5kiman")
-    .controller("uv5kiSupervCtrl", function ($scope, $interval, $serv, $lserv) {
+    .controller("uv5kiSupervCtrl", function ($scope, $interval, $timeout, $serv, $lserv) {
+        console.log("Supervisor Controller start...");
         /** Inicializacion */
         var ctrl = this;
         ctrl.lserv = $lserv;
@@ -215,7 +216,7 @@ angular.module("Uv5kiman")
                     var startstop = !std;
                     $serv.sacta_startstop(startstop).then(function (response) {
                         alertify.success(mensaje);
-                        setTimeout(function () { get_std(); }, 1000);
+                        $timeout(function () { get_std(); }, 1000);
                     }
                         , function (response) {
                             console.log(response);
@@ -446,7 +447,7 @@ angular.module("Uv5kiman")
         /** Gestion de Equipos Externos */
         ctrl.ext_res = [];                          // Recursos Externos.
         ctrl.ext_selected_type = "0";
-        setTimeout(() => ctrl.ext_selected_eq = [ctrl.translate("Todos")], 250);    // Al depender del idioma, hay que retrasar la inicializacion.
+        ctrl.ext_selected_eq = [];
 
         ctrl.ext_equ = () => [ctrl.translate("Todos")].concat(      // Lista de Equipos que se presentan,
             Enumerable.from(ctrl.ext_res)
@@ -594,7 +595,7 @@ angular.module("Uv5kiman")
 
                 /** Timeout de 10 segundos */
                 popoverTimers[current] =
-                    setTimeout(function () {
+                    $timeout(function () {
                         current.popover('hide');
                         popoverTimers[current] = null;
                     }, 10000);
@@ -641,7 +642,10 @@ angular.module("Uv5kiman")
 
         /** */
         function get_std() {
-            ctrl.std = $lserv.GlobalStd();
+            //ctrl.std = $lserv.GlobalStd();
+            $serv.stdgen_get().then((response) => {
+                ctrl.std = response.data;
+            });
         }
 
         /** */
@@ -740,6 +744,15 @@ angular.module("Uv5kiman")
             return true;
         }
 
+        function data_init() {
+            get_std();
+            get_cwps();
+            get_gws();
+            get_pbxab();
+            get_exteq();
+            ctrl.ext_selected_eq = [ctrl.translate("Todos")];    // Al depender del idioma, hay que retrasar la inicializacion.
+        }
+
         /** Funcion Periodica del controlador */
         var timer = $interval(function () {
             if (ctrl.pagina() == 0 || ctrl.pagina() == 3)
@@ -756,21 +769,20 @@ angular.module("Uv5kiman")
 
         /** */
         $scope.$on('$viewContentLoaded', function () {
-            //call it here
-            setTimeout(() => {
-                get_std();
-                get_cwps();
-                get_gws();
-                get_pbxab();
-                get_exteq();
-            }, 200);
+            console.log("Supervisor viewContentLoaded...");
+            data_init();
+        });
+
+        $scope.$on('GlobalStarted', function (data) {
+            console.log("Supervisor GlobalStarted...");
+            data_init();
         });
 
         /** Salida del Controlador. Borrado de Variables */
         $scope.$on("$destroy", function () {
             $interval.cancel(timer);
         });
-
+        console.log("Supervisor Controller end...");
     });
 
 

@@ -1,8 +1,8 @@
 /** */
 angular.module("Uv5kiman")
     .controller("uv5kiGlobalCtrl", function ($scope, $interval, $location, $translate, $serv, $lserv) {
+        console.log("Global Controller Start...");
         /** Inicializacion */
-        var timetoinci = 0;
         var firstLoad = true;
         var ctrl = this;
         ctrl.logged = null;
@@ -30,8 +30,7 @@ angular.module("Uv5kiman")
                 alertify.confirm($lserv.translate('GCT_MSG_00') /*"¿ Desea reconocer la incidencia: " */ + incidencia.inci + "?",
                     function () {
                         $serv.listinci_rec({ user: ctrl.user(), inci: incidencia });
-                        //load_inci();
-                        timetoinci = InciPoll;
+                        load_inci();
                     },
                     function () {
                         alertify.message($lserv.translate("Operacion Cancelada"));
@@ -51,7 +50,7 @@ angular.module("Uv5kiman")
                     data.forEach(function (inci, index) {
                         ctrl.reconoce(inci, false);
                     });
-                    timetoinci = InciPoll;
+                    load_inci();
                 },
                 function () {
                     alertify.message($lserv.translate("Operacion Cancelada"));
@@ -200,7 +199,27 @@ angular.module("Uv5kiman")
 
         ctrl.ToggleSound = function () {
             $lserv.Sound(!$lserv.Sound());
+            SoundPlayOrStop();
         };
+        function SoundPlayOrStop() {
+            /** Control de Audio  en Local */
+            var x = document.getElementById("myAudio");
+            if ($lserv.Sound() === true) {
+                var data = InciTable.rows().data().toArray();
+                if (data.length > 0) {
+                    if (x.paused == true)
+                        x.play();
+                }
+                else {
+                    if (x.paused == false)
+                        x.pause();
+                }
+            }
+            else {
+                if (x.paused == false)
+                    x.pause();
+            }
+        }
 
         ctrl.PhoneGlobalState = 0;
         ctrl.PhoneStdClass = function () {
@@ -294,12 +313,15 @@ angular.module("Uv5kiman")
                 }
             };
             InciTable = $('#dtinci').DataTable(CfgData);
+
             $('#dtinci tbody').on('click', 'button', function () {
                 var data = InciTable.row($(this).parents('tr')).data();
                 //console.log(data);
                 ctrl.reconoce(data, true);
             });
         }
+
+
         ctrl.showExceptSpv = () => {
             return InciTable ? InciTable.page.info().recordsTotal > 0 && $lserv.user_access(['Spv']) : false;
         };
@@ -315,28 +337,36 @@ angular.module("Uv5kiman")
 
         /** Funciones o servicios */
         /** */
-        //function load_inci() {
-        //    /* Obtener el estado del servidor... */
-        //    $serv.listinci_get().then(function (response) {
-
-        //        if (response.status == 200 && (typeof response.data) == 'object') {
-        //            if (new_inci(response.data) == true) {
-        //                ctrl.listainci = response.data.lista;
-        //                ctrl.HashCode = response.data.HashCode;
-        //            }
-        //            // console.log(ctrl.listainci);
-        //        }
-        //        else {
-        //            /** El servidor me devuelve errores... */
-        //        //    console.log("Sesion Vencida...");
-        //        //    window.location.href = "/login.html";
-        //        }
-        //    }
-        //        , function (response) {
-        //            // Error. No puedo conectarme al servidor.
-        //            console.log("Error Peticion: ", error);
-        //        });
-        //}
+        var HashCode = 0;
+        function load_inci() {
+            /* Obtener el estado del servidor... */
+            $serv.listinci_get().then(
+                function (response) {
+                    if (response.status == 200 && (typeof response.data) == 'object') {
+                        var data = response.data;
+                        if (HashCode != data.HashCode) {
+                            HashCode = data.HashCode;
+                            InciTable.ajax.reload();
+                            console.log('InciTable.reload');
+                        }
+                    }
+                });
+        }
+        function alive() {
+            $serv.alive().then(
+                (response) => {
+                    if ((typeof response.data) != 'object') {
+                        /** El servidor me devuelve errores... */
+                    console.log("Sesion Vencida...");
+                    window.location.href = "/login.html";
+                    }
+                },
+                (error) => {
+                    console.log("Error Peticion alive: ", error);
+                    window.location.href = "/login.html";
+                }
+            )
+        }
 
         /** */
         function get_std_gen() {
@@ -397,41 +427,19 @@ angular.module("Uv5kiman")
         }
 
         /** Funcion Periodica del controlador */
-        var HashCode = 0;
         var timer = $interval(function () {
-            ctrl.date = moment().format('ll');
-            ctrl.hora = moment().format('LTS');
-            if (++timetoinci >= InciPoll) {
-                StdGenGet();
-                timetoinci = 0;
-                $.get(RemoteData, (data, status) => {
-                    console.log("$.get('/listinci'", status, data);
-                    if (status == "success") {
-                        if (HashCode != data.HashCode) {
-                            HashCode = data.HashCode;
-                            InciTable.ajax.reload();
-                            console.log('InciTable.reload');
-                        }
-                    }
-                });
-            }
 
+            ctrl.date = moment().format('ll');
+            ctrl.hora = moment().format('LT');
+
+            alive();
+            load_inci();
             /** Control de Audio  en Local */
-            if ($lserv.Sound() === true) {
-                var x = document.getElementById("myAudio");
-                if (ctrl.listainci.length > 0) {
-                    if (x.paused == true)
-                        x.play();
-                }
-                else {
-                    if (x.paused == false)
-                        x.pause();
-                }
-            }
-            /** Control de audio en local */
-        }, 1000);
+            SoundPlayOrStop();
+        }, pollingTime);
 
         $scope.$on('$viewContentLoaded', function () {
+            console.log("Global viewContentLoaded...");
 
             if (firstLoad == true) {
                 /** Alertify */
@@ -441,7 +449,12 @@ angular.module("Uv5kiman")
                     ok: $lserv.translate("Aceptar"),
                     cancel: $lserv.translate("Cancelar")
                 };
-                StdGenGet().then(() => InciTableInit());
+                StdGenGet().then(() => {
+                    InciTableInit();
+                    console.log("Global viewContentLoaded Table and Language Init...");
+                    $scope.$broadcast('GlobalStarted', [1, 2, 3]);
+                });
+                load_inci();
             }
             firstLoad = false;
         });
@@ -450,6 +463,7 @@ angular.module("Uv5kiman")
         $scope.$on("$destroy", function () {
             $interval.cancel(timer);
         });
+        console.log("Global Controller End...");
 
     });
 

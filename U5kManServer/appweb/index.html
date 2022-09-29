@@ -72,74 +72,6 @@
             <section id="_ppal">
                 <div data-ng-view></div>
             </section>
-            <div id="inci" ng-show="false">
-                <h1 class="inciTitle" translate>INDEX_INCI</h1>
-                <table st-table="ctrl.dlistainci" st-safe-src="ctrl.listainci" class="table table-striped" style="margin-bottom: 0" >
-                    <thead>
-                        <tr>
-                            <th translate>INDEX_INCI_FECHA</th>
-                            <th translate>INDEX_INCI_DESCRIPCION</th>
-                            <th translate>INDEX_INCI_RECONOCER</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr data-ng-repeat="inci in ctrl.dlistainci">
-                            <td>
-                                <div>{{inci.time}}</div>
-                            </td>
-                            <td>
-                                <div>{{ctrl.inci_desc(inci.inci)}}</div>
-                            </td>
-                            <td style="text-align: right;">
-                                <button type="button"
-                                        ng-click="ctrl.reconoce(inci, true)"
-                                        class="btn btn-default"
-                                        ng-show="ctrl.showExceptSpv()"
-                                        translate>
-                                    INDEX_INCI_RECONOCER
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                    <tfoot>
-                        <tr style="padding:0;">
-                            <td>
-                            </td>
-                            <td></td>
-                            <td style="text-align: right;">
-                                <div id="pag" st-pagination="" st-items-by-page="4" st-displayed-pages="4"></div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <button style="float:none" width="24"
-                                        class="btn btn-default"
-                                        ng-show="ctrl.showExceptSpv()"
-                                        ng-click="ctrl.ToggleSound()">
-                                    <img ng-src='{{ctrl.SoundImg()}}'>
-                                </button>
-                            </td>
-                            <td style="text-align: right">
-                                <!-- Control Audio local -->
-                                <audio id="myAudio1">
-                                    <source src="ALARM.wav" type="audio/wav">
-                                    Your browser does not support the audio element.
-                                </audio>
-                                <!--<img ng-src='{{ctrl.SoundImg()}}' alt="" width="24">-->
-                            </td>
-                            <td>
-                                <button height="24px"
-                                        class="btn btn-default"
-                                        ng-click="ctrl.reconoce_todas()"
-                                        ng-show="ctrl.showExceptSpv()" translate>
-                                    Reconocer Todas
-                                </button>
-                                <!--<button class="btn btn-default" ng-show="ctrl.listainci.length > 0" onclick="document.getElementById('myAudio').muted=!document.getElementById('myAudio').muted"><img ng-src='{{ctrl.SoundImg()}}' alt="" width="24"></button>-->
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
             <div class="row new-inci">
                 <div class="col-lg-12">
                     <div class="row">
@@ -170,7 +102,7 @@
                                     ng-click="ctrl.ToggleSound()">
                                 <img ng-src='{{ctrl.SoundImg()}}'>
                             </button>
-                            <audio id="myAudio1" ">
+                            <audio id="myAudio">
                                 <source src="ALARM.wav" type="audio/wav">
                                 Your browser does not support the audio element.
                             </audio>

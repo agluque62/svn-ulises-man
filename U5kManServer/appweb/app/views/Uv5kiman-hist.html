@@ -11,7 +11,7 @@
 </section>
 <section id="_contenido">
 
-    <div id="hisGestor" data-ng-show="ctrl.pagina()==0">
+    <div id="hisGestor" ng-show="ctrl.pagina()==0">
         <div id="fhis">
             <div class="row">
                 <div class="col-md-1 bg-info" translate>HST_TB1_01</div>
@@ -37,7 +37,7 @@
             </div>
         </div>
 
-        <div id="tbhis" data-ng-show="false">
+        <div id="tbhis" ng-if="false">
             <table st-table="ctrl.dlhis" st-safe-src="ctrl.lhis" class="hisTable table table-striped">
                 <thead>
                     <tr>
@@ -159,7 +159,7 @@
         </div>
     </div>
 
-    <div id="estGestor" data-ng-show="ctrl.pagina()==1">
+    <div id="estGestor" ng-show="ctrl.pagina()==1">
         <div id="fest">
             <table class="filTable" ng-show="false">
                 <tr>

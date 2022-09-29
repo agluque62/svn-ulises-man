@@ -40,9 +40,6 @@
             <Component Id="cmp47E90FB58ACC10ADB6B518D141C87E90" Directory="dirFF886818DC70C18C5F6F734D8ACBD8C6" Guid="*">
                 <File Id="filC8205539F3EFD19E09CB9AF3F5678098" KeyPath="yes" Source="$(var.SourcePath)\mongoose-free-6.1.exe" />
             </Component>
-            <Component Id="cmp6253A9A0D3C916DF13E6F3B0CC779ECE" Directory="dirFF886818DC70C18C5F6F734D8ACBD8C6" Guid="*">
-                <File Id="fil8DA68704C1FE1A223762EBBAC96F8ED5" KeyPath="yes" Source="$(var.SourcePath)\mongoose-ppal.conf" />
-            </Component>
             <Component Id="cmp390F1189A19840F6AB6319C30124DDD7" Directory="dirFF886818DC70C18C5F6F734D8ACBD8C6" Guid="*">
                 <File Id="fil40DD657428127AEFD569AE9F8B6180FB" KeyPath="yes" Source="$(var.SourcePath)\mongoose.conf" />
             </Component>

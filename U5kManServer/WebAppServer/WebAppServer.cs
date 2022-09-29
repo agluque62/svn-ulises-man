@@ -11,6 +11,7 @@ using System.Net;
 
 using NucleoGeneric;
 using Utilities;
+using U5kBaseDatos;
 
 namespace U5kManServer.WebAppServer
 {
@@ -798,7 +799,7 @@ namespace U5kManServer.WebAppServer
     // TODO. Debe gestionar todas las sesiones activas...
     public class InactivityDetectorClass : IDisposable
     {
-        public TimeSpan IdleTime { get; set; } = TimeSpan.FromSeconds(45);
+        public TimeSpan IdleTime { get; set; } = TimeSpan.FromMinutes(2);
         public bool Tick4Idle(bool modeClick = false)
         {
             if (modeClick)
@@ -841,11 +842,11 @@ namespace U5kManServer.WebAppServer
         dynamic Control { get; set; } = new { Clicks = "0", When=DateTime.Now };
         Dictionary<string, DateTime> LastRestReceived { get; set; } = new Dictionary<string, DateTime>();
     }
-    public class SessionsControl
+    public class SessionsControl : BaseCode
     {
         public class Session
         {
-            public string Key { get; set; }
+            public string Key { get; set; } = "";
             public DateTime Expires { get; set; }
             public string ClicksCount { get; set; }
             public DateTime LastActivityTime { get; set; }
@@ -855,6 +856,7 @@ namespace U5kManServer.WebAppServer
                 return $"([{Key}],[{When(Expires)}],[{ClicksCount}],[{When(LastActivityTime)}]; ";
             }
             string When(DateTime date) => date.TimeOfDay.ToString(@"hh\:mm\:ss");
+            public string UserId => Key?.Split('#').FirstOrDefault() ?? "???";
         }
         public int MaxSessions { get; set; } = Properties.u5kManServer.Default.WebMaxSessions;
         public TimeSpan IdleTime { get; set; } = TimeSpan.FromSeconds(45);
@@ -918,12 +920,15 @@ namespace U5kManServer.WebAppServer
             return false;
         }
         public void Tick4Idle() => Cleanup();
-        public void Logout(HttpListenerRequest request)
+        public void Logout(HttpListenerRequest request, Action<string> user)
         {
             Cleanup();
             var keyAccess = request.Cookies.Cast<Cookie>().Where(c => c.Name == "login").Select(c => c.Value).FirstOrDefault();
             lock (Locker)
             {
+                Session ses = Sessions.Where(s => s.Key == keyAccess).Select(s => s).FirstOrDefault();
+                user(ses?.UserId);
+                // Limpia la tabla...
                 Sessions = Sessions.Where(s => s.Key != keyAccess).Select(s => s).ToList();
             }
         }
@@ -933,13 +938,33 @@ namespace U5kManServer.WebAppServer
         }
         void Cleanup()
         {
+            List<Session> Expired = null;
+            List<Session> Inactives = null;
             lock (Locker)
             {
+                Expired = Sessions.Where(s => s.Expires <= DateTime.Now).Select(s => s).ToList();
                 /** Limpia las Sesiones que han expirado */
                 Sessions = Sessions.Where(s => s.Expires > DateTime.Now).Select(s => s).ToList();
+
+                Inactives = Sessions.Where(s => s.LastActivityTime + IdleTime <= DateTime.Now).Select(s => s).ToList();
                 /** Limpia las Sesiones Inactivas */
                 Sessions = Sessions.Where(s => s.LastActivityTime + IdleTime > DateTime.Now).Select(s => s).ToList();
             }
+            Task.Run(() =>
+            {
+                Expired.ForEach((s) =>
+                {
+                    var msg = $"La Sesion de {s.UserId} ha expirado";
+                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                        new object[] { msg, "", "", "", "", "", "", "" });
+                });
+                Inactives.ForEach((s) =>
+                {
+                    var msg = $"La Sesion de {s.UserId} se ha cancelado por inactividad.";
+                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                        new object[] { msg, "", "", "", "", "", "", "" });
+                });
+            });
         }
         int SessionsCount()
         {

@@ -13,7 +13,7 @@
         <li data-ng-class="{'active': ctrl.pagina()==3}">
             <a href="" data-ng-click="ctrl.pagina(3)" translate>Servicios Centralizados</a>
         </li>
-        <li data-ng-class="{'active': ctrl.pagina()==4}" ng-show="ctrl.std.pbx.enable==1">
+        <li data-ng-class="{'active': ctrl.pagina()==4}" ng-if="ctrl.std.pbx.enable==1">
             <a href="" data-ng-click="ctrl.pagina(4)" translate>SPV_OPC_04</a>
         </li>
         <li data-ng-class="{'active': ctrl.pagina()==5}">
@@ -23,7 +23,7 @@
 </section>
 <section id="_contenido" class="hw">
     <!-- Pantalla de Estado General Sin alinear imagenes -->
-    <div id="spvGlobal" data-ng-show="ctrl.pagina()==-1">
+    <div id="spvGlobal" ng-if="ctrl.pagina()==-1">
         <h1><strong translate>SPV_GLOBAL_01</strong></h1>
         <div class="row">
             <div class="col-md-4">
@@ -274,7 +274,7 @@
         </div>
     </div>
     <!-- Pantalla de Estado de Operadores -->
-    <div id="spvOperadores" data-ng-show="ctrl.pagina()==1">
+    <div id="spvOperadores" ng-if="ctrl.pagina()==1">
         <h1 title="Header"><strong translate>SPV_CWP_01</strong></h1>
         <div class="row" ng-repeat="cwp in ctrl.cwps track by $index" ng-if="$index % 6 == 0">
             <div class="col-md-2" ng-repeat="i in [$index, $index + 1, $index + 2, $index + 3, $index + 4, $index + 5]"
@@ -301,7 +301,7 @@
     </div>
 
     <!-- Pantalla de Estado de Pasarelas -->
-    <div id="spvPasarelas" data-ng-show="ctrl.pagina()==2">
+    <div id="spvPasarelas" ng-if="ctrl.pagina()==2">
         <h1><strong translate>SPV_GWS_01</strong></h1>
         <div class="row" ng-repeat="gw in ctrl.gws track by $index" ng-if="$index % 6 == 0">
             <div class="col-md-2" ng-repeat="i in [$index, $index + 1, $index + 2, $index + 3, $index + 4, $index + 5]"
@@ -331,7 +331,7 @@
     </div>
 
     <!-- Pantalla de Estado de Nodeboxes -->
-    <div id="spvNodebox" data-ng-show="ctrl.pagina()==3">
+    <div id="spvNodebox" ng-if="ctrl.pagina()==3">
         <h1><strong translate>Elementos con Servicios Centralizados</strong></h1>
 
         <div class="row" ng-repeat="equ in ctrl.std.csi.mixed.phsl track by $index" ng-if="$index % 3 == 0" ng-show="ctrl.nmxSplitted()==false">
@@ -387,7 +387,7 @@
     </div>
 
     <!-- Pantalla de Estado de Abonados PABX -->
-    <div id="spvAbonados" data-ng-show="ctrl.pagina()==4">
+    <div id="spvAbonados" ng-if="ctrl.pagina()==4">
         <h1><strong translate>SPV_ABN_01</strong></h1>
         <div class="row" ng-repeat="equ in ctrl.pbxab track by $index" ng-if="$index % 6 == 0">
             <div class="col-md-2" ng-repeat="i in [$index, $index + 1, $index + 2, $index + 3, $index + 4, $index + 5]"
@@ -401,7 +401,7 @@
     </div>
 
     <!-- Pantalla de Estado de Equipos Externos (Voip) -->
-    <div id="spvEquiposExt" data-ng-show="ctrl.pagina()==5">
+    <div id="spvEquiposExt" ng-if="ctrl.pagina()==5">
         <div class="row ext-res-main-div">
             <div class="col-md-2"><label>{{ctrl.translate('Filtrar por')}}</label></div>
             <div class="col-md-4">
@@ -440,6 +440,7 @@
                         </a>
                     </div>
                 </div>
+
             </div>
         </div>
 

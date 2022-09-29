@@ -1,5 +1,6 @@
 angular.module("Uv5kiman")
-.controller("uv5kiConfigCtrl", function ($scope, $interval, $serv, $lserv) {
+    .controller("uv5kiConfigCtrl", function ($scope, $interval, $serv, $lserv) {
+        console.log("Configuration controller started...");
     /** Inicializacion */
     var ctrl = this;
     ctrl.translate = $lserv.translate;

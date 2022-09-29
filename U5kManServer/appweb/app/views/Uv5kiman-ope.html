@@ -17,7 +17,7 @@
 </section>
 <section id="_contenido">
     <!-- Sesiones Radio -->
-    <div class="opespv" data-ng-show="ctrl.pagina()==0">
+    <div class="opespv" ng-if="ctrl.pagina()==0">
         <div class="mnman" data-ng-show="(ctrl.frecs.length != 0)">
             <ul class="list-group">
                 <li class="list-group-item">
@@ -133,7 +133,7 @@
     </div>
 
     <!-- Estado M+N -->
-    <div class="opespv" data-ng-show="ctrl.pagina()==1">
+    <div class="opespv" ng-if="ctrl.pagina()==1">
         <div class="mnman" ng-show="ctrl.mnman.length != 0">
             <ul class="list-group">
                 <!--            Tabla de VHF-->
@@ -274,7 +274,7 @@
     </div>
 
     <!-- Equipos HF -->
-    <div class='opespv' data-ng-show="ctrl.pagina()==3">
+    <div class='opespv' ng-if="ctrl.pagina()==3">
         <h1><strong translate>Transmisores HF</strong></h1>
         <div class="mnman" data-ng-show="(ctrl.gestorhf.length != 0)">
             <ul class="list-group">
@@ -313,7 +313,7 @@
     </div>
 
     <!-- Estado 1+1 -->
-    <div id="UnoMasUno" class='opespv' data-ng-show="ctrl.pagina()==2">
+    <div id="UnoMasUno" class='opespv' ng-if="ctrl.pagina()==2">
         <div style="width:98%;margin-left:1%;font-size:80%;" ng-show="ctrl.dtUnoMasUno.length > 0">
             <ul class="list-group" style="margin:0.75em">
                 <!-- Seleccion de la Frecuencia  -->

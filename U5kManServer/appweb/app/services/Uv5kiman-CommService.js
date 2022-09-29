@@ -9,6 +9,9 @@ angular
                 clickCounter += 1;
                 return clickCounter;
             }
+            , alive: () => {
+                return safeRemoteGet("/alive");
+            }
             , stdgen_get: function () {
                 return safeRemoteGet(rest_url_std + "?user=" + $lserv.User());
             }

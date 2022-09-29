@@ -17,7 +17,7 @@
 </section>
 <section id="_contenido">
 
-    <div id="tlfProxies" data-ng-show="ctrl.pagina()==0">
+    <div id="tlfProxies" ng-if="ctrl.pagina()==0">
         <!--<h4 class="text-center "><small class="text-info" translate>Proxies</small></h4>-->
         <div class="stdfrec pv-0">
             <ul class="list-group" style="margin-top: 10px; margin-bottom: 10px;">
@@ -45,7 +45,7 @@
         </div>
     </div>
 
-    <div id="tflAnalogica" data-ng-show="ctrl.pagina()==1">
+    <div id="tflAnalogica" ng-if="ctrl.pagina()==1">
         <!--<h4 class="text-center "><small class="text-info" translate>Interfaces Analogicas</small></h4>-->
         <div class="stdfrec pv-0">
             <ul class="list-group" style="margin-top: 10px; margin-bottom: 10px;">
@@ -97,7 +97,7 @@
         </div>
     </div>
 
-    <div id="tlfPbx" data-ng-show="ctrl.pagina()==2">
+    <div id="tlfPbx" ng-if="ctrl.pagina()==2">
         <!--<h4 class="text-center "><small class="text-info" translate>Abonados PBX</small></h4>-->
         <div class="stdfrec pv-0">
             <ul class="list-group" style="margin-top: 10px; margin-bottom: 10px;">
@@ -139,11 +139,10 @@
                     </div>
                 </li>
             </ul>
-
         </div>
     </div>
 
-    <div id="tlfExtAts" data-ng-show="ctrl.pagina()==3">
+    <div id="tlfExtAts" ng-if="ctrl.pagina()==3">
         <!--<h4 class="text-center "><small class="text-info" translate>Abonados ATS Externos</small></h4>-->
         <div class="stdfrec pv-0">
             <ul class="list-group" style="margin-top: 10px; margin-bottom:10px;">
