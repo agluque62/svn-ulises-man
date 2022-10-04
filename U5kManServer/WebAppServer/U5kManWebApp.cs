@@ -125,7 +125,7 @@ namespace U5kManServer.WebAppServer
                                 Task.Run(() =>
                                 {
                                     var msg = $"Usuario {loggeduser.id}, {loggeduser.ProfileId}, Inicia session";
-                                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                                         new object[] { msg, "", "", "", "", "", "", "" });
                                 });
                             }
@@ -185,7 +185,7 @@ namespace U5kManServer.WebAppServer
                     Task.Run(() =>
                     {
                         var msg = $"Usuario {user}, Finaliza session";
-                        RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                        RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                             new object[] { msg, "", "", "", "", "", "", "" });
                     });
                 });
@@ -1235,7 +1235,7 @@ namespace U5kManServer.WebAppServer
         {
             RecordEvent<U5kManWebApp>(DateTime.Now, 
                 U5kBaseDatos.eIncidencias.IGRL_U5KI_SERVICE_INFO, 
-                U5kBaseDatos.eTiposInci.TEH_SISTEMA, "WEB",        
+                U5kBaseDatos.eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),        
                 Params("WebApp", action));
         }
 

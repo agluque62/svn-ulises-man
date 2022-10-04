@@ -133,7 +133,7 @@ namespace U5kManServer
                     (alarma, str1, str2, str3) =>                
                     {
                         eIncidencias inci = alarma == true ? eIncidencias.IGRL_NBXMNG_ALARM : eIncidencias.IGRL_NBXMNG_EVENT;
-                        RecordEvent<Services.CentralServicesMonitor>(DateTime.Now, inci, eTiposInci.TEH_SISTEMA, "SPV",
+                        RecordEvent<Services.CentralServicesMonitor>(DateTime.Now, inci, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                             new object[] { str1, str2, str3, "", "", "", "", "" });
                     },
                     (m, x) =>

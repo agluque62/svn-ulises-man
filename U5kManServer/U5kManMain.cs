@@ -1416,7 +1416,7 @@ namespace U5kManServer
                 {
                     LogDebug<U5kServiceMain>(item.What);
                     RecordEvent<U5kServiceMain>(item.When, item.IsError == false ? eIncidencias.IGRL_NBXMNG_EVENT : eIncidencias.IGRL_NBXMNG_ALARM,
-                        eTiposInci.TEH_SISTEMA, "BKP", Params(item.What));
+                        eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(), Params(item.What));
                 });
             }
         }
@@ -1425,20 +1425,20 @@ namespace U5kManServer
             if (U5kManService._Master == true)
             {
                 RecordEvent<HistThread>(DateTime.Now /*+ new TimeSpan(0, 1, 0)*/,
-                eIncidencias.IGRL_CAMBIO_DE_DIA, eTiposInci.TEH_SISTEMA, "SPV",
+                eIncidencias.IGRL_CAMBIO_DE_DIA, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                 new object[] { });
 
                 if (U5kManService.Database != null)
                 {
                     long borrados = U5kManService.Database.SupervisaTablaIncidencia(U5kManService.cfgSettings.DiasEnHistorico);
                     RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
-                        eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, "SPV",
+                        eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                         new object[] { "Supervision Tabla Historicos", borrados, "Registros Eliminados" });
                 }
                 else
                 {
                     RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
-                        eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, "SPV",
+                        eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                         new object[] { "Supervision Tabla Historicos. No es posible eliminar registros. No hay acceso a la base de datos" });
                 }
             }
