@@ -22,6 +22,7 @@
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <DefineConstants>SourcePath=$(SolutionDir)U5kManServer\appweb</DefineConstants>
     <Cultures>en-US;es-ES;fr-FR</Cultures>
+    <RunWixToolsOutOfProc Condition=" '$(PROCESSOR_ARCHITECTURE)'!='x86' ">true</RunWixToolsOutOfProc>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="appweb.wxs" />
@@ -63,7 +64,13 @@
 	</Target>
 	-->
   <Target Name="BeforeBuild">
-    <HeatDirectory DirectoryRefId="INSTALLFOLDER" OutputFile="appweb.wxs" Directory="..\..\U5kManServer\appweb" ComponentGroupName="WebAppComponents" ToolPath="$(WixToolPath)" PreprocessorVariable="var.SourcePath" AutogenerateGuids="true">
-    </HeatDirectory>
+    <HeatDirectory DirectoryRefId="INSTALLFOLDER" 
+                   OutputFile="appweb.wxs" 
+                   Directory="..\..\U5kManServer\appweb" 
+                   ComponentGroupName="WebAppComponents" 
+                   ToolPath="$(WixToolPath)" 
+                   PreprocessorVariable="var.SourcePath" 
+                   AutogenerateGuids="true"
+                   RunAsSeparateProcess="$(RunWixToolsOutOfProc)"/>
   </Target>
 </Project>
