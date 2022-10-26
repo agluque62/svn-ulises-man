@@ -490,6 +490,7 @@ namespace U5kManServer.WebAppServer
                                         LogDebug<WebServerBase>($"{Id} Starting HttpListener");
                                         Listener = new HttpListener();
                                         Listener.Prefixes.Add("http://*:" + port.ToString() + "/");
+                                        //Listener.Prefixes.Add("https://*:" + port.ToString() + "/");
                                         Listener.Start();
                                         Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
                                         LogDebug<WebServerBase>($"{Id} HttpListener Started");
