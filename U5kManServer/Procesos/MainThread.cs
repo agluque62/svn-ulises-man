@@ -209,6 +209,10 @@ namespace U5kManServer
                             retorno = false;
                         }
                     }
+                    stdg.HayPbx = U5kManService.PbxEndpoint != null;
+                    stdg.stdPabx.name = String.Format("{0}:{1}",
+                        U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString(),
+                        Properties.u5kManServer.Default.PabxWsPort);
                     if (retorno == true)
                     {
                         // 20170802. Carga de Usuarios....
