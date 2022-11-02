@@ -919,6 +919,7 @@ namespace U5kManServer
                         });
                     }
                 }
+                U5kManService._Master = false;
                 if (U5kManService.Database != null)
                 {
                     /** Cerrar la base de datos */
