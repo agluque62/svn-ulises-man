@@ -458,6 +458,12 @@ namespace U5kManServer.ExtEquSpvSpace
                                 }));
                             }
                         }
+                        else
+                        {
+                            // RM#7285. Si no hay RED, se resetea el estado sip del recurso.
+                            recurso.EstadoSip = std.Error;
+                            recurso.LastOptionsResponse = "";
+                        }
                         LogTrace<ExtEquSpv>($"Process {(res ? "Ok  " : "Fail")} executed: {recurso.sip_user}.");
                     }
                     else
