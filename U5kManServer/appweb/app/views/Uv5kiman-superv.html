@@ -424,21 +424,38 @@
         </div>
         <div class="row ext-res-main-div">
             <div class="col-md-12">
+
                 <label>{{ctrl.translate("Recursos Externos")}}</label>
                 <div class="row" ng-repeat="equ in ctrl.ext_res_show() track by $index" ng-if="$index % 6 == 0">
-                    <div class="col-md-2" ng-repeat="i in [$index, $index + 1, $index + 2, $index + 3, $index + 4, $index + 5]"
-                         ng-if="ctrl.ext_res_show()[i] != null">
+                    <div class="col-md-2" ng-repeat="i in [$index, $index + 1, $index + 2, $index + 3, $index + 4, $index + 5]">
+
                         <a ng-href="" class="thumbnail" ng-show="true">
-                            <img ng-src="{{ctrl.exteq_img(ctrl.ext_res_show()[i])}}" alt="" style="width:80%; height:64px;"
-                                 class="{{ctrl.exteq_std_class(ctrl.ext_res_show()[i])}}"
-                                 width="70" height="35"
-                                 bs-popover
-                                 data-content="{{ctrl.ext_res_detail(ctrl.ext_res_show()[i])}}"
-                                 ng-click="ctrl.popover_click($event)">
-                            <p class="text-info text-center mt-1 ext-res-equipo">{{'(' + ctrl.ext_res_show()[i].equipo+')'}}</p>
-                            <p class="text-info text-center mt-1 ext-res-name">{{ctrl.ext_res_show()[i].name}}</p>
+                            <div ng-if="ctrl.ext_res_show()[i] != null">
+                                <img ng-src="{{ctrl.exteq_img(ctrl.ext_res_show()[i])}}"
+                                     alt=""
+                                     style="width: 80%; height: 64px; margin-left: 10%;"
+                                     class="{{ctrl.exteq_std_class(ctrl.ext_res_show()[i])}}"
+                                     bs-popover
+                                     data-content="{{ctrl.ext_res_detail(ctrl.ext_res_show()[i])}}"
+                                     ng-click="ctrl.popover_click($event)" />
+                                <p class="text-info text-center mt-1 ext-res-equipo">{{'(' + ctrl.ext_res_show()[i].equipo+')'}}</p>
+                                <p class="text-info text-center mt-1 ext-res-name">{{ctrl.ext_res_show()[i].name}}</p>
+                            </div>
+                            <div ng-if="ctrl.ext_res_show()[i] == null">
+                                <img style="width:80%; height:64px; margin-left:10%;" />
+                                <p class="text-info text-center mt-1 ext-res-equipo">{{'-'}}</p>
+                                <p class="text-info text-center mt-1 ext-res-name">{{'-'}}</p>
+                            </div>
                         </a>
                     </div>
+
+                </div>
+                <div style="float: right">
+                    <label class="text-info" style="margin-right: 20px;">{{ctrl.translate(ctrl.einfo())}}</label>
+                    <button class="btn btn-default" ng-click="ctrl.efirst()">{{ctrl.translate("Inicio")}}</button>
+                    <button class="btn btn-default" ng-click="ctrl.enext()">{{ctrl.translate("Siguiente")}}</button>
+                    <button class="btn btn-default" ng-click="ctrl.eprev()">{{ctrl.translate("Previa")}}</button>
+                    <button class="btn btn-default" ng-click="ctrl.elast()">{{ctrl.translate("Final")}}</button>
                 </div>
 
             </div>

@@ -798,8 +798,23 @@ angular.module("Uv5kiman")
         
     });
 
+    //var timer = $interval(function () {
+    //    if (ctrl.linci.length == 0)
+    //        linci_get();
+    //    if (ctrl.pict.length == 0)
+    //        pict_get();
+    //    if (ctrl.pasa.length == 0)
+    //        pasa_get();
+    //    if (ctrl.mni.length == 0)
+    //        mni_get();
+    //    if (ctrl.allhard.length == 0)
+    //        cwp_gws_ext_get();
+    //}, pollingTime);
+
+    /** */
     /** Funcion Periodica del controlador */
-    var timer = $interval(function () {
+    $scope.$on(eventPolling, function () {
+        console.log("hist => ", eventPolling);
         if (ctrl.linci.length == 0)
             linci_get();
         if (ctrl.pict.length == 0)
@@ -810,11 +825,11 @@ angular.module("Uv5kiman")
             mni_get();
         if (ctrl.allhard.length == 0)
             cwp_gws_ext_get();
-    }, pollingTime);
+    });
 
     /** Salida del Controlador. Borrado de Variables */
     $scope.$on("$destroy", function () {
-        $interval.cancel(timer);
+        //$interval.cancel(timer);
     });
 
 });

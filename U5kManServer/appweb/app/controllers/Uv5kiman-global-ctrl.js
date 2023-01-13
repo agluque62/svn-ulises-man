@@ -436,6 +436,8 @@ angular.module("Uv5kiman")
             load_inci();
             /** Control de Audio  en Local */
             SoundPlayOrStop();
+            /** Se propaga el tick */
+            $scope.$broadcast(eventPolling, [1, 2, 3]);
         }, pollingTime);
 
         $scope.$on('$viewContentLoaded', function () {
@@ -455,6 +457,9 @@ angular.module("Uv5kiman")
                     $scope.$broadcast('GlobalStarted', [1, 2, 3]);
                 });
                 load_inci();
+            }
+            else {
+                $scope.$broadcast('GlobalStarted', [1, 2, 3]);
             }
             firstLoad = false;
         });

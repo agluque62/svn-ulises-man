@@ -767,24 +767,29 @@ angular.module("Uv5kiman")
         });
 
         /** Funcion Periodica del controlador */
-        var timer = $interval(function () {
-            //if (ctrl.pagina() == 0)
-            //    rdSessionsGet();
-            //else if (ctrl.pagina() == 1) {
-            //    rdGestormnGet();
-            //}
-            //else if (ctrl.pagina() == 3) {
-            //    rdHfGet();
-            //}
-            //else if (ctrl.pagina() == 4) {
-            //    extDestGet();
-            //}
+        $scope.$on(eventPolling, function () {
+            console.log("radio => ", eventPolling);
             rdDataGet();
-        }, pollingTime);
+        });
+
+        //var timer = $interval(function () {
+        //    //if (ctrl.pagina() == 0)
+        //    //    rdSessionsGet();
+        //    //else if (ctrl.pagina() == 1) {
+        //    //    rdGestormnGet();
+        //    //}
+        //    //else if (ctrl.pagina() == 3) {
+        //    //    rdHfGet();
+        //    //}
+        //    //else if (ctrl.pagina() == 4) {
+        //    //    extDestGet();
+        //    //}
+        //    rdDataGet();
+        //}, pollingTime);
 
         /** Salida del Controlador. Borrado de Variables */
         $scope.$on("$destroy", function () {
-            $interval.cancel(timer);
+            //$interval.cancel(timer);
         });
 
     });
