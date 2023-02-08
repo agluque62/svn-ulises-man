@@ -326,7 +326,7 @@ namespace Utilities
         {
             if (lan < NICList.Count)
             {
-#if DEBUG
+#if DEBUG1
                 Debug.WriteLine("Notificando evento de LAN.", NICList[lan].DeviceId);
 #endif
                 StatusChanged?.Invoke(lan, NICList[lan].Status);
