@@ -87,7 +87,8 @@ namespace U5kManServer.WebAppServer
                 "/listinci",
                 "/images/corporativo-a.png",
                 "/favicon.ico",
-                "/images/corporativo-a.png"
+                "/images/corporativo-a.png",
+                "/db/systemusers"
             };
             /** Rutina a la que llama el servidor base para autentificar un usuario */
             AuthenticateUser = (data, response) =>
