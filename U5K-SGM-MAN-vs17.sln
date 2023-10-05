@@ -35,6 +35,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Setup", "Setup", "{A26B90D9-2B69-44F5-B641-25880E3D5DAD}"
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "U5kManServerSetup", "Setup\U5kManServerSetup\U5kManServerSetup.wixproj", "{D565F872-EAB7-4DC2-9956-25B2AD77E2F7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{ADE5CD26-8DE9-4014-9DF2-59585A19227D} = {ADE5CD26-8DE9-4014-9DF2-59585A19227D}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Antiguos", "Antiguos", "{A266B749-9B87-4D8B-98C1-A5146DF0F4EA}"
 EndProject
