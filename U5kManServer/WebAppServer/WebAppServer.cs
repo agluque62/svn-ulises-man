@@ -12,6 +12,7 @@ using System.Net;
 using NucleoGeneric;
 using Utilities;
 using U5kBaseDatos;
+using System.Collections.Specialized;
 
 namespace U5kManServer.WebAppServer
 {
@@ -491,7 +492,7 @@ namespace U5kManServer.WebAppServer
                                         Listener = new HttpListener();
                                         Listener.Prefixes.Add("http://*:" + port.ToString() + "/");
                                         Listener.Start();
-                                        Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
+                                        Listener.BeginGetContext(new AsyncCallback(GetContextCallback), Listener);
                                         LogDebug<WebServerBase>($"{Id} HttpListener Started");
                                     }
                                     catch (Exception x)
@@ -535,7 +536,7 @@ namespace U5kManServer.WebAppServer
                 ConfigCultureSet();
 
                 HttpListenerContext context = Listener.EndGetContext(result);
-                Logrequest(context);
+                var loggedUrl = Logrequest(context);
                 try
                 {
                     if (IsAuthenticated(context))
@@ -579,30 +580,38 @@ namespace U5kManServer.WebAppServer
                 catch (Exception x)
                 {
                     LogException<WebServerBase>("", x);
-                    context.Response.StatusCode = 500;
+                    ErrorRender(context.Response, $"{x}", 500);
                 }
                 finally
                 {
                     context.Response.Close();
                     if (Listener != null && Listener.IsListening)
-                        Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
+                        Listener.BeginGetContext(new AsyncCallback(GetContextCallback), Listener);
+                    LogDebug<WebServerBase>($"{loggedUrl}");
                 }
             }
         }
         protected void ProcessFile(HttpListenerResponse response, string file, string tag = "", string valor = "")
         {
-            if (tag != "")
+            try
             {
-                string str = File.ReadAllText(file).Replace(tag, valor);
-                byte[] content = Encoding.ASCII.GetBytes(str);
-                response.OutputStream.Write(content, 0, content.Length);
+                if (tag != "")
+                {
+                    string str = File.ReadAllText(file).Replace(tag, valor);
+                    byte[] content = Encoding.ASCII.GetBytes(str);
+                    response.OutputStream.Write(content, 0, content.Length);
+                }
+                else
+                {
+                    byte[] content = File.ReadAllBytes(file);
+                    response.OutputStream.Write(content, 0, content.Length);
+                }
+                //response.Close();
             }
-            else
+            catch (Exception x)
             {
-                byte[] content = File.ReadAllBytes(file);
-                response.OutputStream.Write(content, 0, content.Length);
+                LogException<WebServerBase>("", x);
             }
-            response.Close();
         }
         protected void Render(string msg, HttpListenerResponse res)
         {
@@ -613,6 +622,13 @@ namespace U5kManServer.WebAppServer
             {
                 outputStream.Write(buffer, 0, buffer.Length);
             }
+        }
+        protected void ErrorRender(HttpListenerResponse res, string error, int code)
+        {
+            var errorObject = new { code = _pendingErrors.Insert(error), text = error };
+            var errorObjectEncoded = Encode(JsonHelper.ToString(errorObject));
+            res.StatusCode = code;
+            Render(errorObjectEncoded, res);
         }
         protected string Encode(string entrada)
         {
@@ -726,6 +742,7 @@ namespace U5kManServer.WebAppServer
                                 {
                                     ProcessFile(context.Response, (Config?.DefaultDir + Config?.LoginUrl).Substring(1),
                                         Config.LoginErrorTag, Config.LoginErrorTag + cause);
+                                    context.Response.Close();
                                 }
                             });
                         }
@@ -770,9 +787,9 @@ namespace U5kManServer.WebAppServer
             LogDebug<OldWebAppServer>($"{Id} Listener Reset");
         }
         #region Testing
-        private void Logrequest(HttpListenerContext context)
+        private string Logrequest(HttpListenerContext context)
         {
-            LogDebug<WebServerBase>($"HTTP Request: {context.Request.HttpMethod} {context.Request.Url.OriginalString}");
+            LogDebug<WebServerBase>($"HTTP Request Entry: {context.Request.HttpMethod} {context.Request.Url.OriginalString}");
             if (context.Request.QueryString.Count > 0)
             {
                 var array = (from key in context.Request.QueryString.AllKeys
@@ -781,6 +798,7 @@ namespace U5kManServer.WebAppServer
 
                 LogDebug<WebServerBase>($"Query: {String.Join("##", array)}");
             }
+            return $"HTTP Request  Exit: {context.Request.HttpMethod} {context.Request.Url.OriginalString}";
         }
         #endregion
 
@@ -793,8 +811,42 @@ namespace U5kManServer.WebAppServer
         //InactivityDetectorClass InactivityDetector { get; set; } = new InactivityDetectorClass();
         Task ExecutiveThread { get; set; } = null;
         CancellationTokenSource ExecutiveThreadCancel { get; set; } = null;
+        ErrorManagement _pendingErrors = new ErrorManagement();
         //Dictionary<string, Cookie> Sessions { get; set; } = new Dictionary<string, Cookie>();
         #endregion
+    }
+    // Gestor de Mensajes de Error
+    internal class ErrorManagement
+    {
+        class ErrorControl
+        {
+            public string Key { get; set; }
+            public string Value { get; set; }
+            public DateTime TimeStamp { get; set; } 
+            public ErrorControl(string value)
+            {
+                Key = Guid.NewGuid().ToString();
+                TimeStamp = DateTime.Now;
+                Value = value;
+            }
+        }
+        public string Insert(string errorText)
+        {
+            var error = new ErrorControl(errorText);
+            _errors.Add(error);
+            Sanitize();
+            return error.Key;
+        }
+        public string Extract(string key)
+        {
+            return _errors.Where(e => e.Key == key).FirstOrDefault()?.Value ?? string.Empty;
+        }
+        private void Sanitize()
+        {
+            var oldDate = DateTime.Now - TimeSpan.FromSeconds(10);
+            _errors = _errors.Where(e => e.TimeStamp < oldDate).Select(e => e).ToList();
+        }
+        private List<ErrorControl> _errors = new List<ErrorControl>();
     }
     // TODO. Debe gestionar todas las sesiones activas...
     public class InactivityDetectorClass : IDisposable

@@ -151,20 +151,43 @@ angular
                     }, data: ''
                 })
                 .then(function (response) {
-                    if (response.status == 200) {
+                    if (IsOk(response) == true) {
                         if (typeof response.data == 'object')
                             deferred.resolve(response);
                         else {
                             console.log("Sesion Vencida...");
                             window.location.href = "/login.html";
                         }
+                    } else if (IsRedirect(response)) {
+                        var newLocation = response.headers('Location');
+                        console.log("safeRemoteGet " + url + " Redirect to => " + newLocation);
+                        window.location.href = newLocation;
+                    } else {
+                        console.error("safeRemoteGet " + url + " Unknow OK response => ", response);
+                        deferred.reject("Error Interno: " + response);
                     }
-                    else {
+                }, function (response) {
+                    if (IsUnauthorized(response)) {
+                        console.log("safeRemoteGet " + url + " Unauthorized!");
+                        window.location.href = "/login.html";
+                    } else if (IsNotFound(response)) {
+                        console.error("safeRemoteGet " + url + " Not Found!");
+                        alertify.error($lserv.translate("Error al ejecutar la operacion") + ": " + url + " Not Found!");
+                    } else if (IsLocalError(response)) {
+                        console.error("safeRemoteGet " + url + " Local Error => ", response);
+                        alertify.error($lserv.translate("Error al ejecutar la operacion") + ": " + url + " " + response.statusText);
+                    } else if (IsServerError(response)) {
+                        console.error("safeRemoteGet " + url + " Server Error => data: ", response.data);
+                        // Todo... visualizar el error en otra pantalla.
+                        window.location.href = "/error.html?error=" + response.data.code;
+                        // deferred.reject(response);
+                    } else {
+                        console.error("safeRemoteGet " + url + " Unknow Error => ", response);
                         deferred.reject(response);
+                        // Todo... algun efecto visual transitorio
                     }
-                }, function (reason) {
-                    deferred.reject("Error Interno: " + reason);
                 }, function (update) {
+                    console.error("safeRemoteGet " + url + " Notification => ", update);
                     deferred.reject("Notificacion: " + update);
                 });
             return deferred.promise;
@@ -196,6 +219,37 @@ angular
             var urlsim = n1 == -1 ? url : url.substr(0, n1);
 
             return "./simulate" + urlsim + ".json";
+        }
+
+        function IsUnauthorized(response) {
+            if (response.status == 401)
+                return true;
+            return false;
+        }
+        function IsNotFound(response) {
+            if (response.status == 404)
+                return true;
+            return false;
+        }
+        function IsOk(response) {
+            if (response.status >= 200 && response.status < 300)
+                return true;
+            return false;
+        }
+        function IsRedirect(response) {
+            if (response.status >= 300 && response.status < 400)
+                return true;
+            return false;
+        }
+        function IsLocalError(response) {
+            if (response.status >= 400 && response.status < 500)
+                return true;
+            return false;
+        }
+        function IsServerError(response) {
+            if (response.status >= 500)
+                return true;
+            return false;
         }
 
     });

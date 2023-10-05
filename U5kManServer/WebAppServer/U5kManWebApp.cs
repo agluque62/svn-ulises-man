@@ -695,6 +695,9 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
+#if DEBUG1
+                throw new Exception("Simulated Exception from restOptions.");
+#endif
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADOptions>(new U5kManWADOptions(gdt, true) {}));
             }
             else if (context.Request.HttpMethod == "POST")
