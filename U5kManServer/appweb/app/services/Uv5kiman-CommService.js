@@ -178,13 +178,10 @@ angular
                         alertify.error($lserv.translate("Error al ejecutar la operacion") + ": " + url + " " + response.statusText);
                     } else if (IsServerError(response)) {
                         console.error("safeRemoteGet " + url + " Server Error => data: ", response.data);
-                        // Todo... visualizar el error en otra pantalla.
                         window.location.href = "/error.html?error=" + response.data.code;
-                        // deferred.reject(response);
                     } else {
                         console.error("safeRemoteGet " + url + " Unknow Error => ", response);
-                        deferred.reject(response);
-                        // Todo... algun efecto visual transitorio
+                        alertify.error($lserv.translate("Error al ejecutar la operacion") + ": " + url + " " + $lserv.translate("Error Desconocido: ") + response.statusText);
                     }
                 }, function (update) {
                     console.error("safeRemoteGet " + url + " Notification => ", update);

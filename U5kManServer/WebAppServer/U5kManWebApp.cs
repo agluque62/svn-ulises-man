@@ -55,7 +55,7 @@ namespace U5kManServer.WebAppServer
                     {"/sacta", restSacta},              // GET & POST
                     {"/sacta/*", restSacta},              // GET & POST
                     {"/extatssest",restExtAtsDest},
-                    {"/versiones",restVersiones},
+                    //{"/versiones",restVersiones},
                     {"/allhard", restAllHard},
                     {"/tifxinfo", restTifxInfo},
                     {"/logs", restLogs},
@@ -169,6 +169,8 @@ namespace U5kManServer.WebAppServer
                     HtmlEncode = false,
                     //SessionDuration = SessionDuration,
                     SecureUris = SecureUris,
+                    ErrorUrl = "/error.html",
+                    ErrorTag = "<div id='error_text'>",
                     CfgRest = cfg
                 });
             }

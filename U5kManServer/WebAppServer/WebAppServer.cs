@@ -454,6 +454,8 @@ namespace U5kManServer.WebAppServer
             public Dictionary<string, wasRestCallBack> CfgRest { get; set; }
             public string LoginErrorTag { get; set; }
             public List<string> SecureUris { get; set; }
+            public string ErrorUrl { get; set; }
+            public string ErrorTag { get; set; }
         }
         public int SyncListenerSpvPeriod { get; set; } = 5;
         public WebServerBase()
@@ -565,13 +567,29 @@ namespace U5kManServer.WebAppServer
                                     /** Es un fichero lo envio... */
                                     string file = url.Substring(1);
                                     string ext = Path.GetExtension(file).ToLowerInvariant();
-
-                                    context.Response.ContentType = FileContentType(ext);
-                                    ProcessFile(context.Response, file);
+                                    if (url.ToLower().Contains(Config.ErrorUrl))
+                                    {
+                                        var keyError = context.Request.RawUrl
+                                            .Split('?')
+                                            .Skip(1)
+                                            .FirstOrDefault()?
+                                            .Split('=')
+                                            .Skip(1)
+                                            .FirstOrDefault();
+                                        var errorInfo = _pendingErrors.Extract(keyError);
+                                        var errorContent = Config.ErrorTag + errorInfo;
+                                        context.Response.ContentType = FileContentType(".html");
+                                        ProcessFile(context.Response, file, Config.ErrorTag, errorContent);
+                                    }
+                                    else
+                                    {
+                                        context.Response.ContentType = FileContentType(ext);
+                                        ProcessFile(context.Response, file);
+                                    }
                                 }
                                 else
                                 {
-                                    context.Response.StatusCode = 404;
+                                    ErrorRender(context.Response, $"Unauthorized", 404);
                                 }
                             }
                         }
@@ -832,7 +850,8 @@ namespace U5kManServer.WebAppServer
         }
         public string Insert(string errorText)
         {
-            var error = new ErrorControl(errorText);
+            var htmlText = errorText.Replace("\r\n", "<br>");
+            var error = new ErrorControl(htmlText);
             _errors.Add(error);
             Sanitize();
             return error.Key;
@@ -844,7 +863,7 @@ namespace U5kManServer.WebAppServer
         private void Sanitize()
         {
             var oldDate = DateTime.Now - TimeSpan.FromSeconds(10);
-            _errors = _errors.Where(e => e.TimeStamp < oldDate).Select(e => e).ToList();
+            _errors = _errors.Where(e => e.TimeStamp > oldDate).Select(e => e).ToList();
         }
         private List<ErrorControl> _errors = new List<ErrorControl>();
     }
