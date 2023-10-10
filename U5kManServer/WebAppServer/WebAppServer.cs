@@ -564,11 +564,11 @@ namespace U5kManServer.WebAppServer
                                 url = Config?.DefaultDir + url;
                                 if (url.Length > 1 && File.Exists(url.Substring(1)))
                                 {
-                                    /** Es un fichero lo envio... */
                                     string file = url.Substring(1);
                                     string ext = Path.GetExtension(file).ToLowerInvariant();
                                     if (url.ToLower().Contains(Config.ErrorUrl))
                                     {
+                                        /** Es una página de error */
                                         var keyError = context.Request.RawUrl
                                             .Split('?')
                                             .Skip(1)
@@ -583,22 +583,27 @@ namespace U5kManServer.WebAppServer
                                     }
                                     else
                                     {
+                                        /** Es un fichero lo envio... */
                                         context.Response.ContentType = FileContentType(ext);
                                         ProcessFile(context.Response, file);
                                     }
                                 }
                                 else
                                 {
-                                    ErrorRender(context.Response, $"Unauthorized", 404);
+                                    ErrorRender(context, $"Not Found", 404);
                                 }
                             }
                         }
+                    }
+                    else
+                    {
+                        LogWarn<WebServerBase>($"Unauthorized!!");
                     }
                 }
                 catch (Exception x)
                 {
                     LogException<WebServerBase>("", x);
-                    ErrorRender(context.Response, $"{x}", 500);
+                    ErrorRender(context, $"{x}", 500);
                 }
                 finally
                 {
@@ -641,12 +646,13 @@ namespace U5kManServer.WebAppServer
                 outputStream.Write(buffer, 0, buffer.Length);
             }
         }
-        protected void ErrorRender(HttpListenerResponse res, string error, int code)
+        protected void ErrorRender(HttpListenerContext context, string error, int code)
         {
-            var errorObject = new { code = _pendingErrors.Insert(error), text = error };
+            var textError = $"On Request {context.Request.Url} Error {code}<br><br>{error}";
+            var errorObject = new { code = _pendingErrors.Insert(textError), text = textError };
             var errorObjectEncoded = Encode(JsonHelper.ToString(errorObject));
-            res.StatusCode = code;
-            Render(errorObjectEncoded, res);
+            context.Response.StatusCode = code;
+            Render(errorObjectEncoded, context.Response);
         }
         protected string Encode(string entrada)
         {

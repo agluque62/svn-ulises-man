@@ -1452,3 +1452,13 @@ div.dataTables_length {
 .new-inci .dataTables_paginate {
     font-size: 85%;
 }
+
+.error {
+    background-color: lightyellow;
+    color: red;
+    font-size: 150%;
+    text-align: center;
+    margin: 5%;
+    padding: 2%;
+    border: 1px solid #4A7729 /*#C1022C*/;
+}
