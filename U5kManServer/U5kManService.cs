@@ -3260,14 +3260,15 @@ namespace U5kManServer
         {
             if (wait == false)
             {
-                try
-                {
-                    setData(U5kManService.GlobalData);
-                }
-                catch (Exception x)
-                {
-                    throw x;
-                }
+                //try
+                //{
+                //    setData(U5kManService.GlobalData);
+                //}
+                //catch (Exception x)
+                //{
+                //    throw x;
+                //}
+                setData(U5kManService.GlobalData);
             }
             else if (smp.WaitOne(TimeSpan.FromMilliseconds(5000)))
             {

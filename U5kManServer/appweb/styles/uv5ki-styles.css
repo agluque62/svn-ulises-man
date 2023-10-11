@@ -186,9 +186,21 @@ div#agrupar nav#_menu {
     {
         text-align: center;
         margin-top: 1em;
-        margin-bottom: 10em;
+        margin-bottom: 1em;
     }
-
+    #_ppalerror .error {
+        background-color: lightyellow;
+        color: red;
+        font-size: 180%;
+        margin: 2em;
+        padding: 2em;
+        border: 1px solid #4A7729 /*#C1022C*/;
+    }
+    #_ppalerror .error p {
+        color: brown;
+        font-size: 70%;
+        padding-left: 2em;
+    }
 #_ppallog
 {
     width: 60%;
@@ -1453,12 +1465,3 @@ div.dataTables_length {
     font-size: 85%;
 }
 
-.error {
-    background-color: lightyellow;
-    color: red;
-    font-size: 150%;
-    text-align: center;
-    margin: 5%;
-    padding: 2%;
-    border: 1px solid #4A7729 /*#C1022C*/;
-}

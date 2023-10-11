@@ -648,11 +648,15 @@ namespace U5kManServer.WebAppServer
         }
         protected void ErrorRender(HttpListenerContext context, string error, int code)
         {
-            var textError = $"On Request {context.Request.Url} Error {code}<br><br>{error}";
-            var errorObject = new { code = _pendingErrors.Insert(textError), text = textError };
+            //var textError = $"On Request {context.Request.Url} Error {code}<br><br>{error}";
+            var textError = error.Split('\n')
+                .Select(l => "<p>" + l + "</p>")
+                .Aggregate($"On Request {context.Request.Url} Error {code}<br><br>", (p, s) => p + s);
+            var errorObject = new { code = _pendingErrors.Insert(textError), text = error };
             var errorObjectEncoded = Encode(JsonHelper.ToString(errorObject));
             context.Response.StatusCode = code;
             Render(errorObjectEncoded, context.Response);
+
         }
         protected string Encode(string entrada)
         {

@@ -960,7 +960,8 @@ namespace U5kManServer.WebAppServer
 #endif
                 {
                     ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-                    sb.Append(sacta_srv.SactaConfGet());
+                    var config = sacta_srv.SactaConfGet();
+                    sb.Append(config);
                 }
             }
             else if (context.Request.HttpMethod == "POST")

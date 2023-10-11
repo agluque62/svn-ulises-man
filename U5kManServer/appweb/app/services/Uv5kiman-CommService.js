@@ -179,6 +179,9 @@ angular
                     } else if (IsServerError(response)) {
                         console.error("safeRemoteGet " + url + " Server Error => data: ", response.data);
                         window.location.href = "/error.html?error=" + response.data.code;
+                    //    window.open("/error.html?error=" + response.data.code,
+                    //        "Error en Servidor",
+                    //        "width=600,height=600,left=(screen.width/2)-(600/2),top=(screen.height/2)-(600/2)");
                     } else {
                         console.error("safeRemoteGet " + url + " Unknow Error => ", response);
                         alertify.error($lserv.translate("Error al ejecutar la operacion") + ": " + url + " " + $lserv.translate("Error Desconocido: ") + response.statusText);
