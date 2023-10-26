@@ -17,6 +17,8 @@ using Newtonsoft.Json.Linq;
 
 using U5kBaseDatos;
 using Utilities;
+using NucleoGeneric;
+
 namespace U5kManServer.WebAppServer
 {
 #if _WEBLOGIN_
@@ -677,7 +679,7 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(JsonConvert.SerializeObject(gdt.SystemUsers));
+                sb.Append(SafeExecute<string>("restDbSystemUsers", () => JsonConvert.SerializeObject(gdt.SystemUsers), "{}"));
             }
             else
             {
@@ -756,11 +758,7 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
-#if _HAY_NODEBOX__
-                sb.Append(JsonConvert.SerializeObject(U5kManService._sessions_data));
-#else
-                sb.Append(Services.CentralServicesMonitor.Monitor.RadioSessionsString);
-#endif
+                sb.Append(SafeExecute<string>("restRdSessions", () => Services.CentralServicesMonitor.Monitor.RadioSessionsString, "[]"));
             }
             else
             {
@@ -777,11 +775,7 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
-#if _HAY_NODEBOX__
-                sb.Append(JsonConvert.SerializeObject(U5kManService._MNMan_data));
-#else
-                sb.Append(Services.CentralServicesMonitor.Monitor.RadioMNDataString);
-#endif
+                sb.Append(SafeExecute<string>("restRdMNMan", () => Services.CentralServicesMonitor.Monitor.RadioMNDataString, "[]"));
             }
             else
             {
@@ -799,16 +793,14 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
-#if DEBUG1
-                var data = File.ReadAllText(".\\appweb\\simulate\\rddata.json");
-                sb.Append(data);
-#else
-                Services.CentralServicesMonitor.Monitor.GetRadioData((data) =>
+                SafeExecute("restRadioData", () =>
                 {
-                    var strData = U5kManWebAppData.JSerialize(data);
-                    sb.Append(strData);
+                    Services.CentralServicesMonitor.Monitor.GetRadioData((data) =>
+                    {
+                        var strData = U5kManWebAppData.JSerialize(data);
+                        sb.Append(strData);
+                    });
                 });
-#endif
             }
             else
             {
@@ -829,29 +821,32 @@ namespace U5kManServer.WebAppServer
                 /** Payload { id: "", ... }*/
                 using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
                 {
-                    var data = JsonConvert.DeserializeObject(reader.ReadToEnd()) as JObject;
-                    if (JsonHelper.JObjectPropertyExist(data, "id") && JsonHelper.JObjectPropertyExist(data, "command"))
+                    SafeExecute("restRadio11Control", () =>
                     {
-                        // var idEquipo = (string)data["id"];
-                        Services.CentralServicesMonitor.Monitor.RdUnoMasUnoCommand(data, (success, msg) =>
+                        var data = JsonConvert.DeserializeObject(reader.ReadToEnd()) as JObject;
+                        if (JsonHelper.JObjectPropertyExist(data, "id") && JsonHelper.JObjectPropertyExist(data, "command"))
                         {
-                            if (success)
+                            // var idEquipo = (string)data["id"];
+                            Services.CentralServicesMonitor.Monitor.RdUnoMasUnoCommand(data, (success, msg) =>
                             {
-                                context.Response.StatusCode = 200;
-                                sb.Append(JsonConvert.SerializeObject(new { res = "Operacion Realizada." }));
-                            }
-                            else
-                            {
-                                context.Response.StatusCode = 500;
-                                sb.Append(JsonConvert.SerializeObject(new { res = "Internal Error: " + msg }));
-                            }
-                        });
-                    }
-                    else
-                    {
-                        context.Response.StatusCode = 400;
-                        sb.Append(JsonConvert.SerializeObject(new { res = "Bad Request..." }));
-                    }
+                                if (success)
+                                {
+                                    context.Response.StatusCode = 200;
+                                    sb.Append(JsonConvert.SerializeObject(new { res = "Operacion Realizada." }));
+                                }
+                                else
+                                {
+                                    context.Response.StatusCode = 500;
+                                    sb.Append(JsonConvert.SerializeObject(new { res = "Internal Error: " + msg }));
+                                }
+                            });
+                        }
+                        else
+                        {
+                            context.Response.StatusCode = 400;
+                            sb.Append(JsonConvert.SerializeObject(new { res = "Bad Request..." }));
+                        }
+                    });
                 }
             }
             else
@@ -869,11 +864,7 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
-#if _HAY_NODEBOX__
-                sb.Append(JsonConvert.SerializeObject(U5kManService._txhf_data));
-#else
-                sb.Append(Services.CentralServicesMonitor.Monitor.HFRadioDataString);
-#endif
+                sb.Append(SafeExecute<string>("restHFTxData", () => Services.CentralServicesMonitor.Monitor.HFRadioDataString, "[]"));
             }
             else
             {
@@ -893,7 +884,7 @@ namespace U5kManServer.WebAppServer
 #if _HAY_NODEBOX__
                 sb.Append(U5kManService._ps_data);
 #else
-                sb.Append(Services.CentralServicesMonitor.Monitor.PresenceDataString);
+                sb.Append(SafeExecute<string>("restTifxInfo", () => Services.CentralServicesMonitor.Monitor.PresenceDataString, "{}"));
 #endif
             }
             else
@@ -909,10 +900,9 @@ namespace U5kManServer.WebAppServer
         /// <param name="sb"></param>
         protected void restSacta(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
-#if !_SACTA_API_V1_
             if (context.Request.HttpMethod == "GET")
             {
-#if DEBUG
+#if DEBUG1
                 if (DebuggingHelper.Simulating)
                 {
                     var sacta_config = new
@@ -955,7 +945,7 @@ namespace U5kManServer.WebAppServer
 #endif
                 {
                     ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-                    sb.Append(sacta_srv.SactaConfGet());
+                    sb.Append(SafeExecute<string>("SACTA-GET", () => sacta_srv.SactaConfGet(), "{}"));
                 }
             }
             else if (context.Request.HttpMethod == "POST")
@@ -1023,85 +1013,7 @@ namespace U5kManServer.WebAppServer
                 context.Response.StatusCode = 404;
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
-#else
-            ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-            if (context.Request.HttpMethod == "GET")
-            {
-                sb.Append(sacta_srv.SactaConfGet());
-            }
-            else if (context.Request.HttpMethod == "POST")
-            {
-                string[] UrlFields = context.Request.Url.LocalPath.Split('/');
-                if (UrlFields.Length > 2)
-                {
-                    string activar = UrlFields[2];
-                    U5KStdGeneral stdg = gdt.STDG;
-                    if (activar == "true")
-                    {
-                        stdg.SactaServiceEnabled = true;
-                        sacta_srv.StartSacta();
-                        RecordManualAction("Activacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
-                        sb.Append(JsonConvert.SerializeObject(new { res = $"Estado SACTA {sacta_srv.GetEstadoSacta()} "}));
-
-                        //Task.Factory.StartNew(() =>
-                        //{
-                        //    sacta_srv.StartSacta();
-                        //    GlobalServices.GetWriteAccess((data) =>
-                        //    {
-                        //        U5kManService._main.EstadoSacta(16, stdg);
-                        //    });
-                        //    /** TODO. Generar Historico de Actuacion */
-                        //    RecordManualAction("Activacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
-                        //});
-                    }
-                    else if (activar == "false")
-                    {
-                        stdg.SactaServiceEnabled = false;
-                        sacta_srv.EndSacta();
-                        RecordManualAction("Desactivacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
-                        sb.Append(JsonConvert.SerializeObject(new { res = $"Estado SACTA {sacta_srv.GetEstadoSacta()} " }));
-
-                        //Task.Factory.StartNew(() =>
-                        //{
-
-                        //    //ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-                        //    sacta_srv.StartSacta();
-                        //    GlobalServices.GetWriteAccess((data) =>
-                        //    {
-                        //        U5kManService._main.EstadoSacta(0, stdg);
-                        //    });
-                        //    /** TODO. Generar Historico de Actuacion */
-                        //    RecordManualAction("Desactivacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
-                        //});
-                    }
-                    else
-                    {
-                        context.Response.StatusCode = 400;
-                        sb.Append(JsonConvert.SerializeObject(new { res = "Codigo no implementado: " + activar }));
-                    }
-                }
-                else
-                {
-                    using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
-                    {
-                        string strData = reader.ReadToEnd();
-                        sacta_srv.SactaConfSet(strData);
-
-                        /** Sincronizar el otro servidor */
-                        _sync_server.Sync(cmdSync.OpcionesSacta, strData);
-
-                        sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = idiomas.strings.WAP_MSG_001 /* "OK" */}));
-                        RecordManualAction("Cambio de opciones de Servicio SACTA");   // todo. Multi-Idioma.
-                    }
-                }
-            }
-            else
-            {
-                context.Response.StatusCode = 404;
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
-            }
-#endif
-            }
+        }
 
         /// <summary>
         /// 
