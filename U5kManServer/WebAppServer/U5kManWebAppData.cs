@@ -26,31 +26,6 @@ namespace U5kManServer.WebAppServer
         {
             return JsonConvert.DeserializeObject<JObject>(strData);
         }
-        protected static T SafeExecute<T>(string who, Func<T> action)
-        {
-            try
-            {
-                return action();
-            }
-            catch (Exception x)
-            {
-                LogException<U5kManWADStd>($"On SecureExecute {who} exception ", x);
-                LogDebug<U5kManWADStd>($"{x}");
-                return default;
-            }
-        }
-        protected static void SafeExecute(string who, Action action)
-        {
-            try
-            {
-                action();
-            }
-            catch (Exception x)
-            {
-                LogException<U5kManWADStd>($"On SecureExecute {who} exception ", x);
-                LogDebug<U5kManWADStd>($"{x}");
-            }
-        }
     }
     class U5kManWADResultado : U5kManWebAppData
     {

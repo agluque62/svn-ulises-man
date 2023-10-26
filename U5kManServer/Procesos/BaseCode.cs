@@ -9,6 +9,7 @@ using NLog;
 
 using U5kBaseDatos;
 using U5kManServer;
+using U5kManServer.WebAppServer;
 
 namespace NucleoGeneric
 {
@@ -438,5 +439,33 @@ namespace NucleoGeneric
                 LogTrace<BaseCode>("ConfigCultureSet => " + idioma);
             });
         }
+
+        #region SafeExecute
+        protected static T SafeExecute<T>(string who, Func<T> action)
+        {
+            try
+            {
+                return action();
+            }
+            catch (Exception x)
+            {
+                LogException<BaseCode>($"On SecureExecute {who} exception ", x);
+                LogDebug<BaseCode>($"{x}");
+                return default;
+            }
+        }
+        protected static void SafeExecute(string who, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception x)
+            {
+                LogException<BaseCode>($"On SecureExecute {who} exception ", x);
+                LogDebug<BaseCode>($"{x}");
+            }
+        }
+        #endregion SafeExecute
     }
 }
