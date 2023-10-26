@@ -116,10 +116,6 @@ namespace U5kManServer.WebAppServer
             });
         }
     }
-
-    /// <summary>
-    /// Estado General.
-    /// </summary>
     class U5kManWADStd : U5kManWebAppData
     {
         public class itemData
@@ -131,10 +127,6 @@ namespace U5kManServer.WebAppServer
             public string url { get; set; }
             public string ntp { get; set; }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public string version { get; set; }
         public string cfg { get; set; }
         public int hf { get; set; }
@@ -143,9 +135,6 @@ namespace U5kManServer.WebAppServer
         public itemData sv2 { get; set; }
         public itemData cwp { get; set; }
         public itemData gws { get; set; }
-#if _HAY_NODEBOX__
-        public itemData nbx { get; set; }
-#endif
         public itemData pbx { get; set; }
         public itemData ntp { get; set; }
         public bool sactaservicerunning { get; set; }
@@ -153,241 +142,11 @@ namespace U5kManServer.WebAppServer
         public itemData sct1 { get; set;}
         public itemData sct2 { get; set; }
         public itemData ext { get; set; }
-#if _HAY_NODEBOX__
-#if _LISTANBX_V0
-        public class itemNbx
-        {
-            public string name { get; set; }
-            public string modo { get; set; }
-        }
-#elif _LISTANBX_
-        public class itemNbx
-        {
-            public string name { get; set; }                // Para compatibilidad con el anterior.
-            public string modo { get; set; }
-
-            public string url { get; set; }
-            public int CfgService { get; set; }
-            public int RadioService { get; set; }
-            public int TifxService { get; set; }
-            public int PresenceService { get; set; }
-            public bool Running { get; set; }
-        }
-        public List<itemNbx> nbxs = new List<itemNbx>();
-#endif
-#else
         public dynamic csi { get; set; }
-#endif
         public string lang { get; set; }
         public int rd_status { get; set; }
         public int tf_status { get; set; }
         public string igmp_status { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public U5kManWADStd(string old, U5kManStdData gdt, string user ="false", bool bGenerate = false)
-        {
-            if (bGenerate)
-            {
-#if STD_ACCESS_V0
-                U5KStdGeneral stdg = U5kManService._std._gen;
-                lock (U5kManService._std._gen)
-#else
-                U5KStdGeneral stdg = gdt.STDG;
-#endif
-                {
-                    version = U5kGenericos.Version;
-                    cfg = stdg.CfgId;                // .cfgVersion;
-                    hf = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.HayAltavozHF ? 1 : 0;
-                    recw = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.OpcOpeCableGrabacion ? 1 : 0;
-                    sv1 = new itemData()
-                    {
-                        name = stdg.stdServ1.name,
-                        enable = 1,
-                        std = (int)stdg.stdServ1.Estado,
-                        sel = (int)stdg.stdServ1.Seleccionado,
-                        url = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual ?
-                                String.Format("http://{0}/UlisesV5000/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : "",
-                        ntp = stdg.stdServ1.NtpInfo.GlobalStatus
-                    };
-                    sv2 = new itemData()
-                    {
-                        name = stdg.stdServ2.name,
-                        enable = stdg.bDualServ ? 1 : 0,
-                        std = (int)stdg.stdServ2.Estado,
-                        sel = (int)stdg.stdServ2.Seleccionado,
-                        url = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual ?
-                                String.Format("http://{0}/UlisesV5000/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : "",
-                        ntp = stdg.stdServ2.NtpInfo.GlobalStatus
-                    };
-                    cwp = new itemData()
-                    {
-                        name = idiomas.strings.WAP_MSG_003 /* "Puestos de Operador"*/,
-                        enable = 1,
-                        std = (int)stdg.stdGlobalPos,
-                        sel = 0,
-                        url = ""
-                    };
-                    gws = new itemData()
-                    {
-                        name = idiomas.strings.WAP_MSG_004 /* "Pasarelas"*/,
-                        enable = 1,
-                        std = (int)stdg.stdScv1.Estado,
-                        sel = 0,
-                        url = ""
-                    };
-
-#if _HAY_NODEBOX__
-
-#if _LISTANBX_V0
-                    /** Busco el Master en la lista */
-                    int nbx_count = U5kManService._std._gen.lstNbx.Count;
-                    StdServ masternbx = U5kManService._std._gen.lstNbx.Find(x => x.Seleccionado == sel.Seleccionado);
-                    List<StdServ> nbx_master_list = masternbx != null ? U5kManService._std._gen.lstNbx.Where(x => x.Seleccionado == sel.Seleccionado).ToList() : null;
-#elif _LISTANBX_
-                    /** Busco el Master en la lista */
-                    int nbx_count = stdg.lstNbx.Count;
-                    U5KStdGeneral.StdNbx masternbx = stdg.lstNbx.Find(x => x.CfgService==U5KStdGeneral.NbxServiceState.Master);
-                    List<U5KStdGeneral.StdNbx> nbx_master_list = masternbx != null ? stdg.lstNbx.Where(x => x.CfgService == U5KStdGeneral.NbxServiceState.Master).ToList() : null;
-#endif
-                    nbx = new itemData()
-                    {
-#if _LISTANBX_V0
-                        name = masternbx != null ? masternbx.name : "???",
-                        enable = 1,
-                        std = (int)(masternbx != null ? (nbx_master_list.Count > 1 ? std.Error :
-                                                         nbx_count > 1 ? masternbx.Estado : std.Aviso) : std.NoInfo),
-                        sel = 0,
-                        url = masternbx != null ? U5kGenericos.NodeboxUrl(masternbx.name) : "???"
-#elif _LISTANBX_
-                        name = masternbx != null ? masternbx.ip : "Unknown",
-                        enable = 1,
-                        std = (int)(masternbx != null ? (nbx_master_list.Count > 1 ? std.Error :
-                                                         nbx_count > 1 ? std.Ok : std.Aviso) : std.NoInfo),
-                        sel = 0,
-                        url = masternbx != null ? "http://" + masternbx.ip + ":" + masternbx.webport.ToString() + "/" : "???"
-#else
-                    name = U5kManService._std._gen.stdNbx.name,
-                    enable = 1,
-                    std = (int)U5kManService._std._gen.stdNbx.Estado,
-                    sel = 0,
-                    url = U5kGenericos.NodeboxUrl(U5kManService._std._gen.stdNbx.name)
-#endif
-                    };
-#else
-                    Services.CentralServicesMonitor.Monitor.DataGetForWebServer((csid) =>
-                    {
-                        csi = csid;
-                    });
-#endif
-                    pbx = new itemData()
-                    {
-                        name = stdg.stdPabx.name,
-                        enable = stdg.HayPbx ? 1 : 0,
-                        std = (int)stdg.stdPabx.Estado,
-                        sel = 0,
-                        url = U5kGenericos.PabxUrl(stdg.stdPabx.name)
-                    };
-                    ntp = new itemData()
-                    {
-                        name = stdg.stdClock.name,
-                        enable = stdg.HayReloj ? 1 : 0,
-                        std = (int)stdg.stdClock.Estado,
-                        sel = 0,
-                        url = ""
-                    };
-                    sactaservicerunning = stdg.SactaService == std.Ok;
-                    sactaserviceenabled = stdg.SactaServiceEnabled;
-                    sct1 = new itemData()
-                    {
-                        name = "SACTA-1",
-                        enable = stdg.HaySacta ? 1 : 0,
-                        std = (int)stdg.stdSacta1,
-                        sel = 0,
-                        url = ""
-                    };
-                    sct2 = new itemData()
-                    {
-                        name = "SACTA-2",
-                        enable = stdg.HaySacta ? 1 : 0,
-                        std = (int)stdg.stdSacta2,
-                        sel = 0,
-                        url = ""
-                    };
-#if _HAY_NODEBOX__
-
-#if _LISTANBX_V0
-                    nbxs.Clear();
-                    foreach (StdServ nodebox in U5kManService._std._gen.lstNbx)
-                    {
-                        nbxs.Add(new itemNbx() { name = nodebox.name, modo = nodebox.Seleccionado == sel.Seleccionado ? "Master" : "Slave" });
-                    }
-#elif _LISTANBX_
-                    nbxs.Clear();
-                    foreach (U5KStdGeneral.StdNbx nodebox in stdg.lstNbx)
-                    {
-                        nbxs.Add(new itemNbx() 
-                        {
-                            name = nodebox.ip,
-                            modo = nodebox.CfgService == U5KStdGeneral.NbxServiceState.Master ? "Master" : "Slave",
-                            CfgService = (int )nodebox.CfgService,
-                            RadioService = (int )nodebox.RadioService,
-                            TifxService = (int)nodebox.TifxService,
-                            PresenceService = (int)nodebox.PresenceService,
-                            url = "http://" + nodebox.ip + ":" + nodebox.webport.ToString() + "/",
-                            Running = nodebox.Running
-                        });
-                    }
-#endif
-#else
-                    // TODO...
-#endif
-                    ext = new itemData()
-                    {
-                        name = idiomas.strings.EquiposExternos,
-                        enable = 1,
-                        std = (int)stdg.stdGlobalExt,
-                        sel = 0,
-                        url = ""
-                    };
-                    lang = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.Idioma;
-                    /** Estado Global Radio */
-#if _HAY_NODEBOX__
-                    var fr = U5kManService._sessions_data.Count();                              // Frecuencias Configuradas.
-                    var fa = U5kManService._sessions_data.Where(f => f.fstd == 0).Count();      // Frecuencias No disponibles
-                    var fd = U5kManService._sessions_data.Where(f => f.fstd == 2).Count();      // Frecuencias Degradadas.
-                    rd_status = fr==0 ? -1 /** No INFO */ : fa > 0 ? 2 /** Alarma */ : fd > 0 ? 1 /** Warning */: 0; /** OK */
-
-                    /** Estado Global Telefonia: 0=>OK, 1=>Con PROXY ALT, 2=>Emergencia */
-                    tf_status = U5kManService.tlf_mode;
-
-#else
-                    //var sessions_data = JsonConvert.DeserializeObject<List<U5kManService.radioSessionData>>(Services.CentralServicesMonitor.Monitor.RadioSessionsString);
-                    //var fr = sessions_data.Count();                              // Frecuencias Configuradas.
-                    //var fa = sessions_data.Where(f => f.fstd == 0).Count();      // Frecuencias No disponibles
-                    //var fd = sessions_data.Where(f => f.fstd == 2).Count();      // Frecuencias Degradadas.
-                    //rd_status = fr == 0 ? -1 /** No INFO */ : fa > 0 ? 2 /** Alarma */ : fd > 0 ? 1 /** Warning */: 0; /** OK */
-                    var rs = Services.CentralServicesMonitor.Monitor.GlobalRadioStatus;
-                    rd_status = rs == std.NoInfo ? -1 : rs == std.Alarma ? 2 : rs == std.Aviso ? 1 : 0;
-
-                    ///** 20181010. De los datos obtenemos el estado de emergencia */
-                    //JArray grps = JsonHelper.SafeJArrayParse(Services.CentralServicesMonitor.Monitor.PresenceDataString);
-                    //JObject prx_grp = grps == null ? null :
-                    //    grps.Where(u => u.Value<int>("tp") == 4).FirstOrDefault() as JObject;
-                    //JProperty prx_prop = prx_grp == null ? null : prx_grp.Property("res");
-                    //JArray proxies = prx_prop == null ? null : prx_prop.Value as JArray;
-                    //int ppal = proxies == null ? 0 : proxies.Where(u => u.Value<int>("tp") == 5 && u.Value<int>("std") == 0).Count();
-                    //int alt = proxies == null ? 0 : proxies.Where(u => u.Value<int>("tp") == 6 && u.Value<int>("std") == 0).Count();
-                    //tf_status = ppal > 0 ? 0 /** OK */ : alt > 0 ? 1 /** DEG */ : 2 /** EMG */;
-
-                    var tfs = Services.CentralServicesMonitor.Monitor.GlobalPhoneStatus;
-                    tf_status = tfs == std.Ok ? 0 /** OK */ : tfs==std.Aviso ? 1 /** DEG */ : 2 /** EMG */;
-#endif
-                    igmp_status = Services.IgmpMonitor.Status;
-                }
-            }
-        }
         public U5kManWADStd(U5kManStdData gdt, string user = "false", bool bGenerate = false)
         {
             if (bGenerate)
@@ -510,10 +269,6 @@ namespace U5kManServer.WebAppServer
             }
         }
     }
-
-    /// <summary>
-    /// Estado de Operadores.
-    /// </summary>
     class U5kManWADCwps : U5kManWebAppData
     {
         public class CWPData
@@ -534,23 +289,15 @@ namespace U5kManServer.WebAppServer
             public string sect { get; set; }
             public string ntp { get; set; }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public List<CWPData> lista = new List<CWPData>();
-
-        /// <summary>
-        /// 
-        /// </summary>
         public U5kManWADCwps(U5kManStdData gdt, bool bGenerate)
         {
             if (bGenerate)
             {
-#if STD_ACCESS_V0
-                lock (U5kManService._std.stdpos)
+                List<stdPos> stdpos = gdt.STDTOPS;
+                foreach (stdPos pos in stdpos)
                 {
-                    foreach (stdPos pos in U5kManService._std.stdpos)
+                    SafeExecute($"CWP-{pos.name}", () =>
                     {
                         lista.Add(new CWPData()
                         {
@@ -564,40 +311,18 @@ namespace U5kManServer.WebAppServer
                             alt_t = pos.alt_t == std.Ok ? 1 : 0,
                             lan1 = pos.lan1 == std.Ok ? 1 : pos.lan1 == std.Error ? 2 : 0,
                             lan2 = pos.lan2 == std.Ok ? 1 : pos.lan2 == std.Error ? 2 : 0,
-                            alt_hf = Properties.u5kManServer.Default.HayAltavozHF ? (pos.alt_hf == std.Ok ? 1 : 0) : -1,
-                            rec_w = pos.rec_w == std.Ok ? 1 : 0
+                            alt_hf = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.HayAltavozHF ? (pos.alt_hf == std.Ok ? 1 : 0) : -1,
+                            rec_w = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.OpcOpeCableGrabacion ? (pos.rec_w == std.Ok ? 1 : 0) : -1,
+                            uris = pos.uris,
+                            sect = NormalizeSectId(pos.SectorOnPos, 16),
+                            ntp = pos.NtpInfo.GlobalStatus
                         });
-                    }
-                }
-#else
-                List<stdPos> stdpos = gdt.STDTOPS;
-                foreach (stdPos pos in stdpos)
-                {
-                    lista.Add(new CWPData()
-                    {
-                        name = pos.name,
-                        ip = pos.ip,
-                        std = (int)pos.stdg,
-                        panel = pos.panel == std.Ok ? 1 : 0,
-                        jack_exe = pos.jack_exe == std.Ok ? 1 : 0,
-                        jack_ayu = pos.jack_ayu == std.Ok ? 1 : 0,
-                        alt_r = pos.alt_r == std.Ok ? 1 : 0,
-                        alt_t = pos.alt_t == std.Ok ? 1 : 0,
-                        lan1 = pos.lan1 == std.Ok ? 1 : pos.lan1 == std.Error ? 2 : 0,
-                        lan2 = pos.lan2 == std.Ok ? 1 : pos.lan2 == std.Error ? 2 : 0,
-                        alt_hf = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.HayAltavozHF ? (pos.alt_hf == std.Ok ? 1 : 0) : -1,
-                        rec_w = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.OpcOpeCableGrabacion ? (pos.rec_w == std.Ok ? 1 : 0) : -1,
-                        uris = pos.uris,
-                        sect = NormalizeSectId(pos.SectorOnPos, 16),
-                        ntp = pos.NtpInfo.GlobalStatus
                     });
                 }
-#endif
             }
         }
-        //LALM 210618
         // Funcion Que limita el numero maximo de caracteres de una agrupacion a 16.
-        private String NormalizeSectId(String sectId, int longmax = 16)
+        String NormalizeSectId(String sectId, int longmax = 16)
         {
             String IdAgrupacion = sectId;
             int len = sectId.Length;
