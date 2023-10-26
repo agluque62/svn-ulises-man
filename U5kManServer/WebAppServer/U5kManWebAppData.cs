@@ -475,15 +475,8 @@ namespace U5kManServer.WebAppServer
             return tars;
         }
     }
-
-    /// <summary>
-    /// Estado Equipos Externos.
-    /// </summary>
     class U5kManWADExtEqu : U5kManWebAppData
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public class itemEqu
         {
             public string equipo { get; set; }
@@ -506,38 +499,14 @@ namespace U5kManServer.WebAppServer
             }
             public string hash => EncryptionHelper.StringMd5Hash(ToString());
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public List<itemEqu> lista = new List<itemEqu>();
         public string hash { get; set; } = string.Empty;
-        /// <summary>
-        /// 
-        /// </summary>
         public U5kManWADExtEqu(U5kManStdData gdata, bool bGenerate = false)
         {
             if (bGenerate)
             {
-#if STD_ACCESS_V0
-                foreach (U5kManStdEquiposEurocae.EquipoEurocae equipo in U5kManService._std.stdeqeu.Equipos)
-                {
-                    lista.Add(new itemEqu()
-                    {
-                        name = equipo.sip_user ?? equipo.Id,
-                        ip1 = equipo.Ip1,
-                        ip2 = equipo.Ip2,
-                        std = (int )equipo.EstadoGeneral,
-                        tipo = equipo.Tipo,
-                        modelo = equipo.Modelo,
-                        txrx = equipo.RxTx,
-                        lan1 = (int)equipo.EstadoRed1,
-                        lan2 = (int)equipo.EstadoRed2,
-                        std_sip = (int)equipo.EstadoSip,
-                        uri = String.Format("sip:{0}@{1}:{2}",equipo.sip_user, equipo.Ip1, equipo.sip_port)
-                    });
-                }
-#else
-                lista = gdata.STDEQS.Select(equipo => new itemEqu()
+                lista = gdata.STDEQS.Select(equipo => SafeExecute<itemEqu>($"EXEQ-{equipo.Id}-{equipo.sip_user}", () =>
+                new itemEqu()
                     {
                         equipo = equipo.Id,
                         name = equipo.sip_user ?? equipo.Id,
@@ -552,30 +521,13 @@ namespace U5kManServer.WebAppServer
                         std_sip = (int)equipo.EstadoSip,
                         uri = String.Format("sip:{0}@{1}:{2}", equipo.sip_user, equipo.Ip1, equipo.sip_port),
                         lor = equipo.LastOptionsResponse
-                    }).ToList();
+                    })                
+                ).ToList();
                 hash = EncryptionHelper.StringMd5Hash(lista.Select(i => i.hash).Aggregate("", (p, s) => p + s));
-#endif
             }
         }
-
-        //private int std_global(std lan1, std lan2, std sip)
-        //{
-        //    if (lan1 == std.Ok || lan2 == std.Ok)
-        //    {
-        //        if (sip != std.Ok)
-        //            return (int)std.Error;
-        //        return (int)std.Ok;
-        //    }
-        //    else if (lan1 == std.NoInfo && lan2 == std.NoInfo)
-        //    {
-        //        return (int )std.NoInfo;
-        //    }
-        //    return (int )std.Aviso;
-        //}
     }
-
-
-    class U5kManWADExtAtsDst : U5kManWebAppData
+    class U5kManWADExtAtsDst : U5kManWebAppData // No se utiliza el REST asociado en el cliente
     {
         public class itemDst
         {
@@ -585,7 +537,6 @@ namespace U5kManServer.WebAppServer
             public string ip2 { get; set; }
             public string ats { get; set; }
             public string uri { get; set; }
-
             public int std { get; set; }
             public int lan1 { get; set; }
             public int lan2 { get; set; }
@@ -615,43 +566,21 @@ namespace U5kManServer.WebAppServer
             }
         }
     }
-
-    /// <summary>
-    /// Estado abonados PBX
-    /// </summary>
     class U5kManWADPbx : U5kManWebAppData
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public class itemPabx
         {
             public string name { get; set; }
             public int std { get; set; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public List<itemPabx> lista = new List<itemPabx>();
-        /// <summary>
-        /// 
-        /// </summary>
         public U5kManWADPbx(U5kManStdData gdata, bool bGenerate = false)
         {
             if (bGenerate)
             {
-#if STD_ACCESS_V0
-                foreach (Uv5kManDestinosPabx.DestinoPabx destino in U5kManService._std.pabxdest.Destinos)
-                {
-                    lista.Add(new itemPabx()
-                    {
-                        name = destino.Id,
-                        std = (int)destino.Estado
-                    });
-                }
-#else
-                lista = gdata.STDPBXS.Select(d => new itemPabx() { name = d.Id, std = (int)d.Estado }).ToList();
-#endif
+                lista = gdata.STDPBXS
+                    .Select(d => SafeExecute<itemPabx>($"pbxsub-{d.Id}", () => new itemPabx() { name = d.Id, std = (int)d.Estado }))
+                    .ToList();
             }
         }
     }
