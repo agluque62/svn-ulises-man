@@ -26,7 +26,7 @@ namespace U5kManServer.WebAppServer
         {
             return JsonConvert.DeserializeObject<JObject>(strData);
         }
-        protected T SafeExecute<T>(string who, Func<T> action)
+        protected static T SafeExecute<T>(string who, Func<T> action)
         {
             try
             {
@@ -39,7 +39,7 @@ namespace U5kManServer.WebAppServer
                 return default;
             }
         }
-        protected void SafeExecute(string who, Action action)
+        protected static void SafeExecute(string who, Action action)
         {
             try
             {
@@ -52,18 +52,10 @@ namespace U5kManServer.WebAppServer
             }
         }
     }
-
-    /// <summary>
-    /// Resultado Genérico de una operación.
-    /// </summary>
     class U5kManWADResultado : U5kManWebAppData
     {
         public string res { get; set; }
     }
-
-    /// <summary>
-    /// Lista de Incidencias Pendientes.
-    /// </summary>
     public class U5kManWADInci : U5kManWebAppData
     {
         public class InciData
@@ -72,50 +64,39 @@ namespace U5kManServer.WebAppServer
             public string inci { get; set; }
             public int id { get; set; }
         }
-
         public class InciRec
         {
             public string user { get; set; }
             public InciData inci { get; set; }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public List<InciData> lista = new List<InciData>();
         public int HashCode { get; set; }
         public string lang { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public U5kManWADInci(bool bGenerate = false)
         {
             if (bGenerate)
             {
                 lock (U5kManService._last_inci)
                 {
-                    foreach (U5kManLastInciList.eListaInci inci in U5kManService._last_inci._lista)
+                    SafeExecute("listinc", () =>
                     {
-                        lista.Add(new InciData() 
-                        { 
-                            time = inci._fecha.ToString(),
-                            inci = /*EncryptionHelper.CAE_cifrar(inci._desc)*/inci._desc, 
-                            id = (int)inci._id 
-                        });
-                    }
-                    // La Lista ya debe estar ordenada...
-                    // HashCode = lista.GetHashCode();
-                    HashCode = HashCodeGet();
-                    lang = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.Idioma;
+                        foreach (U5kManLastInciList.eListaInci inci in U5kManService._last_inci._lista)
+                        {
+                            lista.Add(new InciData()
+                            {
+                                time = inci._fecha.ToString(),
+                                inci = /*EncryptionHelper.CAE_cifrar(inci._desc)*/inci._desc,
+                                id = (int)inci._id
+                            });
+                        }
+                        // La Lista ya debe estar ordenada...
+                        // HashCode = lista.GetHashCode();
+                        HashCode = HashCodeGet();
+                        lang = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.Idioma;
+                    });
                 }
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
         private int HashCodeGet()
         {
             int hash = 0;
@@ -126,14 +107,13 @@ namespace U5kManServer.WebAppServer
             }
             return hash;
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
         static public void Reconoce(string jStrInci)
         {
-            InciRec inci = JDeserialize<InciRec>(jStrInci);
-            U5kManService.stReconoceAlarma(inci.user, DateTime.Parse(inci.inci.time), inci.inci.inci);
+            SafeExecute("inci_ack", () =>
+            {
+                InciRec inci = JDeserialize<InciRec>(jStrInci);
+                U5kManService.stReconoceAlarma(inci.user, DateTime.Parse(inci.inci.time), inci.inci.inci);
+            });
         }
     }
 
