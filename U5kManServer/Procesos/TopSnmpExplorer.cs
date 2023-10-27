@@ -13,13 +13,14 @@ using Utilities;
 
 using Lextm.SharpSnmpLib;
 using NucleoGeneric;
+using U5kManServer.Procesos;
 
 namespace U5kManServer
 {
     /// <summary>
     /// Parámetros y Eventos en el Operador.
     /// </summary>
-    enum eTopPar
+    public enum eTopPar
     {
         None = 0,
         Top,
@@ -202,14 +203,16 @@ namespace U5kManServer
         /// </summary>
         // public event GenerarHistorico hist;
         static public event ChangeStatusDelegate CambiaEstado;
+        IProcessData gData { get; }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="pdata"></param>
-        public TopSnmpExplorer(ChangeStatusDelegate _CambiaEstado)
+        public TopSnmpExplorer(ChangeStatusDelegate _CambiaEstado, IProcessData proccesData = null)
         {
             Name = "TopSnmpExplorer";
             CambiaEstado = _CambiaEstado;
+            gData = proccesData ?? new RunTimeData();
 #if OIDS_V0
 #else
             InitStaticTables();
@@ -236,7 +239,7 @@ namespace U5kManServer
                 // Procesos.
                 while (IsRunning())
                 {
-                    if (U5kManService._Master == true)
+                    if (gData.IsMaster == true)
                     {
 #if POOL_METHOD_0
                         List<stdPos> localpos = null;   // new List<stdPos>();
@@ -290,13 +293,13 @@ namespace U5kManServer
                         }
                         tm.StopAndPrint((msg) => { LogTrace<TopSnmpExplorer>(msg); });
 #else
-                        GlobalServices.GetWriteAccess((gdata) =>
+                        GlobalServices.GetWriteAccess(() =>
                         {
                             // limpiar pollingControl con los Puestos que puedan desaparecer de la configuracion.
-                            taskControl.DeleteNotPresent(gdata.STDTOPS.Select(p => p.name).ToList());
+                            taskControl.DeleteNotPresent(gData.Data.STDTOPS.Select(p => p.name).ToList());
 
                             // Relleno los datos...
-                            gdata.STDTOPS.ForEach(psto =>
+                            gData.Data.STDTOPS.ForEach(psto =>
                             {
                                 if (taskControl.IsTaskActive(psto.name) == false)
                                 {
@@ -313,14 +316,14 @@ namespace U5kManServer
                                             Task.Delay(TimeSpan.FromMilliseconds(500)).Wait();
 #endif
                                             /// Copio los datos obtenidos a la tabla...
-                                            GlobalServices.GetWriteAccess((gdata1) =>
+                                            GlobalServices.GetWriteAccess(() =>
                                             {
-                                                if (gdata1.POSDIC.ContainsKey(newPsto.name))
+                                                if (gData.Data.POSDIC.ContainsKey(newPsto.name))
                                                 {
                                                     /** 20200813. Solo actualiza el estado si no se ha cambiado en medio la configuracion */
-                                                    if (gdata1.POSDIC[newPsto.name].Equals(newPsto))
+                                                    if (gData.Data.POSDIC[newPsto.name].Equals(newPsto))
                                                     {
-                                                        gdata1.POSDIC[newPsto.name].CopyFrom(newPsto);
+                                                        gData.Data.POSDIC[newPsto.name].CopyFrom(newPsto);
                                                     }
                                                     else
                                                     {

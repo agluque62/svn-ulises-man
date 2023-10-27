@@ -3306,7 +3306,58 @@ namespace U5kManServer
 #endif
             }
         }
+        public static void GetWriteAccess(Action setData, bool wait = true,
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string file = null)
+        {
+            if (wait == false)
+            {
+                try
+                {
+                    setData();
+                }
+                catch (Exception x)
+                {
+                    BaseCode
+                        .LogException<Semaphore>("sem-hist. Exception 1 ", x);
+                    throw x;
+                }
+            }
+            else if (smp.WaitOne(TimeSpan.FromMilliseconds(5000)))
+            {
+                DateTime EntryTime = DateTime.Now;
+                OccupiedBy = FromString(file, caller, lineNumber);
+                OccupiedByStack = new StackTrace().ToString();
+                try
+                {
+                    setData();
+                }
+                catch (Exception x)
+                {
+                    BaseCode
+                        .LogException<Semaphore>("sem-hist. Exception 2 ", x);
+                    throw x;
+                }
+                finally
+                {
+                    BaseCode
+                        .LogTrace<Semaphore>($"sem-hist. Global Semaphore ocuppied {(DateTime.Now - EntryTime).TotalMilliseconds:000000} ms by {FromString(file, caller, lineNumber)}");
+                    smp.Release();
+                }
+            }
+            else
+            {
+#if DEBUG
+                BaseCode
+                        .LogError<Semaphore>($"sem-hist. Global Semaphore timeout for {FromString(file, caller, lineNumber)}. Occupied By {OccupiedBy}. Stack: {OccupiedByStack}");
+#else
+                BaseCode
+                        .LogFatal<Semaphore>($"sem-hist. Global Semaphore timeout for {FromString(file, caller, lineNumber)}. Occupied By {OccupiedBy}. Stack: {OccupiedByStack}");
+#endif
+            }
 
+        }
         static public mib2OperStatus std2mib2OperStatus(std estado)
         {
             switch (estado)

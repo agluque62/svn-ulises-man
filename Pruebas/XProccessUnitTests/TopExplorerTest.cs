@@ -5,6 +5,9 @@ using Xunit;
 using U5kManServer;
 using U5kBaseDatos;
 
+using XProccessUnitTests.MockedClass;
+using System.Threading.Tasks;
+
 namespace XProccessUnitTests
 {
     public class TopExplorerTest
@@ -14,12 +17,14 @@ namespace XProccessUnitTests
         {
             PrepareTest((topP) =>
             {
-
+                Task.Delay(TimeSpan.FromSeconds(120)).Wait();
             });
         }
         void PrepareTest(Action<TopSnmpExplorer> action)
         {
-            var topProc = new TopSnmpExplorer(CambiaEstado);
+            var mockedTopData = new MockedTop();            
+            var topProc = new TopSnmpExplorer(CambiaEstado, mockedTopData.ProcessData);
+
             topProc.Start();
             action(topProc);
             topProc.Stop(TimeSpan.FromSeconds(5));
