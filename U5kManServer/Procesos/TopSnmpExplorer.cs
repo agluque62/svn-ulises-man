@@ -48,7 +48,7 @@ namespace U5kManServer
     /// <summary>
     /// 
     /// </summary>
-    class TopSnmpExplorer : NucleoGeneric.NGThread
+    public class TopSnmpExplorer : NucleoGeneric.NGThread
     {
         /// <summary>
         /// 
