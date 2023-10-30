@@ -8,6 +8,7 @@ using Lextm.SharpSnmpLib;
 
 using U5kBaseDatos;
 using Utilities;
+using static U5kManServer.EventBus;
 
 #if _ED137_REVB_
 #else
@@ -16,14 +17,39 @@ using U5kManMibRevC;
 
 namespace U5kManServer
 {
+    public class TrapBus
+    {
+        public class TrapEventArgs : EventArgs, ITinyMessage
+        {
+            public object Sender => throw new NotImplementedException();
+            public string TrapOid { get; set; } = string.Empty;
+            public string VarOid { get; set; } = string.Empty;
+            public ISnmpData VarData { get; set; } = default;
+            public IPEndPoint From { get; set; } = default;
+            public override string ToString() => $"From {From} ({TrapOid}), Oid {VarOid} = {VarData}";
+        }
+        public static object Subscribe(Action<TrapEventArgs> notify)
+        {
+            return SystemEventHub.Subscribe<TrapEventArgs>((msg) => notify(msg));
+        }
+        public static void Unsubscribe(object tk)
+        {
+            SystemEventHub.Unsubscribe<TrapEventArgs>(tk as TinyMessageSubscriptionToken);
+        }
+        public static void Publish(string trapOid, string varOid, ISnmpData varData, IPEndPoint from)
+        {
+            SystemEventHub.Publish<TrapEventArgs>(new TrapEventArgs() { TrapOid = trapOid, VarOid = varOid, VarData = varData, From = from });
+        }
+        static readonly TinyMessengerHub SystemEventHub = new TinyMessengerHub();
+    }
     /// <summary>
     /// 
     /// </summary>
-    delegate void Supervisor();
+    //delegate void Supervisor();
     /// <summary>
     /// 
     /// </summary>
-    class U5kSnmpSystemAgent : NucleoGeneric.NGThread
+    public class U5kSnmpSystemAgent : NucleoGeneric.NGThread
     {
         enum SystemAgentState { NotInit, NotStarted, Operative }
         string ipServ = Properties.u5kManServer.Default.MiDireccionIP;  //  U5kGenericos.MiDireccionIP;
@@ -384,6 +410,8 @@ namespace U5kManServer
             /** Ajusto el oidtrap / oidvar para que comienze por <.>*/
             oidvar = oidvar.StartsWith(".") ? oidvar : "." + oidvar;
             oidtrap = oidtrap.StartsWith(".") ? oidtrap : "." + oidtrap;
+            TrapBus.Publish(oidtrap, oidvar, data, ipfrom);
+            // TODO... Esta gestión la debería hacer cada módulo que recibe los traps.
             GlobalServices.GetWriteAccess((gdata) =>
             {
                 try
@@ -475,16 +503,16 @@ namespace U5kManServer
                             }
                             else if (pos != null /*&& pos.stdpos != std.NoInfo*/)
                             {
-                                // Proviene de un Puesto.
-                                var BdtItem = TopSnmpExplorer._OidPos.Where(p => p.Value.EndsWith(oidvar)).ToList();
-                                if (BdtItem.Count > 0)
-                                {
-                                    RecibidoTrapPosicion(pos, BdtItem[0].Key, data);
-                                }
-                                else
-                                {
-                                    LogWarn<U5kSnmpSystemAgent>(String.Format("TOP OID [{0}] No encontrado para {1}", oidvar, ipfrom));
-                                }
+                                //// Proviene de un Puesto.
+                                //var BdtItem = TopSnmpExplorer._OidPos.Where(p => p.Value.EndsWith(oidvar)).ToList();
+                                //if (BdtItem.Count > 0)
+                                //{
+                                //    RecibidoTrapPosicion(pos, BdtItem[0].Key, data);
+                                //}
+                                //else
+                                //{
+                                //    LogWarn<U5kSnmpSystemAgent>(String.Format("TOP OID [{0}] No encontrado para {1}", oidvar, ipfrom));
+                                //}
                             }
                             else
                             {
@@ -508,7 +536,7 @@ namespace U5kManServer
         }
 
         /// <summary>
-        /// 
+        /// ELIMINAR!!!!
         /// </summary>
         /// <param name="pos"></param>
         /// <param name="parametro"></param>

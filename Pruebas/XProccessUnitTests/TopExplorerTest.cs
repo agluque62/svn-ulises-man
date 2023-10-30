@@ -15,18 +15,20 @@ namespace XProccessUnitTests
         [Fact]
         public void TestMethod1()
         {
-            PrepareTest((topP) =>
+            PrepareTest((topP, mock) =>
             {
-                Task.Delay(TimeSpan.FromSeconds(120)).Wait();
+                Task.Delay(TimeSpan.FromSeconds(33)).Wait();
+                mock.RaiseTrap();
+                Task.Delay(TimeSpan.FromSeconds(21)).Wait();
             });
         }
-        void PrepareTest(Action<TopSnmpExplorer> action)
+        void PrepareTest(Action<TopSnmpExplorer, MockedTop> action)
         {
             var mockedTopData = new MockedTop();            
-            var topProc = new TopSnmpExplorer(CambiaEstado, mockedTopData.ProcessData);
+            var topProc = new TopSnmpExplorer(CambiaEstado, mockedTopData.ProcessData, mockedTopData.ProcessSnmp);
 
             topProc.Start();
-            action(topProc);
+            action(topProc, mockedTopData);
             topProc.Stop(TimeSpan.FromSeconds(5));
         }
         std CambiaEstado(std antiguo, std nuevo, int scv, eIncidencias inci, eTiposInci thw, string idhw, params object[] parametros)

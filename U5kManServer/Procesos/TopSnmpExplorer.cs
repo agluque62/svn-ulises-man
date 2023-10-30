@@ -14,6 +14,7 @@ using Utilities;
 using Lextm.SharpSnmpLib;
 using NucleoGeneric;
 using U5kManServer.Procesos;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace U5kManServer
 {
@@ -203,16 +204,19 @@ namespace U5kManServer
         /// </summary>
         // public event GenerarHistorico hist;
         static public event ChangeStatusDelegate CambiaEstado;
-        IProcessData gData { get; }
+        IProcessData pData { get; }
+        IProcessSnmp pSnmp { get; }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="pdata"></param>
-        public TopSnmpExplorer(ChangeStatusDelegate _CambiaEstado, IProcessData proccesData = null)
+        public TopSnmpExplorer(ChangeStatusDelegate _CambiaEstado, IProcessData proccesData = null, IProcessSnmp snmp = null)
         {
             Name = "TopSnmpExplorer";
             CambiaEstado = _CambiaEstado;
-            gData = proccesData ?? new RunTimeData();
+            pData = proccesData ?? new RunTimeData();
+            pSnmp = snmp ?? new RuntimeSnmpService();
+            pSnmp.TrapReceived += TrapReceived;
 #if OIDS_V0
 #else
             InitStaticTables();
@@ -239,7 +243,7 @@ namespace U5kManServer
                 // Procesos.
                 while (IsRunning())
                 {
-                    if (gData.IsMaster == true)
+                    if (pData.IsMaster == true)
                     {
 #if POOL_METHOD_0
                         List<stdPos> localpos = null;   // new List<stdPos>();
@@ -296,10 +300,10 @@ namespace U5kManServer
                         GlobalServices.GetWriteAccess(() =>
                         {
                             // limpiar pollingControl con los Puestos que puedan desaparecer de la configuracion.
-                            taskControl.DeleteNotPresent(gData.Data.STDTOPS.Select(p => p.name).ToList());
+                            taskControl.DeleteNotPresent(pData.Data.STDTOPS.Select(p => p.name).ToList());
 
                             // Relleno los datos...
-                            gData.Data.STDTOPS.ForEach(psto =>
+                            pData.Data.STDTOPS.ForEach(psto =>
                             {
                                 if (taskControl.IsTaskActive(psto.name) == false)
                                 {
@@ -318,12 +322,12 @@ namespace U5kManServer
                                             /// Copio los datos obtenidos a la tabla...
                                             GlobalServices.GetWriteAccess(() =>
                                             {
-                                                if (gData.Data.POSDIC.ContainsKey(newPsto.name))
+                                                if (pData.Data.POSDIC.ContainsKey(newPsto.name))
                                                 {
                                                     /** 20200813. Solo actualiza el estado si no se ha cambiado en medio la configuracion */
-                                                    if (gData.Data.POSDIC[newPsto.name].Equals(newPsto))
+                                                    if (pData.Data.POSDIC[newPsto.name].Equals(newPsto))
                                                     {
-                                                        gData.Data.POSDIC[newPsto.name].CopyFrom(newPsto);
+                                                        pData.Data.POSDIC[newPsto.name].CopyFrom(newPsto);
                                                     }
                                                     else
                                                     {
@@ -365,7 +369,6 @@ namespace U5kManServer
                             });
                         });
 #endif
-
 #endif
                     }
                     GoToSleepInTimer();
@@ -509,12 +512,16 @@ namespace U5kManServer
             if (generaevento)
                 GeneraEventoLan(pos);
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="pos"></param>
+        /// <param name="status"></param>
         static public void PosicionSyncStatusSet(string name, stdPos pos, string status)
         {
             pos.NtpInfo.Actualize(pos.name, status);
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -524,7 +531,10 @@ namespace U5kManServer
             RecordEvent<TopSnmpExplorer>(DateTime.Now, eIncidencias.ITO_ESTADO_LAN, eTiposInci.TEH_TOP, pos.name,
                 Params(pos.lan1 == std.Ok ? "ON" : "OFF", pos.lan2 == std.Ok ? "ON" : "OFF"));
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="obj"></param>
         protected void ExploraTop(object obj)
         {
             stdPos pos = (stdPos)obj;
@@ -557,12 +567,17 @@ namespace U5kManServer
                 LogTrace<TopSnmpExplorer>($"{pos.name}. POLLING Skipped");
             }
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <param name="response"></param>
         protected void SnmpTopPolling(stdPos pos, Action<bool> response)
         {
             try
             {
                 IList<Variable> onlinedata=null;
-#if DEBUG
+#if DEBUG1
                 if (DebuggingHelper.Simulating)
                 {
                     var SimulatedTop = new DebuggingHelper.SimulatedTop(pos.name);
@@ -589,11 +604,11 @@ namespace U5kManServer
                 }
                 else
 #endif
-                onlinedata = new SnmpClient().Get(VersionCode.V2,
-                    new IPEndPoint(IPAddress.Parse(pos.ip), pos.snmpport),
-                    new OctetString("public"), _vList,
-                    pos.SnmpTimeout, pos.SnmpReintentos);
-
+                //onlinedata = new SnmpClient().Get(VersionCode.V2,
+                //    new IPEndPoint(IPAddress.Parse(pos.ip), pos.snmpport),
+                //    new OctetString("public"), _vList,
+                //    pos.SnmpTimeout, pos.SnmpReintentos);
+                onlinedata = pSnmp.GetData(pos, _vList);
                 ProcessPos(pos, onlinedata);
                 response(true);
             }
@@ -660,6 +675,78 @@ namespace U5kManServer
                             case eTopPar.EstadoCableGrabacion:
                                 PosicionGRBCABSet(pos.name, pos, val == 1 ? std.Ok : std.NoInfo);
                                 break;
+                            case eTopPar.SeleccionPaginaRadio:          // Entero.
+                                RecordEvent<TopSnmpExplorer>(
+                                    DateTime.Now, eIncidencias.ITO_PAGINA_FRECUENCIAS, 0, pos.name, 
+                                    Params(((Integer32)varItem.Data).ToInt32(), pos.name));
+                                break;
+                            case eTopPar.EstadoPtt:                     // String... 'SECT_1 PTT-ON en Sector, SECT_0 PTT-OFF en Sector...
+                                {
+                                    var datain = (varItem.Data as OctetString).ToString();   // ((OctetString)data).ToString();
+                                    string[] _str = datain.Split('_');
+                                    if (_str.Length > 1)
+                                    {
+                                        var std = _str[0] == "0" ? "OFF" : "ON";
+                                        var sct = _str.Length == 2 ? _str[1] : datain.Substring(2);
+                                        RecordEvent<TopSnmpExplorer>(DateTime.Now, eIncidencias.ITO_PTT, 0, pos.name, Params(pos.name, std, sct));
+                                    }
+                                    else
+                                    {
+                                        LogWarn<TopSnmpExplorer>($"On TOP {pos.name}, Invalid PTT Trap => {datain}");
+                                    }
+                                }
+                                break;
+                            case eTopPar.LlamadaEntrante:               // STRING
+                                RecordEvent<TopSnmpExplorer>(
+                                    DateTime.Now, eIncidencias.ITO_LLAMADA_ENTRANTE, eTiposInci.TEH_TOP, pos.name, 
+                                    Params(((OctetString)varItem.Data).ToString(), pos.name));
+                                break;
+                            case eTopPar.LlamadaSaliente:               // STRING
+                                RecordEvent<TopSnmpExplorer>(
+                                    DateTime.Now, eIncidencias.ITO_LLAMADA_SALIENTE, eTiposInci.TEH_TOP, pos.name, 
+                                    Params(((OctetString)varItem.Data).ToString(), pos.name));
+                                break;
+                            case eTopPar.LlamadaEstablecida:            // STRING
+                                RecordEvent<TopSnmpExplorer>(
+                                    DateTime.Now, eIncidencias.ITO_LLAMADA_ESTABLECIDA, eTiposInci.TEH_TOP, pos.name, 
+                                    Params(((OctetString)varItem.Data).ToString(), pos.name));
+                                break;
+                            case eTopPar.LlamadaFinaliza:               // STRING
+                                RecordEvent<TopSnmpExplorer>(
+                                    DateTime.Now, eIncidencias.ITO_LLAMADA_FIN, eTiposInci.TEH_TOP, pos.name, 
+                                    Params(((OctetString)varItem.Data).ToString(), pos.name));
+                                break;
+                            case eTopPar.FacilidadTelefonia:            // String
+                                RecordEvent<TopSnmpExplorer>(
+                                    DateTime.Now, eIncidencias.ITO_FACILIDAD_SELECCIONADA, eTiposInci.TEH_TOP, pos.name, 
+                                    Params(((OctetString)varItem.Data).ToString(), pos.name));
+                                break;
+                            case eTopPar.Briefing:                      // STRING
+                                {
+                                    string[] _str = ((OctetString)varItem.Data).ToString().Split('_');
+                                    if (_str.Length == 2)
+                                        RecordEvent<TopSnmpExplorer>(
+                                            DateTime.Now, eIncidencias.ITO_SESION_BREIFING, eTiposInci.TEH_TOP, pos.name, 
+                                            Params(_str[1] == "0" ? "OFF" : "ON", _str[0]));
+                                    else
+                                    {
+                                        LogWarn<TopSnmpExplorer>($"On TOP {pos.name}, Invalid Briefing Trap => {((OctetString)varItem.Data).ToString()}");
+                                    }
+                                }
+                                break;
+                            case eTopPar.Replay:                        // STRING
+                                {
+                                    string[] _str = ((OctetString)varItem.Data).ToString().Split('_');
+                                    if (_str.Length == 2)
+                                        RecordEvent<TopSnmpExplorer>(
+                                            DateTime.Now, eIncidencias.ITO_FUNCION_REPLAY, eTiposInci.TEH_TOP, pos.name, 
+                                            Params(_str[1] == "0" ? "OFF" : "ON", _str[0]));
+                                    else
+                                    {
+                                        LogWarn<TopSnmpExplorer>($"On TOP {pos.name}, Invalid Replay Trap => {((OctetString)varItem.Data).ToString()}");
+                                    }
+                                }
+                                break;
                             default:
                                 break;
                         }
@@ -672,9 +759,28 @@ namespace U5kManServer
                 else
                 {
                     // Error OID no encontrado...
-                    LogWarn<TopSnmpExplorer>(String.Format("TOP OID [{0}] No encontrado", varItem.Id.ToString()));
+                    LogWarn<TopSnmpExplorer>($"On TOP {pos.name} invalid OID => [{varItem.Id}].");
                 }
 
+            }
+        }
+        protected void TrapReceived(object from, TrapBus.TrapEventArgs args)
+        {
+            LogInfo<TopSnmpExplorer>($"Trap Received => {args}");
+            if (pData.IsMaster == true)
+            {
+                GlobalServices.GetWriteAccess(() =>
+                {
+                    var pos = pData.Data.STDTOPS.Where(p => p.ip == args.From?.Address.ToString()).FirstOrDefault();
+                    if (pos != null)
+                    {
+                        var varList = new List<Variable>()
+                        {
+                            new Variable(new ObjectIdentifier(args.VarOid), args.VarData)
+                        };
+                        ProcessPos(pos, varList);
+                    }
+                });
             }
         }
     }
