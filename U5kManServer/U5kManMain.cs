@@ -1083,7 +1083,7 @@ namespace U5kManServer
                     }
                 }
 #else
-                using (NicEventMonitor monitor = new NicEventMonitor(Properties.u5kManServer.Default.TeamingConfig,null,null))
+                using (NicEventMonitor monitor = new NicEventMonitor(Properties.u5kManServer.Default.TeamingConfig, null, null))
                 {
                     if (monitor.GetState((id, status) =>
                     {
@@ -1116,10 +1116,11 @@ namespace U5kManServer
                 // TestingServer.ntp_sync = (new NtpMeinbergClientInfo()).LastClientResponse;
 
                 /** Actualizo los datos en la tabla... */
+                StdServ MyStdServer = null;
                 GlobalServices.GetWriteAccess((data) =>
                 {
                     U5KStdGeneral stdg = data.STDG;
-                    StdServ MyStdServer = stdg.LocalServer;
+                    MyStdServer = stdg.LocalServer;
 
                     if (MyStdServer == null)
                     {
@@ -1131,13 +1132,21 @@ namespace U5kManServer
                     {
                         /** Copio los datos obtenidos **/
                         MyStdServer.lanes.Clear();
-                        foreach(var lan in TestingServer.lanes)
+                        foreach (var lan in TestingServer.lanes)
                         {
                             MyStdServer.lanes[lan.Key] = lan.Value;
                         }
-                        // MyStdServer.ntp_sync = TestingServer.ntp_sync;
-                        MyStdServer.NtpInfo.Actualize("LocalServer", (connected, ip) =>
+                    }
+                });
+
+                if (MyStdServer != null)
+                {
+                    LogDebug<U5kServiceMain>($"Entrando en NtpInfo.Actualize");
+                    MyStdServer.NtpInfo.Actualize("LocalServer", (connected, ip) =>
+                    {
+                        GlobalServices.GetWriteAccess((data) =>
                         {
+                            U5KStdGeneral stdg = data.STDG;
                             if (bMaster)
                             {
                                 // Todo Generar Historicos.
@@ -1156,19 +1165,19 @@ namespace U5kManServer
                                     stdg.stdClock.Estado = std.NoInfo;
                                 }
                             }
+
                         });
+                    });
+                    LogDebug<U5kServiceMain>($"Saliendo en NtpInfo.Actualize");
+                }
 
-                        /** Si soy esclavo, notifico los datos al master */
-                        if (!bMaster)
-                            WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoLanes, MyStdServer.lanes2string);
+                /** Si soy esclavo, notifico los datos al master */
+                if (!bMaster)
+                    WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoLanes, MyStdServer.lanes2string);
 
-                        /** Si soy esclavo, notifico los datos al master */
-                        if (!bMaster)
-                            WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoNtpClient, MyStdServer.NtpInfo.LastInfoFromClient/* ntp_sync*/);
-                    }
-                });
-
-
+                /** Si soy esclavo, notifico los datos al master */
+                if (!bMaster)
+                    WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoNtpClient, MyStdServer.NtpInfo.LastInfoFromClient/* ntp_sync*/);
             }
             catch (Exception x)
             {
