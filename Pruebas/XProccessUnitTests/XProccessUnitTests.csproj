@@ -55,6 +55,7 @@
     <PackageReference Include="coverlet.collector" Version="1.0.1" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MockedClasss\MockedExtEq.cs" />
     <Compile Include="MockedClasss\MockedTop.cs" />
     <Compile Include="TopExplorerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
