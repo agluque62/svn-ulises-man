@@ -7,11 +7,12 @@ using System.Net;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net.NetworkInformation;
 
 using Lextm.SharpSnmpLib;
 using U5kBaseDatos;
 using NucleoGeneric;
-
+using Utilities;
 
 namespace U5kManServer.Procesos
 {
@@ -21,7 +22,6 @@ namespace U5kManServer.Procesos
         bool IsMaster { get; }
         std StatusChangeManage(std antiguo, std nuevo, int scv, eIncidencias inci, eTiposInci thw, string idhw, params object[] parametros);
     }
-
     public class RunTimeData : IProcessData
     {
         public U5kManStdData Data => U5kManService.GlobalData;
@@ -41,12 +41,12 @@ namespace U5kManServer.Procesos
         }
     }
 
-    public interface IProcessSnmp
+    public interface IProcessSnmp : IDisposable
     {
         event EventHandler<TrapBus.TrapEventArgs> TrapReceived;
         IList<Variable> GetData(object from, IList<Variable> variables);
     }
-    public class RuntimeSnmpService : IDisposable, IProcessSnmp
+    public class RuntimeSnmpService : IProcessSnmp
     {
         public event EventHandler<TrapBus.TrapEventArgs> TrapReceived;
 
@@ -78,5 +78,42 @@ namespace U5kManServer.Procesos
             TrapReceived = null;
         }
         object trapSubscrition = default;
+    }
+
+    public interface IProcessPing
+    {
+        void Ping(string host, bool presente, Action<bool, IPStatus[]> ResultDelivery);
+    }
+    public class RuntimePingService : IProcessPing
+    {
+        public void Ping(string host, bool presente, Action<bool, IPStatus[]> ResultDelivery) => U5kGenericos.Ping(host, presente, ResultDelivery);
+    }
+
+    public interface IProcessSip : IDisposable
+    {
+        void Ping(string user, string ip, int port, bool isRadio, Action<bool, string> ResultDelivery);
+    }
+    public class RuntimeSipService : IProcessSip
+    {
+        public RuntimeSipService() 
+        {
+            var local_ua = new SipUA() { user = "MTTO", ip = Properties.u5kManServer.Default.MiDireccionIP, port = 7060 };
+            sips = new SipSupervisor(local_ua, Properties.u5kManServer.Default.SipOptionsTimeout);
+            sips.NotifyException += (ua, x) =>
+            {
+                BaseCode.LogException<ExtEquSpv>("SipSupervisor" + ua.uri, x);
+            };
+        }
+        public void Dispose()
+        {
+            sips.Dispose();
+        }
+        public void Ping(string user, string ip, int port, bool isRadio, Action<bool, string> ResultDelivery)
+        {
+            var ua = new SipUA() { user = user, ip = ip, port = port, radio = isRadio };
+            var res = sips.SipPing(ua);
+            ResultDelivery(res, ua.last_response?.Result);
+        }
+        private SipSupervisor sips = null;
     }
 }

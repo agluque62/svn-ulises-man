@@ -50,7 +50,7 @@ namespace U5kManServer
 #else
         Services.CentralServicesMonitor MonitorOfServices;
 #endif
-        U5kManServer.ExtEquSpvSpace.ExtEquSpv _ext_sup = null;
+        U5kManServer.ExtEquSpv _ext_sup = null;
         PabxItfService pabxService { get; set; } = null;
 
         /// <summary>
@@ -151,7 +151,7 @@ namespace U5kManServer
                 );
                 MonitorOfServices.Start();
 #endif
-                _ext_sup = new ExtEquSpvSpace.ExtEquSpv();
+                _ext_sup = new ExtEquSpv();
                 pabxService = new PabxItfService();
 
                 Services.IgmpMonitor.Start(Properties.u5kManServer.Default.MiDireccionIP,

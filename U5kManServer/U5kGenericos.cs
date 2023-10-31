@@ -42,7 +42,6 @@ namespace U5kManServer
             }
         }
 
-
         static PingReply Ping(string host)
         {
             PingReply reply;
