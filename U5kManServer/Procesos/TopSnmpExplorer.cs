@@ -203,17 +203,17 @@ namespace U5kManServer
         /// 
         /// </summary>
         // public event GenerarHistorico hist;
-        static public event ChangeStatusDelegate CambiaEstado;
+        //static public event ChangeStatusDelegate CambiaEstado;
         IProcessData pData { get; }
         IProcessSnmp pSnmp { get; }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="pdata"></param>
-        public TopSnmpExplorer(ChangeStatusDelegate _CambiaEstado, IProcessData proccesData = null, IProcessSnmp snmp = null)
+        public TopSnmpExplorer(IProcessData proccesData = null, IProcessSnmp snmp = null)
         {
             Name = "TopSnmpExplorer";
-            CambiaEstado = _CambiaEstado;
+            //CambiaEstado = _CambiaEstado;
             pData = proccesData ?? new RunTimeData();
             pSnmp = snmp ?? new RuntimeSnmpService();
             pSnmp.TrapReceived += TrapReceived;
@@ -385,10 +385,10 @@ namespace U5kManServer
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="estado"></param>
-        static public void EstadoPosicionSet(string name, stdPos pos, std estado)
+        void EstadoPosicionSet(string name, stdPos pos, std estado)
         {
             //std stdg_old = pos.stdGlobal();
-            pos.stdpos = CambiaEstado(pos.stdpos, estado, 0,
+            pos.stdpos = pData.StatusChangeManage(pos.stdpos, estado, 0,
                                       estado == std.Ok ? eIncidencias.ITO_ENTRADA : eIncidencias.ITO_CAIDA,
                                       eTiposInci.TEH_TOP, pos.name);
             pos.stdg = pos.StdGlobal;
@@ -400,9 +400,9 @@ namespace U5kManServer
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="estado"></param>
-        static public void PosicionEjecutivoSet(string name, stdPos pos, std estado)
+        void PosicionEjecutivoSet(string name, stdPos pos, std estado)
         {
-            pos.jack_exe = CambiaEstado(pos.jack_exe, estado, 0,
+            pos.jack_exe = pData.StatusChangeManage(pos.jack_exe, estado, 0,
                                 pos.jack_exe == std.Ok ? eIncidencias.ITO_DESCONEXION_JACK_EJECUTIVO : eIncidencias.ITO_CONEXION_JACK_EJECUTIVO,
                                 eTiposInci.TEH_TOP, pos.name, pos.name);
         }
@@ -413,9 +413,9 @@ namespace U5kManServer
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="estado"></param>
-        static public void PosicionAyudanteSet(string name, stdPos pos, std estado)
+        void PosicionAyudanteSet(string name, stdPos pos, std estado)
         {
-            pos.jack_ayu = CambiaEstado(pos.jack_ayu, estado, 0,
+            pos.jack_ayu = pData.StatusChangeManage(pos.jack_ayu, estado, 0,
                                 pos.jack_ayu == std.Ok ? eIncidencias.ITO_DESCONEXION_JACK_AYUDANTE : eIncidencias.ITO_CONEXION_JACK_AYUDANTE,
                                 eTiposInci.TEH_TOP, pos.name, pos.name);
         }
@@ -426,9 +426,9 @@ namespace U5kManServer
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="estado"></param>
-        static public void PosicionALRSet(string name, stdPos pos, std estado)
+        void PosicionALRSet(string name, stdPos pos, std estado)
         {
-            pos.alt_r = CambiaEstado(pos.alt_r, estado, 0,
+            pos.alt_r = pData.StatusChangeManage(pos.alt_r, estado, 0,
                                 pos.alt_r == std.Ok ? eIncidencias.ITO_DESCONEXION_ALTAVOZ : eIncidencias.ITO_CONEXION_ALTAVOZ,
                                 eTiposInci.TEH_TOP, pos.name, "Radio", pos.name);
         }
@@ -439,9 +439,9 @@ namespace U5kManServer
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="estado"></param>
-        static public void PosicionALTSet(string name, stdPos pos, std estado)
+        void PosicionALTSet(string name, stdPos pos, std estado)
         {
-            pos.alt_t = CambiaEstado(pos.alt_t, estado, 0,
+            pos.alt_t = pData.StatusChangeManage(pos.alt_t, estado, 0,
                                 pos.alt_t == std.Ok ? eIncidencias.ITO_DESCONEXION_ALTAVOZ : eIncidencias.ITO_CONEXION_ALTAVOZ,
                                 eTiposInci.TEH_TOP, pos.name, "LC", pos.name);
         }
@@ -452,9 +452,9 @@ namespace U5kManServer
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="estado"></param>
-        static public void PosicionALHFSet(string name, stdPos pos, std estado)
+        void PosicionALHFSet(string name, stdPos pos, std estado)
         {
-            pos.alt_hf = CambiaEstado(pos.alt_hf, estado, 0,
+            pos.alt_hf = pData.StatusChangeManage(pos.alt_hf, estado, 0,
                                 pos.alt_hf == std.Ok ? eIncidencias.ITO_DESCONEXION_ALTAVOZ : eIncidencias.ITO_CONEXION_ALTAVOZ,
                                 eTiposInci.TEH_TOP, pos.name, "HF", pos.name);
         }
@@ -465,9 +465,9 @@ namespace U5kManServer
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="estado"></param>
-        static public void PosicionGRBCABSet(string name, stdPos pos, std estado)
+        void PosicionGRBCABSet(string name, stdPos pos, std estado)
         {
-            pos.rec_w = CambiaEstado(pos.rec_w, estado, 0,
+            pos.rec_w = pData.StatusChangeManage(pos.rec_w, estado, 0,
                                 pos.rec_w == std.Ok ? eIncidencias.ITO_DESCONEXION_CABLE_GRABACION : eIncidencias.ITO_CONEXION_CABLE_GRABACION,
                                 eTiposInci.TEH_TOP, pos.name, "", pos.name);
         }
@@ -478,9 +478,9 @@ namespace U5kManServer
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="estado"></param>
-        static public void PosicionPanelSet(string name, stdPos pos, std estado)
+        void PosicionPanelSet(string name, stdPos pos, std estado)
         {
-            pos.panel = CambiaEstado(pos.panel, estado, 0,
+            pos.panel = pData.StatusChangeManage(pos.panel, estado, 0,
                                 pos.panel == std.Ok ? eIncidencias.ITO_PANEL_SBY : eIncidencias.ITO_PANEL_OPERACION,
                                 eTiposInci.TEH_TOP, pos.name, pos.name);
         }
@@ -490,10 +490,10 @@ namespace U5kManServer
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="estado"></param>
-        static public void PosicionLan1Set(string name, stdPos pos, std estado)
+        void PosicionLan1Set(string name, stdPos pos, std estado)
         {
             bool generaevento = (pos.lan1 != estado);
-            pos.lan1 = CambiaEstado(pos.lan1, estado, 0, eIncidencias.IGNORE,
+            pos.lan1 = pData.StatusChangeManage(pos.lan1, estado, 0, eIncidencias.IGNORE,
                                 eTiposInci.TEH_TOP, pos.name, pos.name);
             if (generaevento)
                 GeneraEventoLan(pos);
@@ -504,10 +504,10 @@ namespace U5kManServer
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="estado"></param>
-        static public void PosicionLan2Set(string name, stdPos pos, std estado)
+        void PosicionLan2Set(string name, stdPos pos, std estado)
         {
             bool generaevento = (pos.lan2 != estado);
-            pos.lan2 = CambiaEstado(pos.lan2, estado, 0, eIncidencias.IGNORE,
+            pos.lan2 = pData.StatusChangeManage(pos.lan2, estado, 0, eIncidencias.IGNORE,
                                 eTiposInci.TEH_TOP, pos.name, pos.name);
             if (generaevento)
                 GeneraEventoLan(pos);
@@ -518,7 +518,7 @@ namespace U5kManServer
         /// <param name="name"></param>
         /// <param name="pos"></param>
         /// <param name="status"></param>
-        static public void PosicionSyncStatusSet(string name, stdPos pos, string status)
+        void PosicionSyncStatusSet(string name, stdPos pos, string status)
         {
             pos.NtpInfo.Actualize(pos.name, status);
         }
@@ -526,7 +526,7 @@ namespace U5kManServer
         /// 
         /// </summary>
         /// <param name="pos"></param>
-        static void GeneraEventoLan(stdPos pos)
+        void GeneraEventoLan(stdPos pos)
         {
             RecordEvent<TopSnmpExplorer>(DateTime.Now, eIncidencias.ITO_ESTADO_LAN, eTiposInci.TEH_TOP, pos.name,
                 Params(pos.lan1 == std.Ok ? "ON" : "OFF", pos.lan2 == std.Ok ? "ON" : "OFF"));

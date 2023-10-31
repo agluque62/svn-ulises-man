@@ -61,7 +61,7 @@ namespace XProccessUnitTests.MockedClass
             {
                 new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.2.2.1.0"), new Integer32(1)),
                 new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.2.2.2.0"), new Integer32(0)),
-                new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.9.2.2.2.0"), new Integer32(1))
+                new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.2.2.3.0"), new Integer32(1))
             };
             //throw new NotImplementedException("Simulacion de Lectura no implementada");
         }

@@ -120,7 +120,7 @@ namespace U5kManServer
 
                 _gwExplorer = new GwExplorer(CambiaEstado);
 
-                _topExplorer = new TopSnmpExplorer(CambiaEstado);
+                _topExplorer = new TopSnmpExplorer();
 
 #if _HAY_NODEBOX__
                 _nbx_scan = new NbxSpv();

@@ -9,6 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 using Lextm.SharpSnmpLib;
+using U5kBaseDatos;
+using NucleoGeneric;
 
 
 namespace U5kManServer.Procesos
@@ -17,6 +19,7 @@ namespace U5kManServer.Procesos
     {
         U5kManStdData Data { get; }
         bool IsMaster { get; }
+        std StatusChangeManage(std antiguo, std nuevo, int scv, eIncidencias inci, eTiposInci thw, string idhw, params object[] parametros);
     }
 
     public class RunTimeData : IProcessData
@@ -24,6 +27,18 @@ namespace U5kManServer.Procesos
         public U5kManStdData Data => U5kManService.GlobalData;
 
         public bool IsMaster => U5kManService._Master;
+
+        public std StatusChangeManage(std antiguo, std nuevo, int scv, eIncidencias inci, eTiposInci thw, string idhw, params object[] parametros)
+        {
+            if (antiguo != nuevo)
+            {
+                if (HistThread.hproc != null)
+                {
+                    BaseCode.RecordEvent<MainThread>(DateTime.Now, inci, thw, idhw, parametros);
+                }
+            }
+            return nuevo;
+        }
     }
 
     public interface IProcessSnmp

@@ -7,6 +7,7 @@ using U5kBaseDatos;
 
 using XProccessUnitTests.MockedClass;
 using System.Threading.Tasks;
+using NucleoGeneric;
 
 namespace XProccessUnitTests
 {
@@ -25,7 +26,7 @@ namespace XProccessUnitTests
         void PrepareTest(Action<TopSnmpExplorer, MockedTop> action)
         {
             var mockedTopData = new MockedTop();            
-            var topProc = new TopSnmpExplorer(CambiaEstado, mockedTopData.ProcessData, mockedTopData.ProcessSnmp);
+            var topProc = new TopSnmpExplorer(mockedTopData.ProcessData, mockedTopData.ProcessSnmp);
 
             topProc.Start();
             action(topProc, mockedTopData);
@@ -35,6 +36,7 @@ namespace XProccessUnitTests
         {
             if (antiguo != nuevo)
             {
+                BaseCode.LogInfo<TopSnmpExplorer>($"Top Parameter status change => {idhw}:{inci}");
             }
             return nuevo;
         }
