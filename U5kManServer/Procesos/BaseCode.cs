@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 using System.Runtime.Serialization;
 
@@ -9,6 +10,7 @@ using NLog;
 
 using U5kBaseDatos;
 using U5kManServer;
+using Utilities;
 
 namespace NucleoGeneric
 {
@@ -19,28 +21,30 @@ namespace NucleoGeneric
     {
 
         /** 20160905. AGL. Localizacion del Servicio. */
-        public String ServiceSite
-        {
-            get
-            {
-                return System.Environment.MachineName;
-            }
-        }
-
-        private static LogLevel _logLevel;
-        private static LogLevel _logLevelLocal;
-
+        public String ServiceSite => System.Environment.MachineName;
         public BaseCode()
         {
-            _logLevel = LogLevel.FromString("Info");
-            _logLevelLocal = LogLevel.FromString("Debug");
         }
 
         #region Logs - Base
 
-        /// <summary>
-        /// Utiliza esta funcion para escribir en la consola.
-        /// </summary>
+        protected static bool IsMaster => U5kManService._Master;
+        protected static string KeyLog(eIncidencias code) => code != eIncidencias.IGNORE ? "[" + ((Int32)code).ToString() + "] " : "";
+        protected static object [] NormalizeParams(string msg, object[] parametros)
+        {
+            var paramList = parametros?.ToList() ?? new List<object>();
+            paramList.Insert(0, msg);
+            var msgInci = String.Join(",", paramList.Select(e => e.ToString().Replace(",", ";")).ToList());
+            return new object[] { msgInci };
+        }
+        protected static void RecordEventFromLog(DateTime when, eIncidencias code, eTiposInci tp, string idw, object[] parametros)
+        {
+            if (code == eIncidencias.IGNORE) return;
+            HistThread.hproc?.AddInci(DateTime.Now, 0, code, (int)tp, idw, parametros);
+        }
+        #endregion
+
+        #region Log - Public
         public void LogConsole<T>(LogLevel level, String message)
         {
             if (level == LogLevel.Fatal)
@@ -52,208 +56,96 @@ namespace NucleoGeneric
             Console.WriteLine(" [" + DateTime.Now + "][" + level + "] [" + typeof(T).Name.ToUpper() + "] " + message);
             Console.ForegroundColor = ConsoleColor.White;
         }
-        /// <summary>
-        /// Utiliza esta funcion para escribir en el Fichero Log.
-        /// </summary>
-        static private void LogLogger<T>(LogLevel level, String message)
-        {
-            Logger _logger = LogManager.GetLogger(typeof(T).Name);
-            _logger.Log(level, message);
-        }
-        static private string From(string caller, int line)
-        {
-            return String.Format("[{0}:{1}]", caller, line);
-        }
-        /// <summary>
-        /// Utiliza esta función para realizar un log, y adicionalmente enviar una incidencia, 
-        /// con mensajes diferentes entre el del Log y el de la incidencia.
-        /// </summary>
-        static private void Log<T>(String key, LogLevel level, String message,
-            eIncidencias type, eTiposInci thw, string idhw, Object[] issueMessages,
-            DateTime when,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
-            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            try
-            {
-                // Origen del Mensaje...
-                String msgOrg = String.Format("[{2}]:{0}[{1}]", typeof(T).Name, From(caller, lineNumber), U5kManService._Master ? "M" : "S");
-                // Clear the string
-                message = message.Replace("'", "").Replace("\"", "");
-
-                LogLogger<T>(level, (type != eIncidencias.IGNORE ? "[" + ((Int32)type).ToString() + "] " : "") + msgOrg + ": " + message);
-
-                if (type != eIncidencias.IGNORE)
-                {
-#if _FILTER_V1_
-                    if (HistThread.hproc != null && filter.ToStore(key) == true)
-#else
-                    if (HistThread.hproc != null)
-#endif
-                    {
-                        HistThread.hproc.AddInci(when, 0, type, (int)thw, idhw, issueMessages);
-                    }
-                }
-            }
-            catch (Exception x)
-            {
-                LogManager.GetLogger("ExceptionInLog").Error(x, "Exception Logging [[" + message + "]]: ");
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="level"></param>
-        /// <param name="message"></param>
-        /// <param name="type"></param>
-        /// <param name="issueMessages"></param>
-        /// <param name="lineNumber"></param>
-        /// <param name="caller"></param>
-        static protected void Log<T>(LogLevel level, String message,
-            eIncidencias type = eIncidencias.IGNORE,
-            Object[] issueMessages = null,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
-            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
-        {
-            String msgOrg = String.Format("{0}[{1}]", typeof(T).Name, From(caller, lineNumber));
-            String msgInci = String.Format("{0},{1}", (Int32)type, msgOrg);
-            if (issueMessages != null)
-            {
-                foreach (string msg in issueMessages)
-                {
-                    msgInci += ("," + msg.Replace(",", ";"));
-                }
-            }
-            else
-            {
-                msgInci = String.Format("{0},{1},{2}", (Int32)type, msgOrg, message);
-            }
-            string key = string.Format("{0}_{1}_{2}", (Int32)type, "MTTO", msgInci);
-            Log<T>(key, level, message, type, eTiposInci.TEH_SISTEMA, "MTTO", new Object[] { msgInci }, DateTime.Now, lineNumber, caller);
-        }
-        #endregion
-
-        #region Log - Public
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="scv"></param>
-        /// <param name="inci"></param>
-        /// <param name="thw"></param>
-        /// <param name="idhw"></param>
-        /// <param name="parametros"></param>
         public static void RecordEvent<T>(DateTime when, eIncidencias inci, eTiposInci thw, string idhw, object[] parametros,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
-            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string file = null)
         {
-            string key = string.Format("{0}_{1}_{2}", (Int32)inci, idhw, StrParams(parametros));
-            /** 20181210. Para que el filtro de incidencias repetidas no afecte a los eventos de PTT y SQH */
-            LogLevel level = inci == eIncidencias.ITO_PTT ||
-                (inci == eIncidencias.IGW_EVENTO &&
-                Array.FindIndex(parametros, e => (e as string).ToLower().Contains("ptt") || (e as string).ToLower().Contains("sqh")) >= 0) ? LogLevel.Trace : LogLevel.Debug;
+            RecordEventFromLog(when, inci, thw, idhw, parametros);
             var msgInci = StrRegHistorico(when, inci, thw, idhw, parametros);
-            Log<T>(key, level, msgInci, inci, thw, idhw, parametros, when, lineNumber, caller);
+            var trace = inci == eIncidencias.ITO_PTT ||
+                Array.FindIndex(parametros, e => e.ToString().ToLower().Contains("ptt") || e.ToString().ToLower().Contains("sqh")) >= 0;
+            if (trace)
+                Uv5kLog.Trace<T>(IsMaster, KeyLog(inci), msgInci, caller, lineNumber, file);
+            else
+                Uv5kLog.Debug<T>(IsMaster, KeyLog(inci), msgInci, caller, lineNumber, file);
         }
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo TRACE, 
-        /// y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>        
         static public void LogTrace<T>(String message,
-            eIncidencias type = eIncidencias.IGNORE,
+            eIncidencias code = eIncidencias.IGNORE,
             Object[] issueMessages = null,
+            string idhw = null,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
-            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string file = null)
         {
-            Log<T>(LogLevel.Trace, message, type, issueMessages, lineNumber, caller);
+            RecordEventFromLog(DateTime.Now, code, eTiposInci.TEH_SISTEMA, "MTTO", NormalizeParams(message, issueMessages));
+            Uv5kLog.Trace<T>(IsMaster, idhw ?? Path.GetFileNameWithoutExtension(file), message, caller, lineNumber, file);
         }
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo DEBUG, 
-        /// y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
         static public void LogDebug<T>(String message,
-            eIncidencias type = eIncidencias.IGNORE,
+            eIncidencias code = eIncidencias.IGNORE,
             Object[] issueMessages = null,
+            string idhw = null,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, 
-            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string file = null)
         {
-            Log<T>(LogLevel.Debug, message, type, issueMessages, lineNumber, caller);
+            RecordEventFromLog(DateTime.Now, code, eTiposInci.TEH_SISTEMA, "MTTO", NormalizeParams(message, issueMessages));
+            Uv5kLog.Debug<T>(IsMaster, idhw ?? Path.GetFileNameWithoutExtension(file), message, caller, lineNumber, file);
         }
-
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo INFO, 
-        /// y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
         static public void LogInfo<T>(String message,
-            eIncidencias type = eIncidencias.IGNORE,
+            eIncidencias code = eIncidencias.IGNORE,
             Object[] issueMessages = null,
+            string idhw = null,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
-            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string file = null)
         {
-            Log<T>(LogLevel.Info, message, type, issueMessages, lineNumber, caller);
+            RecordEventFromLog(DateTime.Now, code, eTiposInci.TEH_SISTEMA, "MTTO", NormalizeParams(message, issueMessages));
+            Uv5kLog.Info<T>(IsMaster, idhw ?? Path.GetFileNameWithoutExtension(file), message, caller, lineNumber, file);
         }
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo WARN, 
-        /// y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
         static public void LogWarn<T>(String message,
-            eIncidencias type = eIncidencias.IGNORE,
+            eIncidencias code = eIncidencias.IGNORE,
             Object[] issueMessages = null,
+            string idhw = null,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
-            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string file = null)
         {
-            Log<T>(LogLevel.Warn, message, type, issueMessages, lineNumber, caller);
+            RecordEventFromLog(DateTime.Now, code, eTiposInci.TEH_SISTEMA, "MTTO", NormalizeParams(message, issueMessages));
+            Uv5kLog.Warn<T>(IsMaster, idhw ?? Path.GetFileNameWithoutExtension(file), message, caller, lineNumber, file);
         }
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo ERROR, 
-        /// y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
         static public void LogError<T>(String message,
-            eIncidencias type = eIncidencias.IGNORE,
+            eIncidencias code = eIncidencias.IGNORE,
             Object[] issueMessages = null,
+            string idhw = null,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
-            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string file = null)
         {
-            Log<T>(LogLevel.Error, message, type, issueMessages, lineNumber, caller);
+            RecordEventFromLog(DateTime.Now, code, eTiposInci.TEH_SISTEMA, "MTTO", NormalizeParams(message, issueMessages));
+            Uv5kLog.Error<T>(IsMaster, idhw ?? Path.GetFileNameWithoutExtension(file), message, caller, lineNumber, file);
         }
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo FATAL, y adicionalmente enviar una incidencia con el string del mensaje literalmente. 
-        /// <para>El mensaje NO PUEDE contener comas(',') porque se utilizan como separador.</para>
-        /// </summary>
         static public void LogFatal<T>(String message,
-            eIncidencias type = eIncidencias.IGNORE,
+            eIncidencias code = eIncidencias.IGNORE,
             Object[] issueMessages = null,
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+            string idhw = null,
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, 
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string file = null)
         {
-            Log<T>(LogLevel.Fatal, message, type, issueMessages, lineNumber, caller);
+            RecordEventFromLog(DateTime.Now, code, eTiposInci.TEH_SISTEMA, "MTTO", NormalizeParams(message, issueMessages));
+            Uv5kLog.Fatal<T>(IsMaster, idhw ?? Path.GetFileNameWithoutExtension(file), message, caller, lineNumber, file);
         }
-        /// <summary>
-        /// Utiliza esta función para realizar un log de tipo ERROR, y adicionalmente enviar una incidencia, con mensajes diferentes entre el del Log y el de la incidencia.
-        /// La funcion coge cada uno de los parametros y los separa con comas para que el software en el destino los interprete.
-        /// </summary>
         static public void LogException<T>(String message, Exception ex,
             bool severity = false, bool bRegistroHistorico = false,
+            string idhw = null,
             [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
-            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string file = null)
         {
-            message += " [EXCEPTION ERROR]: " + ex.Message;
-            if (null != ex.InnerException)
-                message += " [INNER EXCEPTION ERROR]" + ex.InnerException.Message;
-
-            Log<T>(severity ? LogLevel.Error : LogLevel.Warn, message, eIncidencias.IGNORE, null, lineNumber, caller);
-
-            /** */
-            if (bRegistroHistorico == true)
-            {
-                Log<T>(severity ? LogLevel.Error : LogLevel.Warn, "EXCEPTION ERROR", eIncidencias.IGRL_U5KI_SERVICE_ERROR, new object[] { ex.Message }, lineNumber, caller);
-            }
+            var code = bRegistroHistorico ? eIncidencias.IGRL_U5KI_SERVICE_ERROR : eIncidencias.IGNORE;
+            RecordEventFromLog(DateTime.Now, code, eTiposInci.TEH_SISTEMA, "MTTO", NormalizeParams(message, null));
+            Uv5kLog.Exception<T>(IsMaster, idhw??Path.GetFileNameWithoutExtension(file), ex, message, caller, lineNumber, file);
         }
         #endregion
 
@@ -435,7 +327,7 @@ namespace NucleoGeneric
         {
             U5kGenericos.CurrentCultureSet((idioma) =>
             {
-                // LogTrace<BaseCode>("ConfigCultureSet => " + idioma);
+                LogTrace<BaseCode>("ConfigCultureSet => " + idioma);
             });
         }
     }
