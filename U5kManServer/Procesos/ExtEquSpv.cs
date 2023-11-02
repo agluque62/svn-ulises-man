@@ -18,7 +18,7 @@ namespace U5kManServer
     /// <summary>
     /// 20200122: Se separa la Supervision del Equipo de la del recurso, para evitar hacer PINES repetidos en equipos con varios recursos.
     /// </summary>
-    class ExtEquSpv : NGThread/*, IDisposable*/
+    public class ExtEquSpv : NGThread/*, IDisposable*/
     {
         IProcessData pData;
         IProcessPing pPing;
@@ -78,7 +78,7 @@ namespace U5kManServer
             {
                 while (IsRunning())
                 {
-                    if (U5kManService._Master == true)
+                    if (pData.IsMaster == true)
                     {
                         List<EquipoEurocae> localequ = null;    // new List<EquipoEurocae>();
                         try
