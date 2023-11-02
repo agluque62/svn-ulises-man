@@ -1048,41 +1048,7 @@ namespace U5kManServer
         {
             try
             {
-
                 StdServ TestingServer = new StdServ();
-                /** Chequear el TEAMING */
-#if _NEM_V0_
-                NICEventMonitor.NicEventMonitorConfig cfg = new NICEventMonitor.NicEventMonitorConfig(Properties.u5kManServer.Default.TeamingConfig);
-                using (NICEventMonitor monitor = new NICEventMonitor(cfg))
-                {
-                    if (monitor.NICList.Count > 0)
-                    {
-                        // Hay Eventos de TEAMING. Asumo que la red es dual...
-                        foreach (NICEventMonitor.NICItem item in monitor.NICList)
-                        {
-                            TestingServer.lanes[item.DeviceId] = item.Status == NICEventMonitor.LanStatus.Up ? std.Ok : std.Error;
-                        }
-                    }
-                    else
-                    {
-                        // No hay eventos de Teaming. Asumo que la red no es dual...
-                        /** Chequear el estado de la LAN que da servicio a la IP-FISICA del Servidor */
-                        string MyIp = Properties.u5kManServer.Default.MiDireccionIP;
-                        string eth_name = "";
-                        bool eth_up = false;
-                        if (Utilities.NICS.GetEthInterface(MyIp, ref eth_name, ref eth_up) == true)
-                        {
-                            TestingServer.lanes[eth_name] = eth_up ? std.Ok : std.Error;
-                        }
-                        else
-                        {
-                            LogError<U5kServiceMain>(
-                                String.Format("No se encuentra Interfaz ETH para la ip {0}", MyIp));
-                            return;
-                        }
-                    }
-                }
-#else
                 using (NicEventMonitor monitor = new NicEventMonitor(Properties.u5kManServer.Default.TeamingConfig, null, null))
                 {
                     if (monitor.GetState((id, status) =>
@@ -1107,14 +1073,6 @@ namespace U5kManServer
                         }
                     }
                 }
-#endif
-                /** Chequear el Estado de Sincronismo */
-                //using (NtpClientStatus ntpc = new NtpClientStatus(Properties.u5kManServer.Default.NtpClient))
-                //{
-                //    TestingServer.ntp_sync = String.Join("##", ntpc.Status.ToArray());
-                //}
-                // TestingServer.ntp_sync = (new NtpMeinbergClientInfo()).LastClientResponse;
-
                 /** Actualizo los datos en la tabla... */
                 StdServ MyStdServer = null;
                 GlobalServices.GetWriteAccess((data) =>
@@ -1126,7 +1084,7 @@ namespace U5kManServer
                     {
                         LogWarn<U5kServiceMain>(
                             String.Format("No se determina si soy Servidor-1 o Servidor-2: {0} ?? ({1})-({2})",
-                            System.Environment.MachineName, stdg.stdServ1.name, stdg.stdServ2.name));
+                            Environment.MachineName, stdg.stdServ1.name, stdg.stdServ2.name));
                     }
                     else
                     {
@@ -1142,42 +1100,37 @@ namespace U5kManServer
                 if (MyStdServer != null)
                 {
                     LogDebug<U5kServiceMain>($"Entrando en NtpInfo.Actualize");
-                    MyStdServer.NtpInfo.Actualize("LocalServer", (connected, ip) =>
+                    var ntpPoll = new NtpInfoClass(MyStdServer.NtpInfo);
+                    ntpPoll.Actualize("LocalServer", (connected, ip) =>
                     {
-                        GlobalServices.GetWriteAccess((data) =>
+                        if (bMaster)
                         {
-                            U5KStdGeneral stdg = data.STDG;
-                            if (bMaster)
+                            GlobalServices.GetWriteAccess((data) =>
                             {
-                                // Todo Generar Historicos.
-                                if (connected == true)
-                                {
-                                    GeneraIncidencia(0, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "SPV",
-                                        new object[] { idiomas.strings.NTP_ServerConnected/*"Servidor NTP Conectado"*/, ip, "", "", "", "", "", "" });
-                                    stdg.stdClock.name = ip;
-                                    stdg.stdClock.Estado = std.Ok;
-                                }
-                                else
-                                {
-                                    GeneraIncidencia(0, eIncidencias.IGRL_NBXMNG_ALARM, eTiposInci.TEH_SISTEMA, "SPV",
-                                        new object[] { idiomas.strings.NTP_NoServer/*"No Hay Servidor NTP en el Sistema"*/, ip, "", "", "", "", "", "" });
-                                    stdg.stdClock.name = ip;
-                                    stdg.stdClock.Estado = std.NoInfo;
-                                }
-                            }
-
-                        });
+                                U5KStdGeneral stdg = data.STDG;
+                                stdg.stdClock.name = ip;
+                                stdg.stdClock.Estado = connected ? std.Ok : std.NoInfo;
+                                GeneraIncidencia(0, 
+                                    connected ? eIncidencias.IGRL_NBXMNG_EVENT : eIncidencias.IGRL_NBXMNG_ALARM, 
+                                    eTiposInci.TEH_SISTEMA, "SPV",
+                                    new object[] 
+                                    { 
+                                        connected ? idiomas.strings.NTP_ServerConnected : idiomas.strings.NTP_NoServer, 
+                                        ip, "", "", "", "", "", "" 
+                                    });
+                            });
+                        }
                     });
+                    MyStdServer.NtpInfo.CopyFrom(ntpPoll);
                     LogDebug<U5kServiceMain>($"Saliendo en NtpInfo.Actualize");
+
+                    /** Si soy esclavo, notifico los datos al master */
+                    if (!bMaster)
+                    {
+                        WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoLanes, MyStdServer.lanes2string);
+                        WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoNtpClient, MyStdServer.NtpInfo.LastInfoFromClient/* ntp_sync*/);
+                    }
                 }
-
-                /** Si soy esclavo, notifico los datos al master */
-                if (!bMaster)
-                    WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoLanes, MyStdServer.lanes2string);
-
-                /** Si soy esclavo, notifico los datos al master */
-                if (!bMaster)
-                    WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoNtpClient, MyStdServer.NtpInfo.LastInfoFromClient/* ntp_sync*/);
             }
             catch (Exception x)
             {
