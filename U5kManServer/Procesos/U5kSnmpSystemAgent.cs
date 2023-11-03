@@ -410,129 +410,22 @@ namespace U5kManServer
             /** Ajusto el oidtrap / oidvar para que comienze por <.>*/
             oidvar = oidvar.StartsWith(".") ? oidvar : "." + oidvar;
             oidtrap = oidtrap.StartsWith(".") ? oidtrap : "." + oidtrap;
-            TrapBus.Publish(oidtrap, oidvar, data, ipfrom);
-            // TODO... Esta gestión la debería hacer cada módulo que recibe los traps.
-            GlobalServices.GetWriteAccess((gdata) =>
+            try
             {
-                try
+                if (oidvar.StartsWith(Properties.u5kManServer.Default.HfEventOids) ||
+                    oidvar.StartsWith(Properties.u5kManServer.Default.CfgEventOid))
                 {
-                    if (U5kManService._Master == true)
-                    {
-                        // Busco si es una posicion.
-                        List<stdPos> stdpos = gdata?.STDTOPS;
-                        stdPos pos = stdpos?.Find(r => r.ip == ipfrom.Address.ToString());
-
-                        // Busco si es una Pasarela.
-                        List<stdGw> stdgws = gdata?.STDGWS;
-                        stdGw gw = stdgws?.Find(r => r.ip == ipfrom.Address.ToString() || r.gwA.ip == ipfrom.Address.ToString() || r.gwB.ip == ipfrom.Address.ToString());
-                        
-                        if (oidvar.StartsWith(Properties.u5kManServer.Default.HfEventOids) ||
-                            oidvar.StartsWith(Properties.u5kManServer.Default.CfgEventOid))
-                        {
-                            RecibidoEventoExterno(oidvar, ((OctetString)data).ToString());
-                        }
-                        else
-                        {
-                            if (gw != null)
-                            {
-                                stdPhGw pgw = gw.gwA.ip == ipfrom.Address.ToString() ? gw.gwA : gw.gwB;
-#if _PASARELAS_NO_UNIFICADAS_
-                                var BdtItem = GwExplorer._GwOids.Where(p => p.Value.EndsWith(oidvar)).ToList();
-                                if (BdtItem.Count > 0)
-                                {
-                                    eGwPar par = BdtItem[0].Key;
-                                    /** Pasarelas no Unificadas */
-                                    if (par != eGwPar.None)
-                                    {
-                                        LogWarn<U5kSnmpSystemAgent>(String.Format("GW-ANT OID [{0}] No encontrado para {1}", oidvar, ipfrom));
-                                    }
-                                    else if (EventosRecursos.IsEventRadio(oidvar) == true)
-                                    {
-                                        if (_evradio.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
-                                        {
-                                            RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evradio.lastInci, eTiposInci.TEH_TIFX, gw.name, _evradio.lastParameters);
-                                        }
-                                    }
-                                    else if (EventosRecursos.IsEventLcen(oidvar) == true)
-                                    {
-                                        if (_evLcen.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
-                                        {
-                                            RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evLcen.lastInci, eTiposInci.TEH_TIFX, gw.name, _evLcen.lastParameters);
-                                        }
-                                    }
-                                    else if (EventosRecursos.IsEventTlf(oidvar) == true)
-                                    {
-                                        if (_evTlf.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
-                                        {
-                                            RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evTlf.lastInci, eTiposInci.TEH_TIFX, gw.name, _evTlf.lastParameters);
-                                        }
-                                    }
-                                    else if (EventosRecursos.IsEventAts(oidvar) == true)
-                                    {
-                                        if (_evAts.AutomataEventos(pgw, ipto.Port, oidvar, data) == true)
-                                        {
-                                            RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)_evAts.lastInci, eTiposInci.TEH_TIFX, gw.name, _evAts.lastParameters);
-                                        }
-                                    }
-                                    else if (oidtrap.Contains(".1.3.6.1.4.1.7916.8.3.2.1") == true)
-                                    {
-                                        /** Pasarelas Unificadas */
-                                        GwExplorer.RecibidoTrapGw_unificada(gw, pgw, oidtrap, oidvar, data);
-                                    }
-                                    else
-                                    {
-                                        LogWarn<U5kSnmpSystemAgent>(String.Format("Recibido TrapGW {0}:{1} oid={2}. Comando No esperado", ipfrom.Address.ToString(), ipto.Port, oidvar));
-                                    }
-                                }
-                                else
-                                {
-                                    LogError<U5kSnmpSystemAgent>(String.Format("GW OID [{0}] No encontrado para {1}", oidvar, ipfrom));
-                                }
-#else
-                                /** Pasarelas Unificadas */
-                                if (oidtrap.Contains(".1.3.6.1.4.1.7916.8.3.2.1") == true)
-                                {
-                                    /** Pasarelas Unificadas */
-                                    GwExplorer.RecibidoTrapGw_unificada(gw, pgw, oidtrap, oidvar, data);
-                            }
-                                else
-                                {
-                                    LogWarn<U5kSnmpSystemAgent>(String.Format("GW OID [{0}] No encontrado para {1}", oidvar, ipfrom));
-                                }
-#endif
-                            }
-                            else if (pos != null /*&& pos.stdpos != std.NoInfo*/)
-                            {
-                                //// Proviene de un Puesto.
-                                //var BdtItem = TopSnmpExplorer._OidPos.Where(p => p.Value.EndsWith(oidvar)).ToList();
-                                //if (BdtItem.Count > 0)
-                                //{
-                                //    RecibidoTrapPosicion(pos, BdtItem[0].Key, data);
-                                //}
-                                //else
-                                //{
-                                //    LogWarn<U5kSnmpSystemAgent>(String.Format("TOP OID [{0}] No encontrado para {1}", oidvar, ipfrom));
-                                //}
-                            }
-                            else
-                            {
-#if DEBUG
-                                if (oidtrap.Contains(".1.3.6.1.4.1.7916.8.3.2.1") == true)
-                                {
-                                    /** Pasarelas Unificadas */
-                                    GwExplorer.RecibidoTrapGw_unificada(null, null, oidtrap, oidvar, data);
-                                }
-#endif
-                                LogWarn<U5kSnmpSystemAgent>(String.Format("OID [{0}] No encontrado para {1}", oidvar, ipfrom));
-                            }
-                        }
-                    }
+                    GlobalServices.GetWriteAccess(() => RecibidoEventoExterno(oidvar, ((OctetString)data).ToString()));
                 }
-                catch (Exception x)
+                else
                 {
-                    LogException<U5kSnmpSystemAgent>("", x);
+                    TrapBus.Publish(oidtrap, oidvar, data, ipfrom);
                 }
-            });
+            }
+            catch (Exception x)
+            {
+                LogException<U5kSnmpSystemAgent>($"Procesando Trap {ipfrom}:{oidtrap} {oidtrap} => {data}", x);
+            }
         }
         /// <summary>
         /// 
@@ -544,32 +437,38 @@ namespace U5kManServer
             int nInci;
             string idhw = oid.StartsWith(Properties.u5kManServer.Default.HfEventOids) ? "NBX" :
                 oid.StartsWith(Properties.u5kManServer.Default.CfgEventOid) ? "CFG" : "???";
-
-            string[] _oid_val = oid.Split('.');
-            if (int.TryParse(_oid_val[_oid_val.Length - 1], out nInci))
+            try
             {
-                List<string> _params = valor.Split(',').ToList();
-
-                /** El primer Parámetro es el numero de Incidencia */
-                _params.RemoveAt(0);
-
-                /** Si viene del NODEBOX, el segundo parámetro es el ID-Hardware*/
-                if (idhw == "NBX")
+                string[] _oid_val = oid.Split('.');
+                if (int.TryParse(_oid_val[_oid_val.Length - 1], out nInci))
                 {
-                    idhw = _params[0];
+                    List<string> _params = valor.Split(',').ToList();
+
+                    /** El primer Parámetro es el numero de Incidencia */
                     _params.RemoveAt(0);
+
+                    /** Si viene del NODEBOX, el segundo parámetro es el ID-Hardware*/
+                    if (idhw == "NBX")
+                    {
+                        idhw = _params[0];
+                        _params.RemoveAt(0);
+                    }
+
+                    /** Completo con un máximo de 8 parámetros.... */
+                    for (int i = _params.Count; i < 8; i++)
+                        _params.Add("");
+                    RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)nInci, eTiposInci.TEH_SISTEMA, idhw, _params.ToArray());
+                }
+                else
+                {
+                    LogWarn<U5kSnmpSystemAgent>(String.Format("RecibidoEventoExterno. Error de Formato. OID={0}, VAL={1}", oid, valor));
                 }
 
-                /** Completo con un máximo de 8 parámetros.... */
-                for (int i = _params.Count; i < 8; i++)
-                    _params.Add("");
-                RecordEvent<U5kSnmpSystemAgent>(DateTime.Now, (eIncidencias)nInci, eTiposInci.TEH_SISTEMA, idhw, _params.ToArray());
             }
-            else
+            catch (Exception x)
             {
-                LogWarn<U5kSnmpSystemAgent>(String.Format("RecibidoEventoExterno. Error de Formato. OID={0}, VAL={1}", oid, valor));
+                LogException<U5kSnmpSystemAgent>($"Procesando Trap Externo Oid {oid}, Valor: {valor}", x);
             }
-
         }
 
 #if DEBUG

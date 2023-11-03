@@ -42,10 +42,9 @@ namespace XProccessUnitTests.MockedClasss
         {
             ProcessPingMock
                 .Setup(proc => proc.Ping(
-                    It.IsAny<string>(), 
-                    It.IsAny<bool>(), 
-                    It.IsAny<Action<bool, IPStatus[]>>()))
-                .Callback((string p1, bool p2, Action<bool, IPStatus[]> result) => result(Presente, new IPStatus[] { IPStatus.Success }));
+                    It.IsAny<string>(),
+                    It.IsAny<bool>()))
+                .Returns(Task.Run(() => Presente));
         }
         void SetupProcessSip()
         {
@@ -54,14 +53,9 @@ namespace XProccessUnitTests.MockedClasss
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<int>(),
-                    It.IsAny<bool>(),
-                    It.IsAny<Action<bool, string>>()))
-                .Callback((string p1, string p2, int p3, bool p4, Action<bool, string> result) =>
-                {
-                    result(SipAgent, "OK");
-                });
+                    It.IsAny<bool>()))
+                .Returns(Task.Run(() => new Tuple<bool, string>(SipAgent, "OK")));
         }
-
         U5kManStdData mockedData => new U5kManStdData()
         {
             CFGEQS = new List<EquipoEurocae>()

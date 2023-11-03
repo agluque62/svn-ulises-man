@@ -604,11 +604,7 @@ namespace U5kManServer
                 }
                 else
 #endif
-                //onlinedata = new SnmpClient().Get(VersionCode.V2,
-                //    new IPEndPoint(IPAddress.Parse(pos.ip), pos.snmpport),
-                //    new OctetString("public"), _vList,
-                //    pos.SnmpTimeout, pos.SnmpReintentos);
-                onlinedata = pSnmp.GetData(pos, _vList);
+                onlinedata = pSnmp.GetData(pos, _vList).Result;
                 ProcessPos(pos, onlinedata);
                 response(true);
             }
@@ -766,7 +762,7 @@ namespace U5kManServer
         }
         protected void TrapReceived(object from, TrapBus.TrapEventArgs args)
         {
-            LogInfo<TopSnmpExplorer>($"Trap Received => {args}");
+            LogTrace<TopSnmpExplorer>($"Trap Received => {args}");
             if (pData.IsMaster == true)
             {
                 GlobalServices.GetWriteAccess(() =>
@@ -774,6 +770,7 @@ namespace U5kManServer
                     var pos = pData.Data.STDTOPS.Where(p => p.ip == args.From?.Address.ToString()).FirstOrDefault();
                     if (pos != null)
                     {
+                        LogInfo<TopSnmpExplorer>($"TOP Trap Received => {args}");
                         var varList = new List<Variable>()
                         {
                             new Variable(new ObjectIdentifier(args.VarOid), args.VarData)

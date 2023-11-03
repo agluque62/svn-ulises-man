@@ -12,6 +12,7 @@ using System.Net.Sockets;
 using Utilities;
 using NucleoGeneric;
 using U5kManServer.Procesos;
+using NAudio.SoundFont;
 
 namespace U5kManServer
 {
@@ -185,57 +186,54 @@ namespace U5kManServer
         {
             LogTrace<EquipoEurocae>($"Supervisando Equipo en {ip}, {recursos.Count}");
             List<Task> stasks = new List<Task>();
-
             var presente = recursos[0].EstadoRed1 == std.Ok;
-            pPing.Ping(ip, presente, (res, replies) =>
+            var res = pPing.Ping(ip, presente).Result;
+            
+            foreach (var recurso in recursos)
             {
-                LogTrace<EquipoEurocae>($"PIN {ip} => ({string.Join(",", replies)})");
-                foreach (var recurso in recursos)
+                if (recurso.ProcessResult(res))
                 {
-                    if (recurso.ProcessResult(res))
-                    {
-                        recurso.EstadoRed1 = recurso.EstadoRed2 = ChangeStd(recurso, res ? std.Ok : std.NoInfo); /** Provocará el histórico */
-                        LogTrace<EquipoEurocae>($"Recurso {recurso.Id}, Estado Red => {recurso.EstadoRed1}");
+                    recurso.EstadoRed1 = recurso.EstadoRed2 = ChangeStd(recurso, res ? std.Ok : std.NoInfo); /** Provocará el histórico */
+                    LogTrace<EquipoEurocae>($"Recurso {recurso.Id}, Estado Red => {recurso.EstadoRed1}");
 
-                        if (recurso.EstadoRed1 == std.Ok)
+                    if (recurso.EstadoRed1 == std.Ok)
+                    {
+                        /** Estado Agente SIP */
+                        if (recurso.Tipo == 5)
                         {
-                            /** Estado Agente SIP */
-                            if (recurso.Tipo == 5)
-                            {
-                                /** Los Grabadores no tienen Agente SIP, Para que se muestre Ok, 
-                                    Ponemos que está bien */
-                                recurso.EstadoSip = std.Ok;
-                                LogTrace<EquipoEurocae>($"Recurso Grabacion {recurso.Id} => {recurso.EstadoSip}");
-                            }
-                            else
-                            {
-                                stasks.Add(Task.Factory.StartNew(() =>
-                                {
-                                    try
-                                    {
-                                        SupervisaRecurso(recurso);
-                                    }
-                                    catch (Exception x)
-                                    {
-                                        LogException<ExtEquSpv>("", x);
-                                    }
-                                }));
-                            }
+                            /** Los Grabadores no tienen Agente SIP, Para que se muestre Ok, 
+                                Ponemos que está bien */
+                            recurso.EstadoSip = std.Ok;
+                            LogTrace<EquipoEurocae>($"Recurso Grabacion {recurso.Id} => {recurso.EstadoSip}");
                         }
                         else
                         {
-                            // RM#7285. Si no hay RED, se resetea el estado sip del recurso.
-                            recurso.EstadoSip = std.Error;
-                            recurso.LastOptionsResponse = "";
+                            stasks.Add(Task.Factory.StartNew(() =>
+                            {
+                                try
+                                {
+                                    SupervisaRecurso(recurso);
+                                }
+                                catch (Exception x)
+                                {
+                                    LogException<ExtEquSpv>("", x);
+                                }
+                            }));
                         }
-                        LogTrace<ExtEquSpv>($"Process {(res ? "Ok  " : "Fail")} executed: {recurso.sip_user}.");
                     }
                     else
                     {
-                        LogWarn<ExtEquSpv>($"Process Fail ignored : {recurso.sip_user}.");
+                        // RM#7285. Si no hay RED, se resetea el estado sip del recurso.
+                        recurso.EstadoSip = std.Error;
+                        recurso.LastOptionsResponse = "";
                     }
+                    LogTrace<ExtEquSpv>($"Process {(res ? "Ok  " : "Fail")} executed: {recurso.sip_user}.");
                 }
-            });
+                else
+                {
+                    LogWarn<ExtEquSpv>($"Process Fail ignored : {recurso.sip_user}.");
+                }
+            }
 
             var waitingResult = Task.WaitAll(stasks.ToArray(), 9000);
             LogTrace<EquipoEurocae>($"Equipo en {ip}, Supervisado ({stasks.Count}, {waitingResult})");
@@ -244,32 +242,29 @@ namespace U5kManServer
         protected void SupervisaRecurso(EquipoEurocae recurso)
         {
             LogTrace<EquipoEurocae>($"Supervisando recurso {recurso.sip_user}");
-            pSip.Ping(recurso.sip_user, recurso.Ip1, recurso.sip_port, recurso.Tipo == 2, (presente, response) =>
+            var res = pSip.Ping(recurso.sip_user, recurso.Ip1, recurso.sip_port, recurso.Tipo == 2).Result;
+            if (res.Item1 == true) // Presente
             {
-                if (presente == true)
-                {
-                    if (response == null || response == "Error")
-                    {
-                        recurso.EstadoSip = std.Error;
-                        recurso.LastOptionsResponse = "";
-                        LogTrace<EquipoEurocae>($"{recurso.sip_user}. SipAgent Respuesta NULA.");
-                    }
-                    else
-                    {
-                        var allowedReponse = AllowedSipResponses.Contains(response);
-                        recurso.EstadoSip = allowedReponse ? std.Ok : std.Aviso;
-                        recurso.LastOptionsResponse = response;
-                        LogTrace<EquipoEurocae>($"{recurso.sip_user}. SipAgent response {recurso.LastOptionsResponse}, EstadoSip => {recurso.EstadoSip}");
-                    }
-                }
-                else
+                if (res.Item2 == null || res.Item2 == "Error")
                 {
                     recurso.EstadoSip = std.Error;
                     recurso.LastOptionsResponse = "";
-                    LogTrace<EquipoEurocae>($"{recurso.sip_user}. SipAgent no contesta...");
+                    LogTrace<EquipoEurocae>($"{recurso.sip_user}. SipAgent Respuesta NULA.");
                 }
-            });
-
+                else
+                {
+                    var allowedReponse = AllowedSipResponses.Contains(res.Item2);
+                    recurso.EstadoSip = allowedReponse ? std.Ok : std.Aviso;
+                    recurso.LastOptionsResponse = res.Item2;
+                    LogTrace<EquipoEurocae>($"{recurso.sip_user}. SipAgent response {recurso.LastOptionsResponse}, EstadoSip => {recurso.EstadoSip}");
+                }
+            }
+            else
+            {
+                recurso.EstadoSip = std.Error;
+                recurso.LastOptionsResponse = "";
+                LogTrace<EquipoEurocae>($"{recurso.sip_user}. SipAgent no contesta...");
+            }
         }
 
         /// <summary>

@@ -13,6 +13,7 @@ using Lextm.SharpSnmpLib;
 using U5kBaseDatos;
 using NucleoGeneric;
 using Utilities;
+using NAudio.Gui;
 
 namespace U5kManServer.Procesos
 {
@@ -44,21 +45,54 @@ namespace U5kManServer.Procesos
     public interface IProcessSnmp : IDisposable
     {
         event EventHandler<TrapBus.TrapEventArgs> TrapReceived;
-        IList<Variable> GetData(object from, IList<Variable> variables);
+        Task<IList<Variable>> GetData(object from, IList<Variable> variables);
+        int ToInt(ISnmpData data);
+        string ToStr(ISnmpData data);
     }
     public class RuntimeSnmpService : IProcessSnmp
     {
-        public event EventHandler<TrapBus.TrapEventArgs> TrapReceived;
-
-        public IList<Variable> GetData(object from, IList<Variable> variables)
+        internal class Data4Client
         {
-            if (from is stdPos)
+            public string Ip { get; }
+            public int Port { get; }
+            public int Timeout { get; }
+            public int Retries { get; }
+            public Data4Client(object from)
             {
-                var pos = from as stdPos;
-                return new SnmpClient().Get(VersionCode.V2,
-                    new IPEndPoint(IPAddress.Parse(pos.ip), pos.snmpport),
-                    new OctetString("public"), variables,
-                    pos.SnmpTimeout, pos.SnmpReintentos);
+                if (from is stdPos)
+                {
+                    var pos = from as stdPos;
+                    Ip = pos.ip;
+                    Port = pos.snmpport;
+                    Timeout = pos.SnmpTimeout;
+                    Retries = pos.SnmpReintentos;
+                }
+                else if (from is stdPhGw)
+                {
+                    var cgw = from as stdPhGw;
+                    Ip = cgw.ip;
+                    Port = cgw.snmpport;
+                    Timeout = cgw.SnmpTimeout;
+                    Retries += cgw.SnmpReintentos;
+                }
+                else
+                {
+                    Ip = null;
+                }
+            }
+        }
+        public event EventHandler<TrapBus.TrapEventArgs> TrapReceived;
+        public Task< IList<Variable>> GetData(object from, IList<Variable> variables)
+        {
+            var data4Poll = new Data4Client(from);
+            if (data4Poll.Ip != null)
+            {
+                return Task.Run(() => 
+                    new SnmpClient()
+                    .Get(VersionCode.V2,
+                        new IPEndPoint(IPAddress.Parse(data4Poll.Ip), data4Poll.Port),
+                        new OctetString("public"), variables,
+                        data4Poll.Timeout, data4Poll.Retries));
             }
             throw new NotImplementedException();
         }
@@ -77,21 +111,25 @@ namespace U5kManServer.Procesos
             TrapBus.Unsubscribe(trapSubscrition);
             TrapReceived = null;
         }
+
+        public int ToInt(ISnmpData data) => data is Integer32 ? (data as Integer32).ToInt32() : -1;
+        public string ToStr(ISnmpData data) => data.ToString();
+
         object trapSubscrition = default;
     }
 
     public interface IProcessPing
     {
-        void Ping(string host, bool presente, Action<bool, IPStatus[]> ResultDelivery);
+        Task<bool> Ping(string host, bool presente);
     }
     public class RuntimePingService : IProcessPing
     {
-        public void Ping(string host, bool presente, Action<bool, IPStatus[]> ResultDelivery) => U5kGenericos.Ping(host, presente, ResultDelivery);
+        public Task<bool> Ping(string host, bool presente) => Task.Run(() => U5kGenericos.Ping(host, presente));
     }
 
     public interface IProcessSip : IDisposable
     {
-        void Ping(string user, string ip, int port, bool isRadio, Action<bool, string> ResultDelivery);
+        Task<Tuple<bool,string>> Ping(string user, string ip, int port, bool isRadio);
     }
     public class RuntimeSipService : IProcessSip
     {
@@ -108,12 +146,27 @@ namespace U5kManServer.Procesos
         {
             sips.Dispose();
         }
-        public void Ping(string user, string ip, int port, bool isRadio, Action<bool, string> ResultDelivery)
+        public Task<Tuple<bool, string>> Ping(string user, string ip, int port, bool isRadio)
         {
-            var ua = new SipUA() { user = user, ip = ip, port = port, radio = isRadio };
-            var res = sips.SipPing(ua);
-            ResultDelivery(res, ua.last_response?.Result);
+            return Task.Run(() =>
+            {
+                var ua = new SipUA() { user = user, ip = ip, port = port, radio = isRadio };
+                var res = sips.SipPing(ua);
+                return new Tuple<bool,string>(res, ua.last_response?.Result);
+            });
         }
         private SipSupervisor sips = null;
+    }
+
+    public interface IProcessHttp : IDisposable
+    {
+
+    }
+    public class RuntimeHttpService : IProcessHttp
+    {
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -16,6 +16,7 @@ using Lextm.SharpSnmpLib;
 using U5kBaseDatos;
 using U5kManServer.WebAppServer;
 using Utilities;
+using U5kManServer.Procesos;
 
 namespace U5kManServer
 {
@@ -129,7 +130,7 @@ namespace U5kManServer
             { LegacyPhoneResource_AgentType, _GwOids[eGwPar.LegacyPhoneResourceStatus] },
             { ATSPhoneResource_AgentType, _GwOids[eGwPar.ATSPhoneResourceStatus] },
         };
-        protected Dictionary<trc, eIncidencias> ResourceActivationEventsCodes = new Dictionary<trc, eIncidencias>()
+        Dictionary<trc, eIncidencias> ResourceActivationEventsCodes = new Dictionary<trc, eIncidencias>()
         {
             {trc.rcRadio, eIncidencias.IGW_CONEXION_RECURSO_RADIO},
             {trc.rcTLF, eIncidencias.IGW_CONEXION_RECURSO_TLF},
@@ -137,7 +138,7 @@ namespace U5kManServer
             {trc.rcATS, eIncidencias.IGW_CONEXION_RECURSO_R2},
             {trc.rcNotipo, eIncidencias.IGNORE}
         };
-        protected Dictionary<trc, eIncidencias> ResourceDeactivationEventsCodes = new Dictionary<trc, eIncidencias>()
+        Dictionary<trc, eIncidencias> ResourceDeactivationEventsCodes = new Dictionary<trc, eIncidencias>()
         {
             {trc.rcRadio, eIncidencias.IGW_DESCONEXION_RECURSO_RADIO},
             {trc.rcTLF, eIncidencias.IGW_DESCONEXION_RECURSO_TLF},
@@ -146,9 +147,25 @@ namespace U5kManServer
             {trc.rcNotipo, eIncidencias.IGNORE}
         };
 
-        public GwExplorer(/*ChangeStatusDelegate ChangeStatusRoutine*/)
+        IProcessData DataS = null;
+        IProcessPing PingS = null;
+        IProcessSip SipS = null;
+        IProcessSnmp SnmpS = null;
+        IProcessHttp HttpS = null;
+        public GwExplorer(
+            IProcessData pdata = null, 
+            IProcessPing pping = null, 
+            IProcessSip psip = null,
+            IProcessSnmp psnmp = null,
+            IProcessHttp phttp = null)
         {
+            DataS = pdata ?? new RunTimeData();
+            PingS = pping ?? new RuntimePingService();
+            SipS  = psip ?? new RuntimeSipService();
+            SnmpS = psnmp ?? new RuntimeSnmpService();
+            HttpS = phttp ?? new RuntimeHttpService();
             Name = "GwSnmpExplorer";
+            SnmpS.TrapReceived += SnmpTrapReceived;
         }
         protected override void Run()
         {
@@ -166,15 +183,14 @@ namespace U5kManServer
             {
                 while (IsRunning())
                 {
-                    if (U5kManService._Master == true)
+                    if (DataS.IsMaster == true)
                     {
-                        GlobalServices.GetWriteAccess((gdata) =>
+                        GlobalServices.GetWriteAccess(() =>
                         {
                             // limpiar pollingControl con las Pasarelas que puedan desaparecer de la configuracion.
-                            taskControl.DeleteNotPresent(gdata.STDGWS.Select(g => g.name).ToList());
-
+                            taskControl.DeleteNotPresent(DataS.Data.STDGWS.Select(g => g.name).ToList());
                             // Relleno los datos...
-                            gdata.STDGWS.ForEach(gw =>
+                            DataS.Data.STDGWS.ForEach(gw =>
                             {
                                 if (taskControl.IsTaskActive(gw.name) == false)
                                 {
@@ -186,14 +202,14 @@ namespace U5kManServer
                                             LogTrace<GwExplorer>($"Exploracion {newGw.name} iniciada.");
                                             ExploraGw(newGw);
                                             /// Copio los datos obtenidos a la tabla...
-                                            GlobalServices.GetWriteAccess((gdata1) =>
+                                            GlobalServices.GetWriteAccess(() =>
                                             {
-                                                if (gdata1.GWSDIC.ContainsKey(newGw.name))
+                                                if (DataS.Data.GWSDIC.ContainsKey(newGw.name))
                                                 {
                                                     /** 20200813. Solo actualiza el estado si no se ha cambiado en medio la configuracion */
-                                                    if (gdata1.GWSDIC[newGw.name].Equals(newGw))
+                                                    if (DataS.Data.GWSDIC[newGw.name].Equals(newGw))
                                                     {
-                                                        gdata1.GWSDIC[newGw.name].CopyFrom(newGw);
+                                                        DataS.Data.GWSDIC[newGw.name].CopyFrom(newGw);
                                                     }
                                                     else
                                                     {
@@ -219,7 +235,7 @@ namespace U5kManServer
                                 }
                                 else
                                 {
-                                    // todo. Algun tipo de supervision si nunca vuelve...
+                                    // TODO. Algun tipo de supervision si nunca vuelve...
                                     LogWarn<GwExplorer>($"Exploracion de Pasarela {gw.name} no finalizada en Tiempo ...");
                                 }
                             });
@@ -231,7 +247,6 @@ namespace U5kManServer
             Dispose();
             LogInfo<GwExplorer>("Finalizado...");
         }
-
 
         void SlotTypeSet(/*stdGw gw, */stdPhGw pgw, int nslot, stdSlot slot, int tipo, int estado)
         {
@@ -434,7 +449,6 @@ namespace U5kManServer
             });
         }
 
-
         void ExploraGw(object obj)
         {
             stdGw gw = (stdGw)obj;
@@ -474,7 +488,7 @@ namespace U5kManServer
 
             try
             {
-                var resPing = U5kGenericos.Ping(phgw.ip, phgw.presente);
+                var resPing = PingS.Ping(phgw.ip, phgw.presente).Result;
                 if (phgw.IpConn.ProcessResult(resPing))
                 {
                     phgw.IpConn.Std = resPing ? std.Ok : std.NoInfo;
@@ -671,10 +685,10 @@ namespace U5kManServer
             try
             {
 #if !_EXPLORE_ALL_AT_ONCE_
-                ExploraGwStdGen(phgw);
+                SnmpExploraGwStdGen(phgw);
                 for (int slot = 0; slot < 4; slot++)
                 {
-                    ExploraSlot(new KeyValuePair<stdPhGw, int>(phgw, slot));
+                    SnmpExploraSlot(new KeyValuePair<stdPhGw, int>(phgw, slot));
                 }
 #else
                 ExploreEverythingAtOnce(phgw);
@@ -745,8 +759,7 @@ namespace U5kManServer
                 last.CopyFrom(current);
             }
         }
-
-        void ExploraGwStdGen(stdPhGw pgw)
+        void SnmpExploraGwStdGen(stdPhGw pgw)
         {
             IPEndPoint gwep = new IPEndPoint(IPAddress.Parse(pgw.ip), pgw.snmpport);
             OctetString community = new OctetString("public");
@@ -759,29 +772,27 @@ namespace U5kManServer
                 new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.1.4.0")),   // Estado FA,
                 new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.1.1.0")),   // Identificador. Habilita el envio de TRAPS
             };
-            SnmpClient snmpc = new SnmpClient();
-
-            IList<Variable> vOut = snmpc.Get(VersionCode.V2, gwep, community, vIn, pgw.SnmpTimeout, pgw.SnmpReintentos);
+            IList<Variable> vOut = SnmpS.GetData(pgw, vIn).Result;
             // estadoGeneral. 0: No Inicializado, 1: Ok, 2: Fallo, 3: Aviso.
-            int stdGeneral = snmpc.Integer(vOut[0].Data);
+            int stdGeneral = SnmpS.ToInt(vOut[0].Data);
             // stdLAN1. 0: No Presente, 1: Ok, 2: Error.
-            int stdLan1 = snmpc.Integer(vOut[1].Data);
+            int stdLan1 = SnmpS.ToInt(vOut[1].Data);
             // stdLAN2. 0: No Presente, 1: Ok, 2: Error.
-            int stdLan2 = snmpc.Integer(vOut[2].Data);
+            int stdLan2 = SnmpS.ToInt(vOut[2].Data);
             // stdCpuLocal. 0: No Presente. 1: Principal, 2: Reserva, 3: Arrancando
-            int stdPR = snmpc.Integer(vOut[3].Data);
+            int stdPR = SnmpS.ToInt(vOut[3].Data);
             // stdFA. 0: No Presente. 1: Ok, 2: Error
-            int stdFA = snmpc.Integer(vOut[4].Data);
+            int stdFA = SnmpS.ToInt(vOut[4].Data);
             pgw.std = stdGeneral == 0 ? std.NoInfo : stdGeneral == 1 ? std.Ok : std.Error;
 
             int stdLan = (stdLan1 == 1 ? 0x01 : 0x00) | (stdLan2 == 1 ? 0x02 : 0x00);
-            PhGwLanStatusSet(pgw, (0x04 | stdLan));                 // En este tipo de Pasarelas BOND configurado...
 
+            PhGwLanStatusSet(pgw, (0x04 | stdLan));                 // En este tipo de Pasarelas BOND configurado...
             PhGwPrincipalReservaSet(pgw, stdPR == 1 ? 1 : 0);       // Solo se marca PPAL si está en PPAL en cualquier otro caso se marca RSVA
 
             pgw.stdFA = stdFA == 0 ? std.NoInfo : stdFA == 1 ? std.Ok : stdFA == 2 ? std.Error : std.NoExiste;
         }
-        void ExploraSlot(object obj)
+        void SnmpExploraSlot(object obj)
         {
             KeyValuePair<stdPhGw, int> objIn = (KeyValuePair<stdPhGw, int>)obj;
             stdPhGw gw = objIn.Key;
@@ -801,18 +812,17 @@ namespace U5kManServer
                     new Variable(new ObjectIdentifier(oidbase+"6."+(nslot+1).ToString())),   // Canal-2
                     new Variable(new ObjectIdentifier(oidbase+"7."+(nslot+1).ToString()))    // Canal-3
                 };
-                SnmpClient snmpc = new SnmpClient();
 
-                IList<Variable> vOut = snmpc.Get(VersionCode.V2, gwep, community, vIn, gw.SnmpTimeout, gw.SnmpReintentos);
-                int stipo = snmpc.Integer(vOut[0].Data);                            // 0: Error, 1: IA4, 2: IQ1
-                int status = snmpc.Integer(vOut[1].Data);                           // 0: No presente, 1: Presente
+                IList<Variable> vOut = SnmpS.GetData(gw, vIn).Result;
+                int stipo = SnmpS.ToInt(vOut[0].Data);                            // 0: Error, 1: IA4, 2: IQ1
+                int status = SnmpS.ToInt(vOut[1].Data);                           // 0: No presente, 1: Presente
 
                 stipo = status == 0 ? 0 : (stipo == 1 ? 2 : 0);
 
-                int can0 = snmpc.Integer(vOut[2].Data);                             // 0: Desconectada. 1: Conectada
-                int can1 = snmpc.Integer(vOut[3].Data);                             // 0: Desconectada. 1: Conectada
-                int can2 = snmpc.Integer(vOut[4].Data);                             // 0: Desconectada. 1: Conectada
-                int can3 = snmpc.Integer(vOut[5].Data);                             // 0: Desconectada. 1: Conectada
+                int can0 = SnmpS.ToInt(vOut[2].Data);                             // 0: Desconectada. 1: Conectada
+                int can1 = SnmpS.ToInt(vOut[3].Data);                             // 0: Desconectada. 1: Conectada
+                int can2 = SnmpS.ToInt(vOut[4].Data);                             // 0: Desconectada. 1: Conectada
+                int can3 = SnmpS.ToInt(vOut[5].Data);                             // 0: Desconectada. 1: Conectada
 
                 int std = (can0 << 1) | (can1 << 2) | (can2 << 3) | (can3 << 4);
 
@@ -823,7 +833,7 @@ namespace U5kManServer
                 {
                     if (slot.rec[rec].presente == true)
                     {
-                        ExploraRecurso(new KeyValuePair<stdPhGw, int>(gw, nslot * 4 + rec));
+                        SnmpExploraRecurso(new KeyValuePair<stdPhGw, int>(gw, nslot * 4 + rec));
                     }
                     else
                     {
@@ -838,7 +848,7 @@ namespace U5kManServer
                     obj == null ? "null" : ((KeyValuePair<stdPhGw, int>)obj).Value.ToString()), x);
             }
         }
-        void ExploraRecurso(object obj)
+        void SnmpExploraRecurso(object obj)
         {
             KeyValuePair<stdPhGw, int> objIn = (KeyValuePair<stdPhGw, int>)obj;
             stdPhGw gw = objIn.Key;
@@ -852,26 +862,8 @@ namespace U5kManServer
             if (gw.name == "" && nslot == 0 && ires == 1)
                 LogTrace<GwExplorer>(String.Format("Presencia (1) Slot 0, Recurso 1: {0}", gw.slots[0].rec[1].presente));
 
-#if DEBUG
-            if (DebuggingHelper.Simulating)
+            try
             {
-                DebuggingHelper.SimulatedGw.SnmpRecursoGet(gw.ParentName, gw.name, nslot, ires,
-                    (tipo, status) =>
-                    {
-                        if ((tipo >= 0 && tipo < 9) || tipo == 13)
-                        {
-                            int AgentType = NotifiedAgentType(tipo);
-                            SlotRecursoTipoAgenteSet(gw, rec, AgentType);
-                            SlotRecursoTipoInterfazSet(gw, rec, tipo);
-                            SlotRecursoEstadoSet(gw, rec, status, (trc)AgentType);
-
-                        }
-                    });
-            }
-            else
-#endif
-                try
-                {
                 string oidbase = ".1.3.6.1.4.1.7916.8.3.1.4.2.1.";
                 List<Variable> vIn = new List<Variable>()
                 {
@@ -879,11 +871,10 @@ namespace U5kManServer
                     new Variable(new ObjectIdentifier(oidbase+"6."+(nres+1).ToString())),   // Status Hardware,
                     new Variable(new ObjectIdentifier(oidbase+"15."+(nres+1).ToString())),  // Status Interfaz.
                 };
-                SnmpClient snmpc = new SnmpClient();
 
-                IList<Variable> vOut = snmpc.Get(VersionCode.V2, gwep, community, vIn, gw.SnmpTimeout, gw.SnmpReintentos);
+                IList<Variable> vOut = SnmpS.GetData(gw, vIn).Result;
 
-                int ntipo = snmpc.Integer(vOut[0].Data);   // 0: RD, 1: LC, 2: BC, 3: BL, 4: AB, 5: R2, 6: N5, 7: QS, 9: NP, 13: PPEM 
+                int ntipo = SnmpS.ToInt(vOut[0].Data);   // 0: RD, 1: LC, 2: BC, 3: BL, 4: AB, 5: R2, 6: N5, 7: QS, 9: NP, 13: PPEM 
                 if (ntipo == 9)
                 {
                     // 20170630. El código 9 no es no presente sino NO CONFIGURADO
@@ -912,7 +903,7 @@ namespace U5kManServer
                      * */
                     SlotRecursoTipoInterfazSet(gw, rec, ntipo);
 
-                    int estado = snmpc.Integer(vOut[2].Data);   // 0: NP, 1: OK, 2: Fallo, 3: Degradado
+                    int estado = SnmpS.ToInt(vOut[2].Data);   // 0: NP, 1: OK, 2: Fallo, 3: Degradado
                     SlotRecursoEstadoSet(gw, rec, estado, (trc)AgentType);
                 }
                 else if (ntipo != 9 && ntipo != -1)
@@ -924,6 +915,87 @@ namespace U5kManServer
             catch (Exception x)
             {
                 LogException<GwExplorer>(String.Format(" Explorando recurso en {0}: Rec:{1}-{2}", gw.ip, nres, rec.name), x);
+            }
+        }
+        void SnmpTrapReceived(object from, TrapBus.TrapEventArgs args)
+        {
+            LogTrace<GwExplorer>($"Trap Received => {args}");
+            if (DataS.IsMaster == true)
+            {
+                GlobalServices.GetWriteAccess(() =>
+                {
+                    // Busco si es una Pasarela.
+                    var ipfrom = args.From?.Address.ToString();
+                    var gw = DataS.Data.STDGWS
+                        .Where(g => g.ip == ipfrom || g.gwA.ip == ipfrom || g.gwB.ip == ipfrom)
+                        .FirstOrDefault();
+                    if (gw != null)
+                    {
+                        LogInfo<GwExplorer>($"GW Trap Received => {args}");
+                        var pgw = gw.gwA.ip == ipfrom ? gw.gwA : gw.gwB;
+                        ProcessTrap(gw, pgw, args.TrapOid, args.VarOid, args.VarData);
+                    }
+                });
+            }
+        }
+        void ProcessTrap(stdGw gw, stdPhGw pgw, string oidEnt, string oidvar, ISnmpData data)
+        {
+            switch (oidEnt)
+            {
+                case ".1.3.6.1.4.1.7916.8.3.2.1.1":         // Cambio de Configuracion.
+                    break;
+
+                case ".1.3.6.1.4.1.7916.8.3.2.1.2":         // Cambio de Estado.
+                    break;
+
+                case ".1.3.6.1.4.1.7916.8.3.2.1.3":         // Se genera cuando cambia un parametro del grupo tarjeta
+                    break;
+
+                case ".1.3.6.1.4.1.7916.8.3.2.1.4":         // Se genera cuando cambia parametro del grupo interfaz
+                    break;
+
+                case ".1.3.6.1.4.1.7916.8.3.2.1.5":         // Evento de Historicos.
+                    if (oidvar == ".1.3.6.1.4.1.7916.8.3.2.1.7.0")
+                    {
+                        LogTrace<GwExplorer>(String.Format("GWU-HISTORICO: <<<{0}>>>", data.ToString()));
+
+                        using (var hist = new Redan2UlisesHist(data.ToString()))
+                        {
+                            hist.UlisesInci((ok, date, inci, parametros) =>
+                            {
+                                if (ok)
+                                {
+                                    var settings = Properties.u5kManServer.Default;
+                                    var workingDate = settings.GwsDatesAreUtc ? date.ToLocalTime() : date;
+                                    var deviation = DateTime.Now - workingDate;
+
+                                    if (deviation < TimeSpan.FromSeconds(-settings.GwsHistMaxSecondsInAdvance) ||
+                                        deviation > TimeSpan.FromHours(settings.GwsHistMaxHoursDelayed))
+                                    {
+                                        var msg = $" Historico fuera de sincronismo: GW => [{pgw.name},{pgw.ip}], " +
+                                            $"GW UTC date => {date}, Local date => {DateTime.Now}, " +
+                                            $"Inci => {inci}";
+                                        LogWarn<GwExplorer>(msg);
+                                        RecordEvent<GwExplorer>(DateTime.Now,
+                                            eIncidencias.IGRL_U5KI_SERVICE_ERROR,
+                                            eTiposInci.TEH_SISTEMA, "SPV",
+                                            new Object[] { "Supervision Pasarelas", msg });
+                                    }
+                                    else
+                                    {
+                                        RecordEvent<GwExplorer>(workingDate, (eIncidencias)inci.id, (eTiposInci)inci.tipo, inci.idhw, parametros.ToArray());
+                                    }
+                                }
+                                else
+                                    LogWarn<GwExplorer>(String.Format("GWU-HISTORICO NO CONVERTIDO: <<<{0}>>>", data.ToString()));
+                            });
+                        }
+                    }
+                    break;
+
+                default:
+                    LogWarn<GwExplorer>(String.Format("Recibido TRAP-GW OID-Desconocida de {0}, OID={1}", gw?.ip, oidEnt));
+                    break;
             }
         }
 #if _EXPLORE_ALL_AT_ONCE_
@@ -1130,66 +1202,6 @@ namespace U5kManServer
                 output = input;
 
             return output;
-        }
-        static public void RecibidoTrapGw_unificada(stdGw gw, stdPhGw pgw, string oidEnt, string oidvar, ISnmpData data)
-        {
-            switch (oidEnt)
-            {
-                case ".1.3.6.1.4.1.7916.8.3.2.1.1":         // Cambio de Configuracion.
-                    break;
-
-                case ".1.3.6.1.4.1.7916.8.3.2.1.2":         // Cambio de Estado.
-                    break;
-
-                case ".1.3.6.1.4.1.7916.8.3.2.1.3":         // Se genera cuando cambia un parametro del grupo tarjeta
-                    break;
-
-                case ".1.3.6.1.4.1.7916.8.3.2.1.4":         // Se genera cuando cambia parametro del grupo interfaz
-                    break;
-
-                case ".1.3.6.1.4.1.7916.8.3.2.1.5":         // Evento de Historicos.
-                    if (oidvar == ".1.3.6.1.4.1.7916.8.3.2.1.7.0")
-                    {
-                        LogTrace<GwExplorer>(String.Format("GWU-HISTORICO: <<<{0}>>>", data.ToString()));
-
-                        using(var hist= new Redan2UlisesHist(data.ToString()))
-                        {
-                            hist.UlisesInci((ok, date, inci, parametros) =>
-                            {
-                                if (ok)
-                                {
-                                    var settings = Properties.u5kManServer.Default;
-                                    var workingDate = settings.GwsDatesAreUtc ? date.ToLocalTime() : date;
-                                    var deviation = DateTime.Now - workingDate;
-
-                                    if (deviation < TimeSpan.FromSeconds(-settings.GwsHistMaxSecondsInAdvance) || 
-                                        deviation > TimeSpan.FromHours(settings.GwsHistMaxHoursDelayed))
-                                    {
-                                        var msg = $" Historico fuera de sincronismo: GW => [{pgw.name},{pgw.ip}], " +
-                                            $"GW UTC date => {date}, Local date => {DateTime.Now}, " +
-                                            $"Inci => {inci}";
-                                        LogWarn<GwExplorer>(msg);
-                                        RecordEvent<GwExplorer>(DateTime.Now, 
-                                            eIncidencias.IGRL_U5KI_SERVICE_ERROR,
-                                            eTiposInci.TEH_SISTEMA, "SPV",
-                                            new Object[] { "Supervision Pasarelas", msg });
-                                    }
-                                    else
-                                    {
-                                        RecordEvent<GwExplorer>(workingDate, (eIncidencias)inci.id, (eTiposInci)inci.tipo, inci.idhw, parametros.ToArray());
-                                    }
-                                }
-                                else
-                                    LogWarn<GwExplorer>(String.Format("GWU-HISTORICO NO CONVERTIDO: <<<{0}>>>", data.ToString()));
-                            });
-                        }
-                    }
-                    break;
-
-                default:
-                    LogWarn<GwExplorer>(String.Format("Recibido TRAP-GW OID-Desconocida de {0}, OID={1}", gw?.ip, oidEnt));
-                    break;
-            }
         }
 
         void PushEvent(stdPhGw cpu, eIncidencias inci, eTiposInci thw, string idhw, object[] parametros,

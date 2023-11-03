@@ -392,7 +392,7 @@ namespace U5kManServer
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public int Integer(ISnmpData data)
+        public static int Integer(ISnmpData data)
         {
             return (data is Integer32) ? ((Integer32)data).ToInt32() : -1;
         }
