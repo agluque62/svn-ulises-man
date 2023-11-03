@@ -118,7 +118,7 @@ namespace U5kManServer
                 HistThread.hproc = new HistThread();
                 _snmpagent = new U5kSnmpSystemAgent();
 
-                _gwExplorer = new GwExplorer(CambiaEstado);
+                _gwExplorer = new GwExplorer();
 
                 _topExplorer = new TopSnmpExplorer();
 

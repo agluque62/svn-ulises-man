@@ -1,5 +1,4 @@
-﻿// #define _EXPLORE_THREADS_
-using System;
+﻿using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,20 +12,13 @@ using System.Net.Http;
 using System.Runtime.CompilerServices;
 
 using Lextm.SharpSnmpLib;
-//using Lextm.SharpSnmpLib.Messaging;
-//using Lextm.SharpSnmpLib.Objects;
-//using Lextm.SharpSnmpLib.Pipeline;
 
-using NucleoGeneric;
 using U5kBaseDatos;
 using U5kManServer.WebAppServer;
-
 using Utilities;
+
 namespace U5kManServer
 {
-    /// <summary>
-    /// 
-    /// </summary>
     enum eGwPar
     {
         None = 0,
@@ -40,7 +32,6 @@ namespace U5kManServer
         ATSPhoneResourceType, ATSPhoneResourceStatus,
         Lan2Status
     };
-
     class GwHelper
     {
         public static string SlotStd2String(Int32 nslot, Int32 tipo, Int32 slotstd)
@@ -60,16 +51,8 @@ namespace U5kManServer
             phgw.version = string.Empty;
         }
     }
-    /// <summary>
-    /// 
-    /// </summary>
     class GwExplorer : NucleoGeneric.NGThread
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
         static string OidGet(string id, string _default)
         {
             foreach (string s in Properties.u5kManServer.Default.GwOids)
@@ -81,9 +64,6 @@ namespace U5kManServer
 
             return _default;
         }
-        /// <summary>
-        /// 
-        /// </summary>
         static public Dictionary<eGwPar, string> _GwOids = new Dictionary<eGwPar, string>()
         {
             // General de la Pasarela.
@@ -115,10 +95,6 @@ namespace U5kManServer
             {eGwPar.ATSPhoneResourceStatus,OidGet("EstadoRecursoATS",".1.1.500.2.0")},
 
         };
-
-        /// <summary>
-        /// Polling a la Pasarela.
-        /// </summary>
         List<Variable> _GwVarList = new List<Variable>()
         {
             new Variable(new ObjectIdentifier(_GwOids[eGwPar.GwStatus])),
@@ -134,17 +110,11 @@ namespace U5kManServer
             new Variable(new ObjectIdentifier(_GwOids[eGwPar.Slot3Status]))
         };
 
-        /// <summary>
-        /// Tipos Notificados...
-        /// </summary>
         const int RadioResource_AgentType = 2;
         const int IntercommResource_AgentType = 3;
         const int LegacyPhoneResource_AgentType = 4;
         const int ATSPhoneResource_AgentType = 5;
 
-        /// <summary>
-        /// Oid de los Tipos Reales segun los tipos notificados.
-        /// </summary>
         Dictionary<int, string> _TypesOids = new Dictionary<int, string>()
         {
             { RadioResource_AgentType, _GwOids[eGwPar.RadioResourceType] },
@@ -152,10 +122,6 @@ namespace U5kManServer
             { LegacyPhoneResource_AgentType, _GwOids[eGwPar.LegacyPhoneResourceType]},
             { ATSPhoneResource_AgentType, _GwOids[eGwPar.ATSPhoneResourceType] },
         };
-
-        /// <summary>
-        /// Oid de los Estados segun los tipos notificados.
-        /// </summary>
         Dictionary<int, string> _StatusOids = new Dictionary<int, string>()
         {
             { RadioResource_AgentType, _GwOids[eGwPar.RadioResourceStatus] },
@@ -163,10 +129,6 @@ namespace U5kManServer
             { LegacyPhoneResource_AgentType, _GwOids[eGwPar.LegacyPhoneResourceStatus] },
             { ATSPhoneResource_AgentType, _GwOids[eGwPar.ATSPhoneResourceStatus] },
         };
-
-        /// <summary>
-        /// Incidencias de Activacion Asociadas a los tipos de Recurso notificados.
-        /// </summary>
         protected Dictionary<trc, eIncidencias> ResourceActivationEventsCodes = new Dictionary<trc, eIncidencias>()
         {
             {trc.rcRadio, eIncidencias.IGW_CONEXION_RECURSO_RADIO},
@@ -175,10 +137,6 @@ namespace U5kManServer
             {trc.rcATS, eIncidencias.IGW_CONEXION_RECURSO_R2},
             {trc.rcNotipo, eIncidencias.IGNORE}
         };
-
-        /// <summary>
-        /// Incidencias de Desactivacion Asociadas a los tipos de Recurso notificados...
-        /// </summary>
         protected Dictionary<trc, eIncidencias> ResourceDeactivationEventsCodes = new Dictionary<trc, eIncidencias>()
         {
             {trc.rcRadio, eIncidencias.IGW_DESCONEXION_RECURSO_RADIO},
@@ -188,28 +146,14 @@ namespace U5kManServer
             {trc.rcNotipo, eIncidencias.IGNORE}
         };
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public event ChangeStatusDelegate ChangeStatus;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pdata"></param>
-        public GwExplorer(ChangeStatusDelegate ChangeStatusRoutine)
+        public GwExplorer(/*ChangeStatusDelegate ChangeStatusRoutine*/)
         {
             Name = "GwSnmpExplorer";
-            ChangeStatus = ChangeStatusRoutine;
         }
-        /// <summary>
-        /// 
-        /// </summary>
         protected override void Run()
         {
             U5kGenericos.TraceCurrentThread(this.GetType().Name);
 
-            //U5kGenericos.SetCurrentCulture();
             LogInfo<GwExplorer>("Arrancado...");
 
             Decimal interval = Properties.u5kManServer.Default.SpvInterval;     // Tiempo de Polling,
@@ -224,62 +168,6 @@ namespace U5kManServer
                 {
                     if (U5kManService._Master == true)
                     {
-#if POOL_METHOD_0
-                        List<stdGw> localgws = null;        // new List<stdGw>();
-                        try
-                        {
-                            Utilities.TimeMeasurement tm = new Utilities.TimeMeasurement("GW Explorer");
-
-                            // Relleno los datos...
-                            GlobalServices.GetWriteAccess((gdata) => localgws = gdata.STDGWS.Select(gw => new stdGw(gw)).ToList());
-
-                            // Arranco los procesos de exploracion...
-                            List<Task> task = new List<Task>();
-                            localgws?.ForEach((gw) =>
-                            {
-                                task.Add(
-                                    BackgroundTaskFactory.StartNew(gw.name, () =>
-                                    {
-                                        U5kGenericos.TraceCurrentThread(this.GetType().Name + " " + gw.name);
-                                        ExploraGw(gw);
-                                    },
-                                    (id, excep) =>
-                                    {
-                                        LogException<GwExplorer>("Supervisando Pasarela " + gw.name, excep);
-                                    }, TimeSpan.FromMilliseconds((double)threadTimeout))
-                                    );
-                            });
-
-                            // Espero que acaben todos los procesos.
-                            Task.WaitAll(task.ToArray(), TimeSpan.FromMilliseconds((double)poolTimeout));
-                            tm.StopAndPrint((msg) => LogTrace<GwExplorer>(msg));
-                        }
-                        catch (Exception x)
-                        {
-                            if (x is ThreadAbortException)
-                            {
-                                Thread.ResetAbort();
-                                break;
-                            }
-                            else if (x is AggregateException)
-                            {
-                                foreach (var excep in (x as AggregateException).InnerExceptions)
-                                {
-                                    LogTrace<GwExplorer>($"Excepcion {excep.Message}");
-                                }
-                            }
-                            else
-                            {
-                                LogException<GwExplorer>("Supervisando Pasarelas ", x);
-                            }
-                        }
-
-                        /// Copio los datos obtenidos a la tabla...
-                        if (localgws != null)
-                        {
-                            GlobalServices.GetWriteAccess((gdata) => gdata.GWSDIC = localgws.Select(gw => gw).ToDictionary(gw => gw.name, gw => gw));
-                        }
-#else
                         GlobalServices.GetWriteAccess((gdata) =>
                         {
                             // limpiar pollingControl con las Pasarelas que puedan desaparecer de la configuracion.
@@ -297,10 +185,6 @@ namespace U5kManServer
                                         {
                                             LogTrace<GwExplorer>($"Exploracion {newGw.name} iniciada.");
                                             ExploraGw(newGw);
-#if DEBUG1
-                                            // Para asegurar un tiempo de ejecucion.
-                                            Task.Delay(TimeSpan.FromMilliseconds(500)).Wait();
-#endif
                                             /// Copio los datos obtenidos a la tabla...
                                             GlobalServices.GetWriteAccess((gdata1) =>
                                             {
@@ -340,34 +224,6 @@ namespace U5kManServer
                                 }
                             });
                         });
-#if DEBUG1
-                        /** Para simular Sectorizaciones con cambios 'problematicos' */
-                        tm.FromCreation(TimeSpan.FromMinutes(1), () =>
-                        {
-                            GlobalServices.GetWriteAccess((gdata) =>
-                            {
-                                //gdata.GWSDIC.Remove("CGW3");
-                                gdata.GWSDIC["CGW1"] = new stdGw(null)
-                                {
-                                    name = "CGW1",
-                                    ip = "192.168.0.51",
-                                    Dual = true,
-                                    gwA = new stdPhGw()
-                                    {
-                                        name = "CGW01-A",
-                                        ip = "192.168.0.50"
-                                    },
-                                    gwB = new stdPhGw()
-                                    {
-                                        name = "CGW01-B",
-                                        ip = "192.168.0.59"
-                                    }
-                                };
-                            });
-                        });
-#endif
-
-#endif
                     }
                     GoToSleepInTimer();
                 }
@@ -375,14 +231,9 @@ namespace U5kManServer
             Dispose();
             LogInfo<GwExplorer>("Finalizado...");
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="nslot"></param>
-        /// <param name="slot"></param>
-        /// <param name="tipo"></param>
-        public void SlotTypeSet(/*stdGw gw, */stdPhGw pgw, int nslot, stdSlot slot, int tipo, int estado)
+
+
+        void SlotTypeSet(/*stdGw gw, */stdPhGw pgw, int nslot, stdSlot slot, int tipo, int estado)
         {
             std current = tipo == 2 ? std.Ok : std.NoInfo;
             estado = tipo == 2 ? (estado | 0x01) : (estado & 0xFFFE);
@@ -408,14 +259,7 @@ namespace U5kManServer
                 slot.std_online = current;
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="name"></param>
-        /// <param name="nslot"></param>
-        /// <param name="slot"></param>
-        /// <param name="estado"></param>
-        public void SlotStateSet(/*stdGw gw, */stdPhGw pgw, int nslot, stdSlot slot, int estado)
+        void SlotStateSet(/*stdGw gw, */stdPhGw pgw, int nslot, stdSlot slot, int estado)
         {
             /** El primer bit es el estado de la tarjeta */
             estado = (estado >> 1);
@@ -449,75 +293,15 @@ namespace U5kManServer
                 rec.std_online = (presente == false ? std.NoInfo : rec.std_online);
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="ip"></param>
-        /// <param name="slot"></param>
-        protected void SlotRecsAct(/*stdGw gw, */stdPhGw pgw, string ip, stdSlot slot)
-        {
-            if (slot.std_online != std.Ok)
-                return;
-
-            SnmpClient snmpc = new SnmpClient();
-            for (int rec = 0; rec < 4; rec++)
-            {
-                //if (slot.rec[rec].bdt == false || slot.rec[rec].presente == false)
-                //    continue;
-                if (/*slot.rec[rec].bdt == false || */slot.rec[rec].presente == false)
-                    continue;
-
-                int tipo = -1;
-
-                // Tipo Notificado de Recurso.
-                if (!snmpc.GetInt(ip, slot.rec[rec].snmp_port, "public", _GwOids[eGwPar.ResourceType], 1000, out tipo))
-                    continue;
-
-                if (!TestTipoNotificado(tipo))
-                    continue;
-
-                SlotRecursoTipoAgenteSet(/*gw, */pgw, slot.rec[rec], tipo);
-
-                // Tipo de Interfaz
-                /**
-                int titf = (int)itf.rcNotipo;
-                SnmpClient.GetInt(ip, slot.rec[rec].snmp_port, "public", OidsTipos[tipo], 1000, out titf);
-                SlotRecursoTipoInterfazSet(gw, pgw, slot.rec[rec], titf);
-                */
-
-                // Estado  de Recurso.
-                int estado = (int)std.NoInfo;
-                if (!snmpc.GetInt(ip, slot.rec[rec].snmp_port, "public", _StatusOids[tipo], 1000, out estado))
-                    continue;
-
-                SlotRecursoEstadoSet(/*gw, */pgw, slot.rec[rec], estado, (trc)tipo);
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="gwname"></param>
-        /// <param name="rec"></param>
-        /// <param name="tipo"></param>
-        public void SlotRecursoTipoAgenteSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int tipo)
+        void SlotRecursoTipoAgenteSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int tipo)
         {
             rec.tipo_online = (trc)tipo;              // Todo. Generar Incidencia si procede. Esta Incidencia no Existe.
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="gwname"></param>
-        public void SlotRecursoTipoInterfazSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int tipo)
+        void SlotRecursoTipoInterfazSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int tipo)
         {
             rec.tipo_itf = (itf)tipo;               // Todo. Generar Incidencia si procede. Esta Incidencia no Existe.
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="gwname"></param>
-        /// <param name="rec"></param>
-        /// <param name="estado">0: NP, 1: OK, 2: Fallo, 3: Degradado.</param>
-        public void SlotRecursoEstadoSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int estado, trc tipo)
+        void SlotRecursoEstadoSet(/*stdGw gw, */stdPhGw pgw, stdRec rec, int estado, trc tipo)
         {
             if (rec.presente)
             {
@@ -528,8 +312,6 @@ namespace U5kManServer
                     if (rec.std_online != current)
                     {
                         rec.std_online = current;
-                        //RecordEvent<GwExplorer>(DateTime.Now, estado != 0 ? ResourceActivationEventsCodes[tipo] : ResourceDeactivationEventsCodes[tipo],
-                        //                          eTiposInci.TEH_TIFX, pgw.name, Params(rec.name));
                         PushEvent(pgw, estado != 0 ? ResourceActivationEventsCodes[tipo] : ResourceDeactivationEventsCodes[tipo],
                               eTiposInci.TEH_TIFX, pgw.name, Params(rec.name));
                     }
@@ -544,10 +326,6 @@ namespace U5kManServer
                             eTiposInci.TEH_TIFX, pgw.name, Params(rec.name));
                         rec.std_online = newstd;
                     }
-                    //rec.std_online = ChangeStatus(rec.std_online,
-                    //                              estado == 1 ? std.Ok : std.Error, 0,
-                    //                              estado == 1 ? ResourceActivationEventsCodes[tipo] : ResourceDeactivationEventsCodes[tipo],
-                    //                              eTiposInci.TEH_TIFX, pgw.name, rec.name);
                 }
             }
             else
@@ -555,11 +333,47 @@ namespace U5kManServer
                 rec.std_online = std.NoInfo;
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="tipo"></param>
-        /// <returns></returns>
+        void PhGwPrincipalReservaSet(/*stdGw gw, */stdPhGw pgw, int estado)
+        {
+            var newSel = estado == 1;
+            if (pgw.Seleccionada != newSel)
+            {
+                PushEvent(pgw, eIncidencias.IGW_PRINCIPAL_RESERVA, eTiposInci.TEH_TIFX, pgw.name,
+                    Params(pgw.name, estado == 0 ? idiomas.strings.GWS_Reserva : idiomas.strings.GWS_Principal));
+                pgw.Seleccionada = newSel;
+            }
+        }
+        void PhGwLanStatusSet(/*stdGw gw, */stdPhGw pgw, int status)
+        {
+            var oldlan1 = pgw.lan1;
+            var oldlan2 = pgw.lan2;
+
+            int bond = (status & 0x4) >> 2;
+            int eth1 = (status & 0x2) >> 1;
+            int eth0 = (status & 0x1);
+
+            pgw.lan1 = eth0 == 1 ? std.Ok : std.Error;
+            pgw.lan2 = bond == 0 ? std.NoInfo : eth1 == 1 ? std.Ok : std.Error;
+
+            /** 20220224. Historicos de Activacion / Desactivacion LAN */
+            if (oldlan1 != pgw.lan1)
+            {
+                PushEvent(pgw,
+                    pgw.lan1 == std.Error ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA,
+                    eTiposInci.TEH_TIFX,
+                    pgw.name,
+                    Params("Lan1"));
+            }
+            if (oldlan2 != pgw.lan2)
+            {
+                PushEvent(pgw,
+                    pgw.lan2 == std.Error ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA,
+                    eTiposInci.TEH_TIFX,
+                    pgw.name,
+                    Params("Lan2"));
+            }
+        }
+
         bool TestTipoNotificado(int tipo)
         {
             return tipo ==
@@ -585,11 +399,7 @@ namespace U5kManServer
             if (found != null)
                 respond(found.Item3);
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="gw"></param>
-        public void GwActualizaEstado(stdGw gw)
+        void GwActualizaEstado(stdGw gw)
         {
             std std_old = gw.std;
 
@@ -623,97 +433,9 @@ namespace U5kManServer
                 }
             });
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="gwp"></param>
-        /// <param name="pgw"></param>
-        /// <param name="estado"></param>
-        public void PhGwCambioEstado(/*stdGw gw, */stdPhGw pgw, int estado)
-        {
-            /* Actualizo el estado de la pasarela fisica **/
-            bool nuevo_estado = estado == 1 ? true : false;
-            if (nuevo_estado != pgw.presente)
-            {
-                pgw.presente = nuevo_estado;
-                std std_new = pgw.presente == false ? std.NoInfo : pgw.Errores == true ? std.Error : std.Ok;
-                eIncidencias inci = std_new == std.NoInfo ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
 
-                //pgw.std = ChangeStatus(pgw.std, std_new, 0, inci, eTiposInci.TEH_TIFX, pgw.name);
-                if (std_new != pgw.std)
-                {
-                    pgw.std = std_new;
-                    PushEvent(pgw, inci, eTiposInci.TEH_TIFX, pgw.name, Params(""));
-                }
 
-                if (pgw.presente == false)
-                {
-                    /** Reset Estado GW fisica */
-                    pgw.Reset();
-                }
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pgw"></param>
-        /// <param name="estado"></param>
-        public void PhGwPrincipalReservaSet(/*stdGw gw, */stdPhGw pgw, int estado)
-        {
-            //pgw.Seleccionada = ChangeStatus(pgw.Seleccionada == true ? std.Ok : std.NoInfo,
-            //    estado == 0 ? std.NoInfo : std.Ok, 0, eIncidencias.IGW_PRINCIPAL_RESERVA, eTiposInci.TEH_TIFX, pgw.name,
-            //    pgw.name,
-            //    estado == 0 ? idiomas.strings.GWS_Reserva : idiomas.strings.GWS_Principal/* "Reserva" : "Principal"*/) == std.Ok ? true : false;
-            var newSel = estado == 1;
-            if (pgw.Seleccionada != newSel)
-            {
-                PushEvent(pgw, eIncidencias.IGW_PRINCIPAL_RESERVA, eTiposInci.TEH_TIFX, pgw.name,
-                    Params(pgw.name, estado == 0 ? idiomas.strings.GWS_Reserva : idiomas.strings.GWS_Principal));
-                pgw.Seleccionada = newSel;
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pwg"></param>
-        /// <param name="status"></param>
-        public void PhGwLanStatusSet(/*stdGw gw, */stdPhGw pgw, int status)
-        {
-            var oldlan1 = pgw.lan1;
-            var oldlan2 = pgw.lan2;
-
-            int bond = (status & 0x4) >> 2;
-            int eth1 = (status & 0x2) >> 1;
-            int eth0 = (status & 0x1);
-
-            pgw.lan1 = eth0 == 1 ? std.Ok : std.Error;
-            pgw.lan2 = bond == 0 ? std.NoInfo : eth1 == 1 ? std.Ok : std.Error;
-
-            /** 20220224. Historicos de Activacion / Desactivacion LAN */
-            if (oldlan1 != pgw.lan1){
-                PushEvent(pgw,
-                    pgw.lan1 == std.Error ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA,
-                    eTiposInci.TEH_TIFX,
-                    pgw.name,
-                    Params("Lan1"));
-            }
-            if (oldlan2 != pgw.lan2)
-            {
-                PushEvent(pgw,
-                    pgw.lan2 == std.Error ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA,
-                    eTiposInci.TEH_TIFX,
-                    pgw.name,
-                    Params("Lan2"));
-            }
-        }
-
-        #region Threads de Exploracion en Paralelo.
-
-        /// <summary>
-        /// Explora una pasarela logica.
-        /// </summary>
-        /// <param name="obj"></param>
-        protected void ExploraGw(object obj)
+        void ExploraGw(object obj)
         {
             stdGw gw = (stdGw)obj;
 
@@ -744,15 +466,287 @@ namespace U5kManServer
             GwActualizaEstado(gw);
 
         }
+        void ExplorePhGw(object obj)
+        {
+            // Obtengo una copia del estado de la pasarela.
+            stdPhGw phgw = new stdPhGw((stdPhGw)obj);
+            phgw.events = new Queue<object>();
 
-#region Exploracion de GW Unificada
+            try
+            {
+                var resPing = U5kGenericos.Ping(phgw.ip, phgw.presente);
+                if (phgw.IpConn.ProcessResult(resPing))
+                {
+                    phgw.IpConn.Std = resPing ? std.Ok : std.NoInfo;
+                    LogTrace<GwExplorer>($"GwPing {(resPing ? "Ok  " : "Fail")} executed: {phgw.name}.");
+                    if (phgw.IpConn.Std == std.Ok)
+                    {
+                        // Supervision del Modulo SIP...
+                        SipModuleTest(phgw, (res, newStd) =>
+                        {
+                            if (phgw.SipMod.ProcessResult(res) == true)
+                            {
+                                phgw.SipMod.Std = newStd;
+                                LogTrace<GwExplorer>($"GwSip_ {(res ? "Ok  " : "Fail")} executed: {phgw.name}.");
+                            }
+                            else
+                            {
+                                LogWarn<GwExplorer>($"GwSip_ Fail ignored : {phgw.name}.");
+                            }
+                        });
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="ipgw"></param>
-        /// <param name="port"></param>
-        protected void ExploraGwStdGen_unificada(stdPhGw pgw)
+                        if (phgw.SipMod.Std == std.Ok)
+                        {
+                            // Supervision del Modulo de Configuracion...
+                            CfgModuleTest(phgw, (res, newStd, mensaje) =>
+                            {
+                                if (phgw.CfgMod.ProcessResult(res) == true)
+                                {
+                                    phgw.CfgMod.Std = newStd;
+                                    if (res)
+                                        LogTrace<GwExplorer>($"GwCfg_ Ok  executed: {phgw.name}.");
+                                    else
+                                    {
+                                        LogTrace<GwExplorer>($"GwCfg_ Fail EXECUTED: {phgw.name}\n   <{mensaje}>.");
+                                    }
+                                }
+                                else
+                                {
+                                    LogTrace<GwExplorer>($"GwCfg_ Fail IGNORED: {phgw.name}\n   <{mensaje}>.");
+                                }
+                            });
+
+                            // Supervision del Modulo SNMP....
+                            SnmpModuleExplore(phgw, (res) =>
+                            {
+                                if (phgw.SnmpMod.ProcessResult(res) == true)
+                                {
+                                    if (res == true)
+                                    {
+                                        phgw.SnmpMod.Std = std.Ok;
+                                    }
+                                    else
+                                    {
+                                        phgw.SnmpMod.Std = std.NoInfo;
+                                        phgw.SnmpDataReset();
+                                    }
+                                    LogTrace<GwExplorer>($"GwSnmp {(res ? "Ok  " : "Fail")} executed: {phgw.name}.");
+                                }
+                                else
+                                {
+                                    LogWarn<GwExplorer>($"GwSnmp Fail ignored : {phgw.name}.");
+                                }
+                            });
+                        }
+                        else
+                        {
+                            // No se ha Respondido al SIP...
+                        }
+                    }
+                    else
+                    {
+                        // No se ha respondido al PING...
+                    }
+                }
+                else
+                {
+                    LogWarn<GwExplorer>($"GwPing Fail ignored : {phgw.name}.");
+                }
+            }
+            catch (Exception x)
+            {
+                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when Exploring", x);
+                if (phgw.IpConn.ProcessResult(false) == true)
+                {
+                    phgw.IpConn.Std = std.NoInfo;
+                }
+            }
+            finally
+            {
+                ConsolidateData((stdPhGw)obj, phgw);
+                phgw.events.Clear();
+            }
+        }
+        void SipModuleTest(stdPhGw phgw, Action<bool, std> response)
+        {
+            try
+            {
+                int timeout = Properties.u5kManServer.Default.SipOptionsTimeout;
+                SipUA locale_ua = new SipUA() { user = "MTTO", ip = Properties.u5kManServer.Default.MiDireccionIP, port = 0 };
+                SipUA remote_ua = new SipUA() { user = phgw.name, ip = phgw.ip, port = 5060, radio = true };
+                SipSupervisor sips = new SipSupervisor(locale_ua, timeout);
+                if (sips.SipPing(remote_ua))
+                {
+                    if (remote_ua.last_response == null || remote_ua.last_response.Result == "Error")
+                    {
+                        response(false, std.NoInfo);
+                    }
+                    else
+                    {
+                        response(true, (remote_ua.last_response.Result == "200" || remote_ua.last_response.Result == "503") ? std.Ok : std.Error);
+                    }
+                }
+                else
+                {
+                    /** No Responde */
+                    response(false, std.NoInfo);
+                }
+            }
+            catch (Exception x)
+            {
+                // Error en los OPTIONS...
+                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when SipModuleTest", x);
+                response(false, std.NoInfo);
+            }
+        }
+        void CfgModuleTest(stdPhGw phgw, Action<bool, std, string> response)
+        {
+            std stdRes = std.NoInfo;
+            var mensaje = "";
+            try
+            {
+                string page = "http://" + phgw.ip + ":8080/test";
+                var timeout = TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout);
+                HttpHelper.GetSync(page, timeout, (success, message) =>
+                {
+                    if (success)
+                    {
+                        stdRes = message.Contains("Handler por Defecto") ? std.Ok : std.Error;
+                    }
+                    else
+                    {
+                        stdRes = std.NoInfo;
+                        mensaje = message;
+                    }
+                });
+
+
+                //var resp = HttpHelper.Get(page, timeout, null);
+                //stdRes = resp == null ? std.NoInfo : resp.Contains("Handler por Defecto") ? std.Ok : std.Error;
+
+                /** Obtiene la version unificada */
+                if (stdRes == std.Ok && (phgw.version == string.Empty || phgw.version == idiomas.strings.GWS_VersionError))
+                {
+                    try
+                    {
+                        var resp = HttpHelper.GetSync(phgw.ip, "8080", "/mant/lver", timeout);
+                        phgw.version = resp ?? idiomas.strings.GWS_VersionError;
+                    }
+                    catch (Exception x)
+                    {
+                        LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when getting version", x);
+                    }
+                }
+                /** Obtiene la información NTP */
+                if (stdRes == std.Ok)
+                {
+                    try
+                    {
+                        var result = HttpHelper.GetSync(phgw.ip, "8080", "/ntpstatus", timeout);
+                        var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
+                        status = NormalizeNtpStatusList(status);
+                        phgw.NtpInfo.Actualize(phgw.name, status);
+                        LogTrace<GwExplorer>($"{phgw.name}, NtpInfo OUT     => <<{phgw.NtpInfo}>>");
+                    }
+                    catch (Exception x)
+                    {
+                        LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when getting ntp info", x);
+                    }
+                }
+            }
+            catch (Exception x)
+            {
+                // Error en Modulo de Configuracion Local...
+                stdRes = std.NoInfo;
+                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when CfgModuleTest", x);
+            }
+            finally
+            {
+                //GetVersion_unificada(phgw);
+            }
+            response(stdRes != std.NoInfo, stdRes, mensaje);
+        }
+        void SnmpModuleExplore(stdPhGw phgw, Action<bool> response)
+        {
+            try
+            {
+#if !_EXPLORE_ALL_AT_ONCE_
+                ExploraGwStdGen(phgw);
+                for (int slot = 0; slot < 4; slot++)
+                {
+                    ExploraSlot(new KeyValuePair<stdPhGw, int>(phgw, slot));
+                }
+#else
+                ExploreEverythingAtOnce(phgw);
+#endif
+                response(true);
+            }
+            catch (Exception x)
+            {
+                // Error en la Exploracion SNMP....
+                response(false);
+                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when SnmpModuleTest", x);
+            }
+        }
+        void ConsolidateData(stdPhGw last, stdPhGw current)
+        {
+            try
+            {
+                // Calcular Presente....
+                current.presente = (current.IpConn.Std == std.Ok && current.SipMod.Std != std.NoInfo);
+                // Calcular Estado General.... En current.std se encuentra el estado leido. last.std debe tener tambien los errores de recurso...
+                current.std = current.presente == false ? std.NoInfo : current.Errores == true ? std.Error : std.Ok;
+
+                // Historicos de Activacion / Desactivacion de Modulos...
+                if (current.CfgMod.Std != last.CfgMod.Std)
+                {
+                    eIncidencias inci = current.CfgMod.Std == std.NoInfo ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
+                    RecordEvent<GwExplorer>(DateTime.Now, inci, eTiposInci.TEH_TIFX, current.name, Params(idiomas.strings.GW_CFGL_MODULE));
+                }
+                if (current.SipMod.Std != last.SipMod.Std)
+                {
+                    eIncidencias inci = current.SipMod.Std == std.NoInfo ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
+                    RecordEvent<GwExplorer>(DateTime.Now, inci, eTiposInci.TEH_TIFX, current.name, Params(idiomas.strings.GW_SIP_MODULE));
+                }
+                if (current.SnmpMod.Std != last.SnmpMod.Std)
+                {
+                    eIncidencias inci = current.SnmpMod.Std == std.NoInfo ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
+                    RecordEvent<GwExplorer>(DateTime.Now, inci, eTiposInci.TEH_TIFX, current.name, Params(idiomas.strings.GW_SNMP_MODULE));
+                }
+                /** Habilita el registro de los eventos surgidos en los Pollings */
+                PopEvents(current);
+
+                // Genera historicos de activacion / desactivacion de la pasarela...
+                if (current.presente != last.presente)
+                {
+                    var who = idiomas.strings.GW_CPU_MODULE + (current.Seleccionada ? " Activa " : " Reserva ");
+                    eIncidencias inci = current.presente == false ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
+                    RecordEvent<GwExplorer>(DateTime.Now, inci, eTiposInci.TEH_TIFX, current.name, Params(who));
+
+                    if (current.presente == false)
+                    {
+                        /** 20200811 Reset de los estados de Módulos */
+                        current.SipMod.Std = std.NoInfo;
+                        current.CfgMod.Std = std.NoInfo;
+                        current.SnmpMod.Std = std.NoInfo;
+
+                        /** Reset Estado GW fisica */
+                        GwHelper.SetToOutOfOrder(current);
+                    }
+                }
+            }
+            catch (Exception x)
+            {
+                // Error en la consolidacion.
+                LogException<GwExplorer>($"In ({last.name}, {last.ip}) Exception when ConsolidateData", x);
+            }
+            finally
+            {
+                last.CopyFrom(current);
+            }
+        }
+
+        void ExploraGwStdGen(stdPhGw pgw)
         {
             IPEndPoint gwep = new IPEndPoint(IPAddress.Parse(pgw.ip), pgw.snmpport);
             OctetString community = new OctetString("public");
@@ -787,11 +781,7 @@ namespace U5kManServer
 
             pgw.stdFA = stdFA == 0 ? std.NoInfo : stdFA == 1 ? std.Ok : stdFA == 2 ? std.Error : std.NoExiste;
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="obj"></param>
-        protected void ExploraSlot_unificada(object obj)
+        void ExploraSlot(object obj)
         {
             KeyValuePair<stdPhGw, int> objIn = (KeyValuePair<stdPhGw, int>)obj;
             stdPhGw gw = objIn.Key;
@@ -799,31 +789,6 @@ namespace U5kManServer
             stdSlot slot = gw.slots[nslot];
             IPEndPoint gwep = new IPEndPoint(IPAddress.Parse(gw.ip), gw.snmpport);
             OctetString community = new OctetString("public");
-
-#if DEBUG
-            if (DebuggingHelper.Simulating)
-            {
-                DebuggingHelper.SimulatedGw.SnmpSlotGet(gw.ParentName, gw.name, nslot,
-                    (tipo, status) =>
-                    {
-                        SlotTypeSet(gw, nslot, gw.slots[nslot], tipo, status);
-                        SlotStateSet(gw, nslot, gw.slots[nslot], status);
-
-                        for (int rec = 0; rec < 4; rec++)
-                        {
-                            if (slot.rec[rec].presente == true)
-                            {
-                                ExploraRecurso_unificada(new KeyValuePair<stdPhGw, int>(gw, nslot * 4 + rec));
-                            }
-                            else
-                            {
-                                Reset_ExploraRecurso(gw, nslot, rec);
-                            }
-                        }
-                    });
-            }
-            else
-#endif
             try
             {
                 string oidbase = ".1.3.6.1.4.1.7916.8.3.1.3.2.1.";
@@ -858,7 +823,7 @@ namespace U5kManServer
                 {
                     if (slot.rec[rec].presente == true)
                     {
-                        ExploraRecurso_unificada(new KeyValuePair<stdPhGw, int>(gw, nslot * 4 + rec));
+                        ExploraRecurso(new KeyValuePair<stdPhGw, int>(gw, nslot * 4 + rec));
                     }
                     else
                     {
@@ -866,7 +831,6 @@ namespace U5kManServer
                     }
                 }
             }
-
             catch (Exception x)
             {
                     LogException<GwExplorer>(String.Format(" Explorando Slot. CGW {0}.{1}",
@@ -874,11 +838,7 @@ namespace U5kManServer
                     obj == null ? "null" : ((KeyValuePair<stdPhGw, int>)obj).Value.ToString()), x);
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="obj"></param>
-        protected void ExploraRecurso_unificada(object obj)
+        void ExploraRecurso(object obj)
         {
             KeyValuePair<stdPhGw, int> objIn = (KeyValuePair<stdPhGw, int>)obj;
             stdPhGw gw = objIn.Key;
@@ -966,6 +926,7 @@ namespace U5kManServer
                 LogException<GwExplorer>(String.Format(" Explorando recurso en {0}: Rec:{1}-{2}", gw.ip, nres, rec.name), x);
             }
         }
+#if _EXPLORE_ALL_AT_ONCE_
 
         /** 20200813. Version para solo generar un GET */
         List<Variable> vInAll = new List<Variable>()
@@ -1053,7 +1014,7 @@ namespace U5kManServer
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.3.16")),   // Tipo
             new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.4.2.1.15.16")),  // Status Interfaz.
         };
-        protected void ExploreEverythingAtOnce(stdPhGw pgw)
+        void ExploreEverythingAtOnce(stdPhGw pgw)
         {
             IPEndPoint gwep = new IPEndPoint(IPAddress.Parse(pgw.ip), pgw.snmpport);
             OctetString community = new OctetString("public");
@@ -1149,79 +1110,14 @@ namespace U5kManServer
                 }
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="gw"></param>
-        /// <param name="nslot"></param>
-        /// <param name="rec"></param>
-        protected void Reset_ExploraRecurso(stdPhGw gw, int nslot, int rec)
+#endif
+        void Reset_ExploraRecurso(stdPhGw gw, int nslot, int rec)
         {
             SlotRecursoTipoAgenteSet(gw, gw.slots[nslot].rec[rec], (int)trc.rcNotipo);
             SlotRecursoTipoInterfazSet(gw, gw.slots[nslot].rec[rec], (int)itf.rcNotipo);
             SlotRecursoEstadoSet(gw, gw.slots[nslot].rec[rec], (int)std.NoInfo, trc.rcNotipo);
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pgw"></param>
-        protected async void GetVersion_unificada(stdPhGw pgw)
-        {
-            if (pgw.version == string.Empty || pgw.version == idiomas.strings.GWS_VersionError/*"Error en GetVersion_unificada"*/)
-            {
-                try
-                {
-                    string page = "http://" + pgw.ip + ":8080/mant/lver";
-
-                    // ... Use HttpClient.
-                    using (HttpClient client = new HttpClient())
-                    using (HttpResponseMessage response = await client.GetAsync(page))
-                    using (HttpContent content = response.Content)
-                    {
-                        // ... Read the string.
-                        string result = await content.ReadAsStringAsync();
-                        pgw.version = result;
-                    }
-                }
-                catch (Exception x)
-                {
-                    if (pgw.version != idiomas.strings.GWS_VersionError/*"Error en GetVersion_unificada"*/)
-                        LogException<GwExplorer>(String.Format(" GW:{0},{1}", pgw.name, pgw.ip), x);
-                    pgw.version = idiomas.strings.GWS_VersionError/*"Error en GetVersion_unificada"*/;
-                }
-            }
-        }
-        protected async void GetNtpStatus(stdPhGw gw)
-        {
-            try
-            {
-                string page = "http://" + gw.ip + ":8080/ntpstatus";
-                // ... Use HttpClient.
-                using (HttpClient client = new HttpClient())
-                using (HttpResponseMessage response = await client.GetAsync(page))
-                using (HttpContent content = response.Content)
-                {
-                    // ... Read the string.
-                    string result = await content.ReadAsStringAsync();
-
-                    //gw.ntp_client_status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
-                    var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
-                    status = NormalizeNtpStatusList(status);
-                    gw.NtpInfo.Actualize(gw.name, status);
-                    LogTrace<GwExplorer>($"{gw.name}, NtpInfo OUT     => <<{gw.NtpInfo}>>");
-                }
-            }
-            catch (Exception x)
-            {
-                LogException<GwExplorer>(String.Format(" GW:{0},{1}", gw.name, gw.ip), x);
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        protected List<string> NormalizeNtpStatusList(List<string> input)
+        List<string> NormalizeNtpStatusList(List<string> input)
         {
             List<string> output = new List<string>();
             int lenline = 78;
@@ -1235,13 +1131,6 @@ namespace U5kManServer
 
             return output;
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="gw"></param>
-        /// <param name="pgw"></param>
-        /// <param name="oidEnt"></param>
-        /// <param name="oidvar"></param>
         static public void RecibidoTrapGw_unificada(stdGw gw, stdPhGw pgw, string oidEnt, string oidvar, ISnmpData data)
         {
             switch (oidEnt)
@@ -1303,371 +1192,12 @@ namespace U5kManServer
             }
         }
 
-#endregion //
-
-#region GW_STD_V1
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="obj"></param>
-        protected void ExplorePhGw(object obj)
-        {
-            // Obtengo una copia del estado de la pasarela.
-            stdPhGw phgw = new stdPhGw((stdPhGw)obj);
-            phgw.events = new Queue<object>();
-
-            try
-            {
-                // Ping para la conectividad....
-#if DEBUG
-                var resPing = DebuggingHelper.Simulating ? 
-                    DebuggingHelper.SimulatedGw.Ping2Cpu(phgw.ParentName, phgw.name) : 
-                    U5kGenericos.Ping(phgw.ip, phgw.presente);
-#else
-                var resPing = U5kGenericos.Ping(phgw.ip, phgw.presente);
-#endif
-                if (phgw.IpConn.ProcessResult(resPing))
-                {
-                    phgw.IpConn.Std = resPing ? std.Ok : std.NoInfo;
-                    LogTrace<GwExplorer>($"GwPing {(resPing ? "Ok  " : "Fail")} executed: {phgw.name}.");
-                    if (phgw.IpConn.Std == std.Ok)
-                    {
-                        // Supervision del Modulo SIP...
-                        SipModuleTest(phgw, (res, newStd) =>
-                         {
-                             if (phgw.SipMod.ProcessResult(res) == true)
-                             {
-                                 phgw.SipMod.Std = newStd;
-                                 LogTrace<GwExplorer>($"GwSip_ {(res ? "Ok  " : "Fail")} executed: {phgw.name}.");
-                             }
-                             else
-                             {
-                                 LogWarn<GwExplorer>($"GwSip_ Fail ignored : {phgw.name}.");
-                             }
-                         });
-
-                        if (phgw.SipMod.Std == std.Ok)
-                        {
-                            // Supervision del Modulo de Configuracion...
-                            CfgModuleTest(phgw, (res, newStd, mensaje) =>
-                            {
-                                if (phgw.CfgMod.ProcessResult(res) == true)
-                                {
-                                    phgw.CfgMod.Std = newStd;
-                                    if (res)
-                                        LogTrace<GwExplorer>($"GwCfg_ Ok  executed: {phgw.name}.");
-                                    else
-                                    {
-                                        LogTrace<GwExplorer>($"GwCfg_ Fail EXECUTED: {phgw.name}\n   <{mensaje}>.");
-                                    }
-                                }
-                                else
-                                {
-                                    LogTrace<GwExplorer>($"GwCfg_ Fail IGNORED: {phgw.name}\n   <{mensaje}>.");
-                                }
-                            });
-
-                            // Supervision del Modulo SNMP....
-                            SnmpModuleExplore(phgw, (res) =>
-                            {
-                                if (phgw.SnmpMod.ProcessResult(res) == true)
-                                {
-                                    if (res == true)
-                                    {
-                                        phgw.SnmpMod.Std = std.Ok;
-                                    }
-                                    else
-                                    {
-                                        phgw.SnmpMod.Std = std.NoInfo;
-                                        phgw.SnmpDataReset();
-                                    }
-                                    LogTrace<GwExplorer>($"GwSnmp {(res ? "Ok  " : "Fail")} executed: {phgw.name}.");
-                                }
-                                else
-                                {
-                                    LogWarn<GwExplorer>($"GwSnmp Fail ignored : {phgw.name}.");
-                                }
-                            });
-                        }
-                        else
-                        {
-                            // No se ha Respondido al SIP...
-                        }
-                    }
-                    else
-                    {
-                        // No se ha respondido al PING...
-                    }
-                }
-                else
-                {
-                    LogWarn<GwExplorer>($"GwPing Fail ignored : {phgw.name}.");
-                }
-            }
-            catch (Exception x)
-            {
-                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when Exploring", x);
-                if (phgw.IpConn.ProcessResult(false) == true)
-                {
-                    phgw.IpConn.Std = std.NoInfo;
-                }
-            }
-            finally
-            {
-                ConsolidateData((stdPhGw)obj, phgw);
-                phgw.events.Clear();
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="phgw"></param>
-        protected void SipModuleTest(stdPhGw phgw, Action<bool, std> response)
-        {
-#if DEBUG
-            if (DebuggingHelper.Simulating)
-            {
-                var res = DebuggingHelper.SimulatedGw.SipPing2Cpu(phgw.ParentName, phgw.name);
-                response(res, res ? std.Ok : std.NoInfo);
-            }
-            else
-#endif
-            try
-            {
-                int timeout = Properties.u5kManServer.Default.SipOptionsTimeout;
-                SipUA locale_ua = new SipUA() { user = "MTTO", ip = Properties.u5kManServer.Default.MiDireccionIP, port = 0 };
-                SipUA remote_ua = new SipUA() { user = phgw.name, ip = phgw.ip, port = 5060, radio = true };
-                SipSupervisor sips = new SipSupervisor(locale_ua, timeout);
-                if (sips.SipPing(remote_ua))
-                {
-                    if (remote_ua.last_response == null || remote_ua.last_response.Result == "Error")
-                    {
-                        response(false, std.NoInfo);
-                    }
-                    else
-                    {
-                        response(true, (remote_ua.last_response.Result == "200" || remote_ua.last_response.Result == "503") ? std.Ok : std.Error);
-                    }
-                }
-                else
-                {
-                    /** No Responde */
-                    response(false, std.NoInfo);
-                }
-            }
-            catch (Exception x)
-            {
-                    // Error en los OPTIONS...
-                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when SipModuleTest", x);
-                response(false, std.NoInfo);
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="phgw"></param>
-        protected void CfgModuleTest(stdPhGw phgw, Action<bool, std, string> response)
-        {
-            std stdRes = std.NoInfo;
-            var mensaje = "";
-#if DEBUG
-            if (DebuggingHelper.Simulating)
-            {
-                var res = DebuggingHelper.SimulatedGw.CfgPing2Cpu(phgw.ParentName, phgw.name);
-                response(res, res ? std.Ok : std.NoInfo, mensaje);
-            }
-            else
-#endif
-                try
-                {
-                    string page = "http://" + phgw.ip + ":8080/test";
-                    var timeout = TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout);
-                    HttpHelper.GetSync(page, timeout, (success, message) =>
-                     {
-                         if (success)
-                         {
-                             stdRes = message.Contains("Handler por Defecto") ? std.Ok : std.Error;
-                         }
-                         else
-                         {
-                             stdRes = std.NoInfo;
-                             mensaje = message;
-                         }
-                     });
-
-
-                    //var resp = HttpHelper.Get(page, timeout, null);
-                    //stdRes = resp == null ? std.NoInfo : resp.Contains("Handler por Defecto") ? std.Ok : std.Error;
-
-                    /** Obtiene la version unificada */
-                    if (stdRes == std.Ok && (phgw.version == string.Empty || phgw.version == idiomas.strings.GWS_VersionError))
-                    {
-                        try
-                        {
-                            var resp = HttpHelper.GetSync(phgw.ip, "8080", "/mant/lver", timeout);
-                            phgw.version = resp ?? idiomas.strings.GWS_VersionError;
-                        }
-                        catch (Exception x)
-                        {
-                            LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when getting version", x);
-                        }
-                    }
-                    /** Obtiene la información NTP */
-                    if (stdRes == std.Ok)
-                    {
-                        try
-                        {
-                            var result = HttpHelper.GetSync(phgw.ip, "8080", "/ntpstatus", timeout);
-                            var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
-                            status = NormalizeNtpStatusList(status);
-                            phgw.NtpInfo.Actualize(phgw.name, status);
-                            LogTrace<GwExplorer>($"{phgw.name}, NtpInfo OUT     => <<{phgw.NtpInfo}>>");
-                        }
-                        catch (Exception x)
-                        {
-                            LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when getting ntp info", x);
-                        }
-                    }
-                }
-                catch (Exception x)
-                {
-                    // Error en Modulo de Configuracion Local...
-                    stdRes = std.NoInfo;
-                    LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when CfgModuleTest", x);
-                }
-                finally
-                {
-                    //GetVersion_unificada(phgw);
-                }
-            response(stdRes != std.NoInfo, stdRes, mensaje);
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="phgw"></param>
-        protected void SnmpModuleExplore(stdPhGw phgw, Action<bool> response)
-        {
-#if DEBUG
-            if (DebuggingHelper.Simulating)
-            {
-                var res = DebuggingHelper.SimulatedGw.SnmpPing2Cpu(phgw.ParentName, phgw.name,
-                    (status, lan1, lan2, mss, fa, ntpdata) =>
-                    {
-                        phgw.std = status == 0 ? std.NoInfo : status == 1 ? std.Ok : std.Error;
-                        int stdLan = (lan1 == 1 ? 0x01 : 0x00) | (lan2 == 1 ? 0x02 : 0x00);
-                        PhGwLanStatusSet(phgw, (0x04 | stdLan));                 // En este tipo de Pasarelas BOND configurado...
-
-                        PhGwPrincipalReservaSet(phgw, mss ? 1 : 0);       // Solo se marca PPAL si está en PPAL en cualquier otro caso se marca RSVA
-
-                        phgw.stdFA = fa == 0 ? std.NoInfo : fa == 1 ? std.Ok : fa == 2 ? std.Error : std.NoExiste;
-
-                        for (int slot = 0; slot < 4; slot++)
-                        {
-                            ExploraSlot_unificada(new KeyValuePair<stdPhGw, int>(phgw, slot));
-                        }
-                        phgw.NtpInfo.Actualize(phgw.name, ntpdata, 78);
-                    });
-                response(res);
-            }
-            else
-#endif
-                try
-                {
-#if !_EXPLORE_ALL_AT_ONCE_
-                ExploraGwStdGen_unificada(phgw);
-                for (int slot = 0; slot < 4; slot++)
-                {
-                    ExploraSlot_unificada(new KeyValuePair<stdPhGw, int>(phgw, slot));
-                }
-                //GetNtpStatus(phgw);
-#else
-#if DEBUG
-                var itm = new TimeMeasurement();
-#endif
-                ExploreEverythingAtOnce(phgw);
-#if DEBUG
-                itm.StopAndPrint((msg) => LogTrace<GwExplorer>(msg));
-#endif
-#endif
-                    response(true);
-            }
-            catch (Exception x)
-            {
-                // Error en la Exploracion SNMP....
-                response(false);
-                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when SnmpModuleTest", x);
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="last"></param>
-        /// <param name="current"></param>
-        protected void ConsolidateData(stdPhGw last, stdPhGw current)
-        {
-            try
-            {
-                // Calcular Presente....
-                current.presente = (current.IpConn.Std == std.Ok && current.SipMod.Std != std.NoInfo);
-                // Calcular Estado General.... En current.std se encuentra el estado leido. last.std debe tener tambien los errores de recurso...
-                current.std = current.presente == false ? std.NoInfo : current.Errores == true ? std.Error : std.Ok;
-
-                // Historicos de Activacion / Desactivacion de Modulos...
-                if (current.CfgMod.Std != last.CfgMod.Std)
-                {
-                    eIncidencias inci = current.CfgMod.Std == std.NoInfo ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
-                    RecordEvent<GwExplorer>(DateTime.Now, inci, eTiposInci.TEH_TIFX, current.name, Params(idiomas.strings.GW_CFGL_MODULE));
-                }
-                if (current.SipMod.Std != last.SipMod.Std)
-                {
-                    eIncidencias inci = current.SipMod.Std == std.NoInfo ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
-                    RecordEvent<GwExplorer>(DateTime.Now, inci, eTiposInci.TEH_TIFX, current.name, Params(idiomas.strings.GW_SIP_MODULE));
-                }
-                if (current.SnmpMod.Std != last.SnmpMod.Std)
-                {
-                    eIncidencias inci = current.SnmpMod.Std == std.NoInfo ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
-                    RecordEvent<GwExplorer>(DateTime.Now, inci, eTiposInci.TEH_TIFX, current.name, Params(idiomas.strings.GW_SNMP_MODULE));
-                }
-                /** Habilita el registro de los eventos surgidos en los Pollings */
-                PopEvents(current);
-
-                // Genera historicos de activacion / desactivacion de la pasarela...
-                if (current.presente != last.presente)
-                {
-                    var who = idiomas.strings.GW_CPU_MODULE + (current.Seleccionada ? " Activa " : " Reserva ");
-                    eIncidencias inci = current.presente == false ? eIncidencias.IGW_CAIDA : eIncidencias.IGW_ENTRADA;
-                    RecordEvent<GwExplorer>(DateTime.Now, inci, eTiposInci.TEH_TIFX, current.name, Params(who));
-
-                    if (current.presente == false)
-                    {
-                        /** 20200811 Reset de los estados de Módulos */
-                        current.SipMod.Std = std.NoInfo;
-                        current.CfgMod.Std = std.NoInfo;
-                        current.SnmpMod.Std = std.NoInfo;
-
-                        /** Reset Estado GW fisica */
-                        GwHelper.SetToOutOfOrder(current);
-                    }
-                }
-            }
-            catch (Exception x)
-            {
-                // Error en la consolidacion.
-                LogException<GwExplorer>($"In ({last.name}, {last.ip}) Exception when ConsolidateData", x);
-            }
-            finally
-            {
-                last.CopyFrom(current);
-            }
-        }
-
         void PushEvent(stdPhGw cpu, eIncidencias inci, eTiposInci thw, string idhw, object[] parametros,
             [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string caller = null)
         {
             var itemEvent = new Tuple<eIncidencias, eTiposInci, string, object[], int, string>(inci, thw, idhw, parametros, lineNumber, caller);
             cpu.events.Enqueue(itemEvent);
         }
-
         void PopEvents(stdPhGw cpu)
         {
             while (cpu.events.Count() > 0)
@@ -1676,7 +1206,6 @@ namespace U5kManServer
                 RecordEvent<GwExplorer>(DateTime.Now, itemEvent.Item1, itemEvent.Item2, itemEvent.Item3, itemEvent.Item4, itemEvent.Item5, itemEvent.Item6);
             }
         }
-
         int NotifiedAgentType(int ntipo)
         {
             int TipoNotificado = ntipo == 0 ? RadioResource_AgentType :
@@ -1685,21 +1214,6 @@ namespace U5kManServer
             return TipoNotificado;
         }
 
-        #endregion
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="gw"></param>
-        protected void GwTrace(stdGw gw)
-        {
-            LogInfo<GwExplorer>($"Name={gw.name}, IP={gw.ip}, Presente={gw.presente}, Estado={gw.std}");
-        }
-
-#endregion
     }   // clase
-
-    /** */
-
 
 } // namespace.
