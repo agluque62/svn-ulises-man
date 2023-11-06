@@ -15,15 +15,15 @@ namespace XProccessUnitTests.MockedClasss
 {
     public class MockedExtEq
     {
-        public IProcessData ProcessData => ProcessDataMock.Object;
-        public IProcessPing ProcessPing => ProcessPingMock.Object;
-        public IProcessSip ProcessSip => ProcessSipMock.Object;
+        public IDataService ProcessData => ProcessDataMock.Object;
+        public IPingService ProcessPing => ProcessPingMock.Object;
+        public ICommSipService ProcessSip => ProcessSipMock.Object;
 
         public MockedExtEq(bool presente = true, bool sipagent=true) 
         {
-            ProcessDataMock = new Mock<IProcessData>();
-            ProcessPingMock = new Mock<IProcessPing>();
-            ProcessSipMock = new Mock<IProcessSip>();
+            ProcessDataMock = new Mock<IDataService>();
+            ProcessPingMock = new Mock<IPingService>();
+            ProcessSipMock = new Mock<ICommSipService>();
             Presente = presente;
             SipAgent = sipagent;
 
@@ -54,7 +54,7 @@ namespace XProccessUnitTests.MockedClasss
                     It.IsAny<string>(),
                     It.IsAny<int>(),
                     It.IsAny<bool>()))
-                .Returns(Task.Run(() => new Tuple<bool, string>(SipAgent, "OK")));
+                .Returns(Task.Run(() => new QueryServiceResult<string>(SipAgent, "OK")));
         }
         U5kManStdData mockedData => new U5kManStdData()
         {
@@ -64,9 +64,9 @@ namespace XProccessUnitTests.MockedClasss
                 new EquipoEurocae(){ Id="MK-EQ1", Ip1="127.0.0.1", sip_port=5060, sip_user="MK-RC02", Tipo=1}
             }
         };
-        readonly Mock<IProcessData> ProcessDataMock;
-        readonly Mock<IProcessPing> ProcessPingMock;
-        readonly Mock<IProcessSip> ProcessSipMock;
+        readonly Mock<IDataService> ProcessDataMock;
+        readonly Mock<IPingService> ProcessPingMock;
+        readonly Mock<ICommSipService> ProcessSipMock;
         readonly bool Presente;
         readonly bool SipAgent;
     }

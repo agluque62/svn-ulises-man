@@ -17,13 +17,23 @@ using NAudio.Gui;
 
 namespace U5kManServer.Procesos
 {
-    public interface IProcessData
+    public class QueryServiceResult<T>
+    {
+        public bool Success { get; set; }
+        public T Result { get; set; }
+        public QueryServiceResult(bool success, T result)
+        {
+            Success = success;
+            Result = result;
+        }
+    }
+    public interface IDataService
     {
         U5kManStdData Data { get; }
         bool IsMaster { get; }
         std StatusChangeManage(std antiguo, std nuevo, int scv, eIncidencias inci, eTiposInci thw, string idhw, params object[] parametros);
     }
-    public class RunTimeData : IProcessData
+    public class RunTimeData : IDataService
     {
         public U5kManStdData Data => U5kManService.GlobalData;
 
@@ -42,14 +52,14 @@ namespace U5kManServer.Procesos
         }
     }
 
-    public interface IProcessSnmp : IDisposable
+    public interface ICommSnmpService : IDisposable
     {
         event EventHandler<TrapBus.TrapEventArgs> TrapReceived;
-        Task<IList<Variable>> GetData(object from, IList<Variable> variables);
+        Task<QueryServiceResult<IList<Variable>>> GetData(object from, IList<Variable> variables);
         int ToInt(ISnmpData data);
         string ToStr(ISnmpData data);
     }
-    public class RuntimeSnmpService : IProcessSnmp
+    public class RuntimeSnmpService : ICommSnmpService
     {
         internal class Data4Client
         {
@@ -57,11 +67,13 @@ namespace U5kManServer.Procesos
             public int Port { get; }
             public int Timeout { get; }
             public int Retries { get; }
+            public string Id { get; }
             public Data4Client(object from)
             {
                 if (from is stdPos)
                 {
                     var pos = from as stdPos;
+                    Id = pos.name;
                     Ip = pos.ip;
                     Port = pos.snmpport;
                     Timeout = pos.SnmpTimeout;
@@ -70,6 +82,7 @@ namespace U5kManServer.Procesos
                 else if (from is stdPhGw)
                 {
                     var cgw = from as stdPhGw;
+                    Id = cgw.name;
                     Ip = cgw.ip;
                     Port = cgw.snmpport;
                     Timeout = cgw.SnmpTimeout;
@@ -82,17 +95,28 @@ namespace U5kManServer.Procesos
             }
         }
         public event EventHandler<TrapBus.TrapEventArgs> TrapReceived;
-        public Task<IList<Variable>> GetData(object from, IList<Variable> variables)
+        public Task<QueryServiceResult<IList<Variable>>> GetData(object from, IList<Variable> variables)
         {
             var data4Poll = new Data4Client(from);
             if (data4Poll.Ip != null)
             {
-                return Task.Run(() => 
-                    new SnmpClient()
-                    .Get(VersionCode.V2,
-                        new IPEndPoint(IPAddress.Parse(data4Poll.Ip), data4Poll.Port),
-                        new OctetString("public"), variables,
-                        data4Poll.Timeout, data4Poll.Retries));
+                return Task.Run(() =>
+                {
+                    try
+                    {
+                        var snmpRes = new SnmpClient().Get(
+                            VersionCode.V2,
+                            new IPEndPoint(IPAddress.Parse(data4Poll.Ip), data4Poll.Port),
+                            new OctetString("public"), variables,
+                            data4Poll.Timeout, data4Poll.Retries);
+                        return new QueryServiceResult<IList<Variable>>(true, snmpRes);
+                    }
+                    catch (Exception x)
+                    {
+                        BaseCode.LogException<RuntimeSnmpService>("SnmpException", x, default, default, data4Poll.Id);
+                        return new QueryServiceResult<IList<Variable>>(false, null);
+                    }
+                });
             }
             throw new NotImplementedException();
         }
@@ -118,20 +142,20 @@ namespace U5kManServer.Procesos
         object trapSubscrition = default;
     }
 
-    public interface IProcessPing
+    public interface IPingService
     {
         Task<bool> Ping(string host, bool presente);
     }
-    public class RuntimePingService : IProcessPing
+    public class RuntimePingService : IPingService
     {
         public Task<bool> Ping(string host, bool presente) => Task.Run(() => U5kGenericos.Ping(host, presente));
     }
 
-    public interface IProcessSip : IDisposable
+    public interface ICommSipService : IDisposable
     {
-        Task<Tuple<bool,string>> Ping(string user, string ip, int port, bool isRadio);
+        Task<QueryServiceResult<string>> Ping(string user, string ip, int port, bool isRadio);
     }
-    public class RuntimeSipService : IProcessSip
+    public class RuntimeSipService : ICommSipService
     {
         public RuntimeSipService() 
         {
@@ -139,14 +163,14 @@ namespace U5kManServer.Procesos
             sips = new SipSupervisor(local_ua, Properties.u5kManServer.Default.SipOptionsTimeout);
             sips.NotifyException += (ua, x) =>
             {
-                BaseCode.LogException<ExtEquSpv>("SipSupervisor" + ua.uri, x);
+                BaseCode.LogException<RuntimeSipService>("SipSupervisor", x, default, default, ua.uri);
             };
         }
         public void Dispose()
         {
             sips.Dispose();
         }
-        public Task<Tuple<bool, string>> Ping(string user, string ip, int port, bool isRadio)
+        public Task<QueryServiceResult<string>> Ping(string user, string ip, int port, bool isRadio)
         {
             return Task.Run(() =>
             {
@@ -154,11 +178,12 @@ namespace U5kManServer.Procesos
                 {
                     var ua = new SipUA() { user = user, ip = ip, port = port, radio = isRadio };
                     var res = sips.SipPing(ua);
-                    return new Tuple<bool, string>(res, ua.last_response?.Result);
+                    return new QueryServiceResult<string>(res, ua.last_response?.Result);
                 }
                 catch (Exception x)
                 {
-                    return new Tuple<bool, string>(false, x.Message);
+                    BaseCode.LogException<RuntimeSipService>("", x, default, default, user);
+                    return new QueryServiceResult<string>(false, x.Message);
                 }
             });
         }
@@ -167,25 +192,26 @@ namespace U5kManServer.Procesos
 
     public interface IProcessHttp : IDisposable
     {
-        Task<Tuple<bool, string>> Get(string url, TimeSpan timeout);
+        Task<QueryServiceResult<string>> Get(string url, TimeSpan timeout);
     }
     public class RuntimeHttpService : IProcessHttp
     {
         public void Dispose()
         {
         }
-        public Task<Tuple<bool, string>> Get(string url, TimeSpan timeout)
+        public Task<QueryServiceResult<string>> Get(string url, TimeSpan timeout)
         {
             return Task.Run( async () =>
             {
                 try
                 {
                     var res = await HttpHelper.GetAsync(url, timeout);
-                    return new Tuple<bool, string>(true, res);
+                    return new QueryServiceResult<string>(true, res);
                 }
                 catch (Exception x)
                 {
-                    return new Tuple<bool, string>(false, x.Message);
+                    BaseCode.LogException<RuntimeSnmpService>("Http exception", x, default, default, url);
+                    return new QueryServiceResult<string>(false, x.Message);
                 }
             });
         }

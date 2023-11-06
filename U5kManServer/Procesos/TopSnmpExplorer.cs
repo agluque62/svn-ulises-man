@@ -204,13 +204,13 @@ namespace U5kManServer
         /// </summary>
         // public event GenerarHistorico hist;
         //static public event ChangeStatusDelegate CambiaEstado;
-        IProcessData pData { get; }
-        IProcessSnmp pSnmp { get; }
+        IDataService pData { get; }
+        ICommSnmpService pSnmp { get; }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="pdata"></param>
-        public TopSnmpExplorer(IProcessData proccesData = null, IProcessSnmp snmp = null)
+        public TopSnmpExplorer(IDataService proccesData = null, ICommSnmpService snmp = null)
         {
             Name = "TopSnmpExplorer";
             //CambiaEstado = _CambiaEstado;
@@ -576,8 +576,8 @@ namespace U5kManServer
         {
             try
             {
-                IList<Variable> onlinedata=null;
 #if DEBUG1
+                IList<Variable> onlinedata=null;
                 if (DebuggingHelper.Simulating)
                 {
                     var SimulatedTop = new DebuggingHelper.SimulatedTop(pos.name);
@@ -604,9 +604,12 @@ namespace U5kManServer
                 }
                 else
 #endif
-                onlinedata = pSnmp.GetData(pos, _vList).Result;
-                ProcessPos(pos, onlinedata);
-                response(true);
+                var res = pSnmp.GetData(pos, _vList).Result;
+                if (res .Success == true)
+                {
+                    ProcessPos(pos, res.Result);
+                }
+                response(res.Success);
             }
             catch (Exception x)
             {

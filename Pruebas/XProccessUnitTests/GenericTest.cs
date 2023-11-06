@@ -17,13 +17,13 @@ namespace XProccessUnitTests
         {
             var httpS = new RuntimeHttpService();
             var res = httpS.Get("http://11.21.91.130:8080/std", TimeSpan.FromSeconds(5)).Result;
-            Assert.True(res.Item1 == false);
+            Assert.True(res.Success == false);
             res = httpS.Get("http://www.google.es", TimeSpan.FromSeconds(5)).Result;
-            Assert.True(res.Item1 == true);
+            Assert.True(res.Success == true);
             res = httpS.Get("http://11.21.91.1:9999/pepe", TimeSpan.FromSeconds(5)).Result;
-            Assert.True(res.Item1 == false);
+            Assert.True(res.Success == false);
             res = httpS.Get("http://1.1.365.1:8999/pepe", TimeSpan.FromSeconds(5)).Result;
-            Assert.True(res.Item1 == false);
+            Assert.True(res.Success == false);
         }
     }
 }

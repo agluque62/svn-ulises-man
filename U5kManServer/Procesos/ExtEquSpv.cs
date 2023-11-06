@@ -21,14 +21,14 @@ namespace U5kManServer
     /// </summary>
     public class ExtEquSpv : NGThread/*, IDisposable*/
     {
-        IProcessData pData;
-        IProcessPing pPing;
-        IProcessSip pSip;
+        IDataService pData;
+        IPingService pPing;
+        ICommSipService pSip;
 
         /// <summary>
         /// 
         /// </summary>
-        public ExtEquSpv(IProcessData data=null, IProcessPing ping = null, IProcessSip sip = null)
+        public ExtEquSpv(IDataService data=null, IPingService ping = null, ICommSipService sip = null)
         {
             Name = "ExtEquResSpv";
             
@@ -243,9 +243,9 @@ namespace U5kManServer
         {
             LogTrace<EquipoEurocae>($"Supervisando recurso {recurso.sip_user}");
             var res = pSip.Ping(recurso.sip_user, recurso.Ip1, recurso.sip_port, recurso.Tipo == 2).Result;
-            if (res.Item1 == true) // Presente
+            if (res.Success == true) // Presente
             {
-                if (res.Item2 == null || res.Item2 == "Error")
+                if (res.Result == null || res.Result == "Error")
                 {
                     recurso.EstadoSip = std.Error;
                     recurso.LastOptionsResponse = "";
@@ -253,9 +253,9 @@ namespace U5kManServer
                 }
                 else
                 {
-                    var allowedReponse = AllowedSipResponses.Contains(res.Item2);
+                    var allowedReponse = AllowedSipResponses.Contains(res.Result);
                     recurso.EstadoSip = allowedReponse ? std.Ok : std.Aviso;
-                    recurso.LastOptionsResponse = res.Item2;
+                    recurso.LastOptionsResponse = res.Result;
                     LogTrace<EquipoEurocae>($"{recurso.sip_user}. SipAgent response {recurso.LastOptionsResponse}, EstadoSip => {recurso.EstadoSip}");
                 }
             }

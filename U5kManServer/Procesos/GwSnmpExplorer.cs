@@ -147,16 +147,16 @@ namespace U5kManServer
             {trc.rcNotipo, eIncidencias.IGNORE}
         };
 
-        IProcessData DataS = null;
-        IProcessPing PingS = null;
-        IProcessSip SipS = null;
-        IProcessSnmp SnmpS = null;
+        IDataService DataS = null;
+        IPingService PingS = null;
+        ICommSipService SipS = null;
+        ICommSnmpService SnmpS = null;
         IProcessHttp HttpS = null;
         public GwExplorer(
-            IProcessData pdata = null, 
-            IProcessPing pping = null, 
-            IProcessSip psip = null,
-            IProcessSnmp psnmp = null,
+            IDataService pdata = null, 
+            IPingService pping = null, 
+            ICommSipService psip = null,
+            ICommSnmpService psnmp = null,
             IProcessHttp phttp = null)
         {
             DataS = pdata ?? new RunTimeData();
@@ -622,30 +622,30 @@ namespace U5kManServer
                 string page = "http://" + phgw.ip + ":8080/test";
                 var timeout = TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout);
                 var httpRes = HttpS.Get(page, timeout).Result;
-                if (httpRes.Item1)
+                if (httpRes.Success)
                 {
-                    stdRes = httpRes.Item2.Contains("Handler por Defecto") ? std.Ok : std.Error;
+                    stdRes = httpRes.Result.Contains("Handler por Defecto") ? std.Ok : std.Error;
                 }
                 else
                 {
                     stdRes = std.NoInfo;
-                    mensaje = httpRes.Item2;
+                    mensaje = httpRes.Result;
                 }
                 /** Obtiene la version unificada */
                 if (stdRes == std.Ok && (phgw.version == string.Empty || phgw.version == idiomas.strings.GWS_VersionError))
                 {
                     var versionPage = $"http://{phgw.ip}:8080/mant/lver";
                     httpRes = HttpS.Get(versionPage, timeout).Result;
-                    phgw.version = httpRes.Item1 ? httpRes.Item2 : idiomas.strings.GWS_VersionError;
+                    phgw.version = httpRes.Success ? httpRes.Result : idiomas.strings.GWS_VersionError;
                 }
                 /** Obtiene la información NTP */
                 if (stdRes == std.Ok)
                 {
                     var ntpPage = $"http://{phgw.ip}:8080/ntpstatus";
                     httpRes = HttpS.Get(ntpPage, timeout).Result;
-                    if (httpRes.Item1)
+                    if (httpRes.Success)
                     {
-                        var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(httpRes.Item2)).lines;
+                        var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(httpRes.Result)).lines;
                         status = NormalizeNtpStatusList(status);
                         phgw.NtpInfo.Actualize(phgw.name, status);
                         LogTrace<GwExplorer>($"{phgw.name}, NtpInfo OUT     => <<{phgw.NtpInfo}>>");
@@ -756,25 +756,29 @@ namespace U5kManServer
                 new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.1.4.0")),   // Estado FA,
                 new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.3.1.1.1.0")),   // Identificador. Habilita el envio de TRAPS
             };
-            IList<Variable> vOut = SnmpS.GetData(pgw, vIn).Result;
-            // estadoGeneral. 0: No Inicializado, 1: Ok, 2: Fallo, 3: Aviso.
-            int stdGeneral = SnmpS.ToInt(vOut[0].Data);
-            // stdLAN1. 0: No Presente, 1: Ok, 2: Error.
-            int stdLan1 = SnmpS.ToInt(vOut[1].Data);
-            // stdLAN2. 0: No Presente, 1: Ok, 2: Error.
-            int stdLan2 = SnmpS.ToInt(vOut[2].Data);
-            // stdCpuLocal. 0: No Presente. 1: Principal, 2: Reserva, 3: Arrancando
-            int stdPR = SnmpS.ToInt(vOut[3].Data);
-            // stdFA. 0: No Presente. 1: Ok, 2: Error
-            int stdFA = SnmpS.ToInt(vOut[4].Data);
-            pgw.std = stdGeneral == 0 ? std.NoInfo : stdGeneral == 1 ? std.Ok : std.Error;
+            var res = SnmpS.GetData(pgw, vIn).Result;
+            if (res.Success)
+            {
+                IList<Variable> vOut = res.Result;
+                // estadoGeneral. 0: No Inicializado, 1: Ok, 2: Fallo, 3: Aviso.
+                int stdGeneral = SnmpS.ToInt(vOut[0].Data);
+                // stdLAN1. 0: No Presente, 1: Ok, 2: Error.
+                int stdLan1 = SnmpS.ToInt(vOut[1].Data);
+                // stdLAN2. 0: No Presente, 1: Ok, 2: Error.
+                int stdLan2 = SnmpS.ToInt(vOut[2].Data);
+                // stdCpuLocal. 0: No Presente. 1: Principal, 2: Reserva, 3: Arrancando
+                int stdPR = SnmpS.ToInt(vOut[3].Data);
+                // stdFA. 0: No Presente. 1: Ok, 2: Error
+                int stdFA = SnmpS.ToInt(vOut[4].Data);
+                pgw.std = stdGeneral == 0 ? std.NoInfo : stdGeneral == 1 ? std.Ok : std.Error;
 
-            int stdLan = (stdLan1 == 1 ? 0x01 : 0x00) | (stdLan2 == 1 ? 0x02 : 0x00);
+                int stdLan = (stdLan1 == 1 ? 0x01 : 0x00) | (stdLan2 == 1 ? 0x02 : 0x00);
 
-            PhGwLanStatusSet(pgw, (0x04 | stdLan));                 // En este tipo de Pasarelas BOND configurado...
-            PhGwPrincipalReservaSet(pgw, stdPR == 1 ? 1 : 0);       // Solo se marca PPAL si está en PPAL en cualquier otro caso se marca RSVA
+                PhGwLanStatusSet(pgw, (0x04 | stdLan));                 // En este tipo de Pasarelas BOND configurado...
+                PhGwPrincipalReservaSet(pgw, stdPR == 1 ? 1 : 0);       // Solo se marca PPAL si está en PPAL en cualquier otro caso se marca RSVA
 
-            pgw.stdFA = stdFA == 0 ? std.NoInfo : stdFA == 1 ? std.Ok : stdFA == 2 ? std.Error : std.NoExiste;
+                pgw.stdFA = stdFA == 0 ? std.NoInfo : stdFA == 1 ? std.Ok : stdFA == 2 ? std.Error : std.NoExiste;
+            }
         }
         void SnmpExploraSlot(object obj)
         {
@@ -797,31 +801,35 @@ namespace U5kManServer
                     new Variable(new ObjectIdentifier(oidbase+"7."+(nslot+1).ToString()))    // Canal-3
                 };
 
-                IList<Variable> vOut = SnmpS.GetData(gw, vIn).Result;
-                int stipo = SnmpS.ToInt(vOut[0].Data);                            // 0: Error, 1: IA4, 2: IQ1
-                int status = SnmpS.ToInt(vOut[1].Data);                           // 0: No presente, 1: Presente
-
-                stipo = status == 0 ? 0 : (stipo == 1 ? 2 : 0);
-
-                int can0 = SnmpS.ToInt(vOut[2].Data);                             // 0: Desconectada. 1: Conectada
-                int can1 = SnmpS.ToInt(vOut[3].Data);                             // 0: Desconectada. 1: Conectada
-                int can2 = SnmpS.ToInt(vOut[4].Data);                             // 0: Desconectada. 1: Conectada
-                int can3 = SnmpS.ToInt(vOut[5].Data);                             // 0: Desconectada. 1: Conectada
-
-                int std = (can0 << 1) | (can1 << 2) | (can2 << 3) | (can3 << 4);
-
-                SlotTypeSet(gw, nslot, gw.slots[nslot], stipo, std);
-                SlotStateSet(gw, nslot, gw.slots[nslot], std);
-
-                for (int rec = 0; rec < 4; rec++)
+                var res = SnmpS.GetData(gw, vIn).Result;
+                if (res.Success)
                 {
-                    if (slot.rec[rec].presente == true)
+                    IList<Variable> vOut = res.Result;
+                    int stipo = SnmpS.ToInt(vOut[0].Data);                            // 0: Error, 1: IA4, 2: IQ1
+                    int status = SnmpS.ToInt(vOut[1].Data);                           // 0: No presente, 1: Presente
+
+                    stipo = status == 0 ? 0 : (stipo == 1 ? 2 : 0);
+
+                    int can0 = SnmpS.ToInt(vOut[2].Data);                             // 0: Desconectada. 1: Conectada
+                    int can1 = SnmpS.ToInt(vOut[3].Data);                             // 0: Desconectada. 1: Conectada
+                    int can2 = SnmpS.ToInt(vOut[4].Data);                             // 0: Desconectada. 1: Conectada
+                    int can3 = SnmpS.ToInt(vOut[5].Data);                             // 0: Desconectada. 1: Conectada
+
+                    int std = (can0 << 1) | (can1 << 2) | (can2 << 3) | (can3 << 4);
+
+                    SlotTypeSet(gw, nslot, gw.slots[nslot], stipo, std);
+                    SlotStateSet(gw, nslot, gw.slots[nslot], std);
+
+                    for (int rec = 0; rec < 4; rec++)
                     {
-                        SnmpExploraRecurso(new KeyValuePair<stdPhGw, int>(gw, nslot * 4 + rec));
-                    }
-                    else
-                    {
-                        Reset_ExploraRecurso(gw, nslot, rec);
+                        if (slot.rec[rec].presente == true)
+                        {
+                            SnmpExploraRecurso(new KeyValuePair<stdPhGw, int>(gw, nslot * 4 + rec));
+                        }
+                        else
+                        {
+                            Reset_ExploraRecurso(gw, nslot, rec);
+                        }
                     }
                 }
             }
@@ -856,44 +864,48 @@ namespace U5kManServer
                     new Variable(new ObjectIdentifier(oidbase+"15."+(nres+1).ToString())),  // Status Interfaz.
                 };
 
-                IList<Variable> vOut = SnmpS.GetData(gw, vIn).Result;
-
-                int ntipo = SnmpS.ToInt(vOut[0].Data);   // 0: RD, 1: LC, 2: BC, 3: BL, 4: AB, 5: R2, 6: N5, 7: QS, 9: NP, 13: PPEM 
-                if (ntipo == 9)
+                var res = SnmpS.GetData(gw, vIn).Result;
+                if (res.Success)
                 {
-                    // 20170630. El código 9 no es no presente sino NO CONFIGURADO
-                    // Reset_ExploraRecurso(gw, nslot, ires);
-                    // rec.presente = false;
-                    rec.tipo_itf = itf.rcNotipo;
-                    rec.tipo_online = trc.rcNotipo;
-                    rec.std_online = std.NoInfo;
-                }
-                else if ((ntipo >= 0 && ntipo < 9) || ntipo == 13)
-                {
-                    int AgentType = NotifiedAgentType(ntipo);
+                    IList<Variable> vOut = res.Result;
 
-                    SlotRecursoTipoAgenteSet(gw, rec, AgentType);
-                    /*
-                            rcRadio = 0, 
-                            rcLCE = 1, 
-                            rcPpBC = 2, 
-                            rcPpBL = 3, 
-                            rcPpAB = 4, 
-                            rcAtsR2 = 5, 
-                            rcAtsN5 = 6, 
-                            rcPpEM = 13, 
-                            rcPpEMM = 51, 
-                            rcNotipo = -1 
-                     * */
-                    SlotRecursoTipoInterfazSet(gw, rec, ntipo);
+                    int ntipo = SnmpS.ToInt(vOut[0].Data);   // 0: RD, 1: LC, 2: BC, 3: BL, 4: AB, 5: R2, 6: N5, 7: QS, 9: NP, 13: PPEM 
+                    if (ntipo == 9)
+                    {
+                        // 20170630. El código 9 no es no presente sino NO CONFIGURADO
+                        // Reset_ExploraRecurso(gw, nslot, ires);
+                        // rec.presente = false;
+                        rec.tipo_itf = itf.rcNotipo;
+                        rec.tipo_online = trc.rcNotipo;
+                        rec.std_online = std.NoInfo;
+                    }
+                    else if ((ntipo >= 0 && ntipo < 9) || ntipo == 13)
+                    {
+                        int AgentType = NotifiedAgentType(ntipo);
 
-                    int estado = SnmpS.ToInt(vOut[2].Data);   // 0: NP, 1: OK, 2: Fallo, 3: Degradado
-                    SlotRecursoEstadoSet(gw, rec, estado, (trc)AgentType);
-                }
-                else if (ntipo != 9 && ntipo != -1)
-                {
-                    LogWarn<GwExplorer>(String.Format("Error Explorando Recurso {0}:{1}: Tipo Notificado <{2}> Erroneo.",
-                                gw.ip, nres, ntipo));
+                        SlotRecursoTipoAgenteSet(gw, rec, AgentType);
+                        /*
+                                rcRadio = 0, 
+                                rcLCE = 1, 
+                                rcPpBC = 2, 
+                                rcPpBL = 3, 
+                                rcPpAB = 4, 
+                                rcAtsR2 = 5, 
+                                rcAtsN5 = 6, 
+                                rcPpEM = 13, 
+                                rcPpEMM = 51, 
+                                rcNotipo = -1 
+                         * */
+                        SlotRecursoTipoInterfazSet(gw, rec, ntipo);
+
+                        int estado = SnmpS.ToInt(vOut[2].Data);   // 0: NP, 1: OK, 2: Fallo, 3: Degradado
+                        SlotRecursoEstadoSet(gw, rec, estado, (trc)AgentType);
+                    }
+                    else if (ntipo != 9 && ntipo != -1)
+                    {
+                        LogWarn<GwExplorer>(String.Format("Error Explorando Recurso {0}:{1}: Tipo Notificado <{2}> Erroneo.",
+                                    gw.ip, nres, ntipo));
+                    }
                 }
             }
             catch (Exception x)
