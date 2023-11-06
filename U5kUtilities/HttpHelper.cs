@@ -311,6 +311,11 @@ namespace Utilities
                 Notify?.Invoke(false, msg);
             }
         }
-
+        public static async Task<string> GetAsync(string url, TimeSpan timeout)
+        {
+            var httpClient = new HttpClient() { Timeout = timeout };
+            var response = await httpClient.GetAsync(url);
+            return await response.Content.ReadAsStringAsync();
+        }
     }
 }

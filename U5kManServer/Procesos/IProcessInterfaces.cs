@@ -82,7 +82,7 @@ namespace U5kManServer.Procesos
             }
         }
         public event EventHandler<TrapBus.TrapEventArgs> TrapReceived;
-        public Task< IList<Variable>> GetData(object from, IList<Variable> variables)
+        public Task<IList<Variable>> GetData(object from, IList<Variable> variables)
         {
             var data4Poll = new Data4Client(from);
             if (data4Poll.Ip != null)
@@ -150,9 +150,16 @@ namespace U5kManServer.Procesos
         {
             return Task.Run(() =>
             {
-                var ua = new SipUA() { user = user, ip = ip, port = port, radio = isRadio };
-                var res = sips.SipPing(ua);
-                return new Tuple<bool,string>(res, ua.last_response?.Result);
+                try
+                {
+                    var ua = new SipUA() { user = user, ip = ip, port = port, radio = isRadio };
+                    var res = sips.SipPing(ua);
+                    return new Tuple<bool, string>(res, ua.last_response?.Result);
+                }
+                catch (Exception x)
+                {
+                    return new Tuple<bool, string>(false, x.Message);
+                }
             });
         }
         private SipSupervisor sips = null;
@@ -160,13 +167,27 @@ namespace U5kManServer.Procesos
 
     public interface IProcessHttp : IDisposable
     {
-
+        Task<Tuple<bool, string>> Get(string url, TimeSpan timeout);
     }
     public class RuntimeHttpService : IProcessHttp
     {
         public void Dispose()
         {
-            throw new NotImplementedException();
+        }
+        public Task<Tuple<bool, string>> Get(string url, TimeSpan timeout)
+        {
+            return Task.Run( async () =>
+            {
+                try
+                {
+                    var res = await HttpHelper.GetAsync(url, timeout);
+                    return new Tuple<bool, string>(true, res);
+                }
+                catch (Exception x)
+                {
+                    return new Tuple<bool, string>(false, x.Message);
+                }
+            });
         }
     }
 }

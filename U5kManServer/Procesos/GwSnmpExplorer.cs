@@ -621,50 +621,34 @@ namespace U5kManServer
             {
                 string page = "http://" + phgw.ip + ":8080/test";
                 var timeout = TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout);
-                HttpHelper.GetSync(page, timeout, (success, message) =>
+                var httpRes = HttpS.Get(page, timeout).Result;
+                if (httpRes.Item1)
                 {
-                    if (success)
-                    {
-                        stdRes = message.Contains("Handler por Defecto") ? std.Ok : std.Error;
-                    }
-                    else
-                    {
-                        stdRes = std.NoInfo;
-                        mensaje = message;
-                    }
-                });
-
-
-                //var resp = HttpHelper.Get(page, timeout, null);
-                //stdRes = resp == null ? std.NoInfo : resp.Contains("Handler por Defecto") ? std.Ok : std.Error;
-
+                    stdRes = httpRes.Item2.Contains("Handler por Defecto") ? std.Ok : std.Error;
+                }
+                else
+                {
+                    stdRes = std.NoInfo;
+                    mensaje = httpRes.Item2;
+                }
                 /** Obtiene la version unificada */
                 if (stdRes == std.Ok && (phgw.version == string.Empty || phgw.version == idiomas.strings.GWS_VersionError))
                 {
-                    try
-                    {
-                        var resp = HttpHelper.GetSync(phgw.ip, "8080", "/mant/lver", timeout);
-                        phgw.version = resp ?? idiomas.strings.GWS_VersionError;
-                    }
-                    catch (Exception x)
-                    {
-                        LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when getting version", x);
-                    }
+                    var versionPage = $"http://{phgw.ip}:8080/mant/lver";
+                    httpRes = HttpS.Get(versionPage, timeout).Result;
+                    phgw.version = httpRes.Item1 ? httpRes.Item2 : idiomas.strings.GWS_VersionError;
                 }
                 /** Obtiene la información NTP */
                 if (stdRes == std.Ok)
                 {
-                    try
+                    var ntpPage = $"http://{phgw.ip}:8080/ntpstatus";
+                    httpRes = HttpS.Get(ntpPage, timeout).Result;
+                    if (httpRes.Item1)
                     {
-                        var result = HttpHelper.GetSync(phgw.ip, "8080", "/ntpstatus", timeout);
-                        var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(result)).lines;
+                        var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(httpRes.Item2)).lines;
                         status = NormalizeNtpStatusList(status);
                         phgw.NtpInfo.Actualize(phgw.name, status);
                         LogTrace<GwExplorer>($"{phgw.name}, NtpInfo OUT     => <<{phgw.NtpInfo}>>");
-                    }
-                    catch (Exception x)
-                    {
-                        LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when getting ntp info", x);
                     }
                 }
             }
