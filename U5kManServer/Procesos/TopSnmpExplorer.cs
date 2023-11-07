@@ -12,9 +12,6 @@ using U5kBaseDatos;
 using Utilities;
 
 using Lextm.SharpSnmpLib;
-using NucleoGeneric;
-using U5kManServer.Procesos;
-using System.Runtime.InteropServices.ComTypes;
 
 namespace U5kManServer
 {

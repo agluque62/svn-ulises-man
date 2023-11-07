@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 using U5kManServer;
-using U5kManServer.Procesos;
 
 namespace XProccessUnitTests
 {

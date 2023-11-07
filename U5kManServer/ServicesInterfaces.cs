@@ -10,12 +10,14 @@ using System.Threading.Tasks;
 using System.Net.NetworkInformation;
 
 using Lextm.SharpSnmpLib;
+using WebSocket4Net;
+
 using U5kBaseDatos;
 using NucleoGeneric;
 using Utilities;
 using NAudio.Gui;
 
-namespace U5kManServer.Procesos
+namespace U5kManServer
 {
     public class QueryServiceResult<T>
     {
@@ -32,12 +34,15 @@ namespace U5kManServer.Procesos
         U5kManStdData Data { get; }
         bool IsMaster { get; }
         std StatusChangeManage(std antiguo, std nuevo, int scv, eIncidencias inci, eTiposInci thw, string idhw, params object[] parametros);
+        bool IsTherePbx { get; }
+        string PbxIp { get; }
     }
     public class RunTimeData : IDataService
     {
         public U5kManStdData Data => U5kManService.GlobalData;
-
         public bool IsMaster => U5kManService._Master;
+        public bool IsTherePbx => U5kManService.PbxEndpoint != null;
+        public string PbxIp => U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString();
 
         public std StatusChangeManage(std antiguo, std nuevo, int scv, eIncidencias inci, eTiposInci thw, string idhw, params object[] parametros)
         {
@@ -214,6 +219,80 @@ namespace U5kManServer.Procesos
                     return new QueryServiceResult<string>(false, x.Message);
                 }
             });
+        }
+    }
+
+    public interface IPbxWsService : IDisposable
+    {
+        event EventHandler<EventArgs> WsOpen;
+        event EventHandler<EventArgs> WsClosed;
+        event EventHandler<SuperSocket.ClientEngine.ErrorEventArgs> WsError;
+        event EventHandler<MessageReceivedEventArgs> WsMessage;
+        void Connect(string ip);
+        bool Open();
+        void Close();
+        string Url { get; set; }
+    }
+    public class RuntimePbxWsService : IPbxWsService
+    {
+        public event EventHandler<EventArgs> WsOpen = null;
+        public event EventHandler<EventArgs> WsClosed = null;
+        public event EventHandler<SuperSocket.ClientEngine.ErrorEventArgs> WsError;
+        public event EventHandler<MessageReceivedEventArgs> WsMessage;
+
+        public string Url { get; set; } = null;
+        public RuntimePbxWsService(int port, string  username, string password)
+        {
+            this.port = port;
+            this.username = username;
+            this.password = password;
+        }
+        public void Dispose()
+        {
+            ws?.Dispose();
+            ws = null;
+        }
+        public bool Open()
+        {
+            if (ws?.State == WebSocketState.Closed || ws.State == WebSocketState.None)
+            {
+                ws?.Open();
+                return true;
+            }
+            return false;
+        }
+        public void Close()
+        {
+            ws?.Close();
+        }
+        public void Connect(string ip)
+        {
+            Dispose();
+            Setup(ip);
+        }
+        void Setup(string ip)
+        {
+            Url = $"ws://{ip}:{port}/pbx/ws?login_user={username}&login_password={password}&user=*&registered=True&status=True&line=*";
+            ws = new WebSocket(Url);
+            ws.Opened += (from, data) => WsOpen?.Invoke(from, data);
+            ws.Closed += (from, data) => WsClosed?.Invoke(from, data);
+            ws.Error += (from, data) => WsError?.Invoke(from, data);
+            ws.MessageReceived += (from, data) => WsMessage(from, data);
+        }
+        WebSocket ws = null;
+        int port = 0;
+        string username = null;
+        string password = null;
+    }
+
+    public interface ICommFtpService : IDisposable
+    {
+    }
+    public class RuntimeCommFtpService : ICommFtpService
+    {
+        public void Dispose()
+        {
+            throw new NotImplementedException();
         }
     }
 }

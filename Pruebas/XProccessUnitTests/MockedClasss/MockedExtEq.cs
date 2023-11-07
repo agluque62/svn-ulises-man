@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Moq;
 
 using U5kManServer;
-using U5kManServer.Procesos;
 
 
 namespace XProccessUnitTests.MockedClasss

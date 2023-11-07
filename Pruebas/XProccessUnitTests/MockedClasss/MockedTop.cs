@@ -9,7 +9,6 @@ using Moq;
 using Lextm.SharpSnmpLib;
 
 using U5kManServer;
-using U5kManServer.Procesos;
 
 namespace XProccessUnitTests.MockedClass
 {
