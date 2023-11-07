@@ -26,7 +26,7 @@ namespace XProccessUnitTests
         void PrepareTest(Action<TopSnmpExplorer, MockedTop> action)
         {
             var mockedTopData = new MockedTop();            
-            var topProc = new TopSnmpExplorer(mockedTopData.ProcessData, mockedTopData.ProcessSnmp);
+            var topProc = new TopSnmpExplorer(mockedTopData.DataService, mockedTopData.SnmpService);
 
             topProc.Start();
             action(topProc, mockedTopData);

@@ -760,7 +760,6 @@ namespace U5kManServer
                     // Error OID no encontrado...
                     LogWarn<TopSnmpExplorer>($"On TOP {pos.name} invalid OID => [{varItem.Id}].");
                 }
-
             }
         }
         protected void TrapReceived(object from, TrapBus.TrapEventArgs args)

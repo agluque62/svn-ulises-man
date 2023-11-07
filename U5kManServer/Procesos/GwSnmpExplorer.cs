@@ -20,7 +20,7 @@ using U5kManServer.Procesos;
 
 namespace U5kManServer
 {
-    enum eGwPar
+    public enum eGwPar
     {
         None = 0,
         GwStatus,
@@ -52,9 +52,9 @@ namespace U5kManServer
             phgw.version = string.Empty;
         }
     }
-    class GwExplorer : NucleoGeneric.NGThread
+    public class GwExplorer : NucleoGeneric.NGThread, IDisposable
     {
-        static string OidGet(string id, string _default)
+        public static string OidGet(string id, string _default)
         {
             foreach (string s in Properties.u5kManServer.Default.GwOids)
             {
@@ -65,7 +65,7 @@ namespace U5kManServer
 
             return _default;
         }
-        static public Dictionary<eGwPar, string> _GwOids = new Dictionary<eGwPar, string>()
+        public static Dictionary<eGwPar, string> _GwOids = new Dictionary<eGwPar, string>()
         {
             // General de la Pasarela.
             {eGwPar.GwStatus,OidGet("EstadoGw",".1.1.100.2.0")},
@@ -151,13 +151,13 @@ namespace U5kManServer
         IPingService PingS = null;
         ICommSipService SipS = null;
         ICommSnmpService SnmpS = null;
-        IProcessHttp HttpS = null;
+        ICommHttpService HttpS = null;
         public GwExplorer(
             IDataService pdata = null, 
             IPingService pping = null, 
             ICommSipService psip = null,
             ICommSnmpService psnmp = null,
-            IProcessHttp phttp = null)
+            ICommHttpService phttp = null)
         {
             DataS = pdata ?? new RunTimeData();
             PingS = pping ?? new RuntimePingService();
@@ -199,7 +199,7 @@ namespace U5kManServer
                                     {
                                         try
                                         {
-                                            LogTrace<GwExplorer>($"Exploracion {newGw.name} iniciada.");
+                                            LogTrace<GwExplorer>($"Exploracion iniciada.", default, default, newGw.name);
                                             ExploraGw(newGw);
                                             /// Copio los datos obtenidos a la tabla...
                                             GlobalServices.GetWriteAccess(() =>
@@ -213,22 +213,22 @@ namespace U5kManServer
                                                     }
                                                     else
                                                     {
-                                                        LogWarn<GwExplorer>($"Exploracion {newGw.name}. Resultado Exploracion ignorado. Cambio de configuracion.");
+                                                        LogWarn<GwExplorer>($"Resultado Exploracion ignorado. Cambio de configuracion.", default, default, newGw.name);
                                                     }
                                                 }
                                                 else
                                                 {
-                                                    LogWarn<GwExplorer>($"Exploracion {newGw.name}. Resultado Exploracion ignorado.  Pasarela Eliminada");
+                                                    LogWarn<GwExplorer>($"Resultado Exploracion ignorado.  Pasarela Eliminada.", default, default, newGw.name);
                                                 }
                                             });
                                         }
                                         catch (Exception x)
                                         {
-                                            LogException<GwExplorer>($"In ({newGw.name}, {newGw.ip}) Exception when monitoring", x);
+                                            LogException<GwExplorer>($"Exception when monitoring", x, default, default, newGw.name);
                                         }
                                         finally
                                         {
-                                            LogTrace<GwExplorer>($"Exploracion de {newGw.name} finalizada.");
+                                            LogTrace<GwExplorer>($"Exploracion de finalizada.", default, default, newGw.name);
                                         }
                                     }, TaskCreationOptions.LongRunning);
                                     taskControl.SetTask(gw.name, task);
@@ -236,7 +236,7 @@ namespace U5kManServer
                                 else
                                 {
                                     // TODO. Algun tipo de supervision si nunca vuelve...
-                                    LogWarn<GwExplorer>($"Exploracion de Pasarela {gw.name} no finalizada en Tiempo ...");
+                                    LogWarn<GwExplorer>($"Exploracion de Pasarela no finalizada en Tiempo ...", default, default, gw.name);
                                 }
                             });
                         });
@@ -455,24 +455,24 @@ namespace U5kManServer
 
             if (gw.gwA.IpConn.IsPollingTime() == true)
             {
-                LogTrace<GwExplorer>($"POLL Executed: {gw.gwA.name}");
+                LogTrace<GwExplorer>($"POLL Executed", default, default, gw.gwA.name);
                 ExplorePhGw(gw.gwA);
             }
             else
             {
-                LogTrace<GwExplorer>($"POLL Skipped : {gw.gwA.name}");
+                LogTrace<GwExplorer>($"POLL Skipped", default, default, gw.gwA.name);
             }
 
             if (gw.Dual)
             {
                 if (gw.gwB.IpConn.IsPollingTime() == true)
                 {
-                    LogTrace<GwExplorer>($"POLL Executed: {gw.gwB.name}");
+                    LogTrace<GwExplorer>($"POLL Executed", default, default, gw.gwB.name);
                     ExplorePhGw(gw.gwB);
                 }
                 else
                 {
-                    LogTrace<GwExplorer>($"POLL Skipped : {gw.gwB.name}");
+                    LogTrace<GwExplorer>($"POLL Skipped", default, default, gw.gwB.name);
                 }
             }
 
@@ -492,7 +492,7 @@ namespace U5kManServer
                 if (phgw.IpConn.ProcessResult(resPing))
                 {
                     phgw.IpConn.Std = resPing ? std.Ok : std.NoInfo;
-                    LogTrace<GwExplorer>($"GwPing {(resPing ? "Ok  " : "Fail")} executed: {phgw.name}.");
+                    LogTrace<GwExplorer>($"GwPing {(resPing ? "Ok  " : "Fail")} executed.", default, default, phgw.name);
                     if (phgw.IpConn.Std == std.Ok)
                     {
                         // Supervision del Modulo SIP...
@@ -501,11 +501,11 @@ namespace U5kManServer
                             if (phgw.SipMod.ProcessResult(res) == true)
                             {
                                 phgw.SipMod.Std = newStd;
-                                LogTrace<GwExplorer>($"GwSip_ {(res ? "Ok  " : "Fail")} executed: {phgw.name}.");
+                                LogTrace<GwExplorer>($"GwSip_ {(res ? "Ok  " : "Fail")} executed.", default, default, phgw.name);
                             }
                             else
                             {
-                                LogWarn<GwExplorer>($"GwSip_ Fail ignored : {phgw.name}.");
+                                LogWarn<GwExplorer>($"GwSip_ Fail ignored.", default, default, phgw.name);
                             }
                         });
 
@@ -518,15 +518,15 @@ namespace U5kManServer
                                 {
                                     phgw.CfgMod.Std = newStd;
                                     if (res)
-                                        LogTrace<GwExplorer>($"GwCfg_ Ok  executed: {phgw.name}.");
+                                        LogTrace<GwExplorer>($"GwCfg_ Ok  executed.", default, default, phgw.name);
                                     else
                                     {
-                                        LogTrace<GwExplorer>($"GwCfg_ Fail EXECUTED: {phgw.name}\n   <{mensaje}>.");
+                                        LogTrace<GwExplorer>($"GwCfg_ Fail EXECUTED\n   <{mensaje}>.", default, default, phgw.name);
                                     }
                                 }
                                 else
                                 {
-                                    LogTrace<GwExplorer>($"GwCfg_ Fail IGNORED: {phgw.name}\n   <{mensaje}>.");
+                                    LogTrace<GwExplorer>($"GwCfg_ Fail IGNORED\n   <{mensaje}>.", default, default, phgw.name);
                                 }
                             });
 
@@ -544,11 +544,11 @@ namespace U5kManServer
                                         phgw.SnmpMod.Std = std.NoInfo;
                                         phgw.SnmpDataReset();
                                     }
-                                    LogTrace<GwExplorer>($"GwSnmp {(res ? "Ok  " : "Fail")} executed: {phgw.name}.");
+                                    LogTrace<GwExplorer>($"GwSnmp {(res ? "Ok  " : "Fail")} executed.", default, default, phgw.name);
                                 }
                                 else
                                 {
-                                    LogWarn<GwExplorer>($"GwSnmp Fail ignored : {phgw.name}.");
+                                    LogWarn<GwExplorer>($"GwSnmp Fail ignored.", default, default, phgw.name);
                                 }
                             });
                         }
@@ -564,12 +564,12 @@ namespace U5kManServer
                 }
                 else
                 {
-                    LogWarn<GwExplorer>($"GwPing Fail ignored : {phgw.name}.");
+                    LogWarn<GwExplorer>($"GwPing Fail ignored.", default, default, phgw.name);
                 }
             }
             catch (Exception x)
             {
-                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when Exploring", x);
+                LogException<GwExplorer>($"Exception when Exploring", x, default, default, phgw.name);
                 if (phgw.IpConn.ProcessResult(false) == true)
                 {
                     phgw.IpConn.Std = std.NoInfo;
@@ -586,18 +586,16 @@ namespace U5kManServer
             try
             {
                 int timeout = Properties.u5kManServer.Default.SipOptionsTimeout;
-                SipUA locale_ua = new SipUA() { user = "MTTO", ip = Properties.u5kManServer.Default.MiDireccionIP, port = 0 };
-                SipUA remote_ua = new SipUA() { user = phgw.name, ip = phgw.ip, port = 5060, radio = true };
-                SipSupervisor sips = new SipSupervisor(locale_ua, timeout);
-                if (sips.SipPing(remote_ua))
+                var res = SipS.Ping(phgw.name, phgw.ip, 5060, true).Result;
+                if (res.Success == true)
                 {
-                    if (remote_ua.last_response == null || remote_ua.last_response.Result == "Error")
+                    if (res.Result == null || res.Result == "Error")
                     {
                         response(false, std.NoInfo);
                     }
                     else
                     {
-                        response(true, (remote_ua.last_response.Result == "200" || remote_ua.last_response.Result == "503") ? std.Ok : std.Error);
+                        response(true, (res.Result == "200" || res.Result == "503") ? std.Ok : std.Error);
                     }
                 }
                 else
@@ -609,7 +607,7 @@ namespace U5kManServer
             catch (Exception x)
             {
                 // Error en los OPTIONS...
-                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when SipModuleTest", x);
+                LogException<GwExplorer>($"Exception when SipModuleTest", x, default, default, phgw.name);
                 response(false, std.NoInfo);
             }
         }
@@ -648,7 +646,7 @@ namespace U5kManServer
                         var status = (U5kManWebAppData.JDeserialize<stdGw.RemoteNtpClientStatus>(httpRes.Result)).lines;
                         status = NormalizeNtpStatusList(status);
                         phgw.NtpInfo.Actualize(phgw.name, status);
-                        LogTrace<GwExplorer>($"{phgw.name}, NtpInfo OUT     => <<{phgw.NtpInfo}>>");
+                        LogTrace<GwExplorer>($"NtpInfo OUT     => <<{phgw.NtpInfo}>>", default, default, phgw.name);
                     }
                 }
             }
@@ -656,7 +654,7 @@ namespace U5kManServer
             {
                 // Error en Modulo de Configuracion Local...
                 stdRes = std.NoInfo;
-                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when CfgModuleTest", x);
+                LogException<GwExplorer>($"Exception when CfgModuleTest", x, default, default, phgw.name);
             }
             finally
             {
@@ -683,7 +681,7 @@ namespace U5kManServer
             {
                 // Error en la Exploracion SNMP....
                 response(false);
-                LogException<GwExplorer>($"In ({phgw.name}, {phgw.ip}) Exception when SnmpModuleTest", x);
+                LogException<GwExplorer>($"Exception when SnmpModuleTest", x, default, default, phgw.name);
             }
         }
         void ConsolidateData(stdPhGw last, stdPhGw current)
@@ -736,7 +734,7 @@ namespace U5kManServer
             catch (Exception x)
             {
                 // Error en la consolidacion.
-                LogException<GwExplorer>($"In ({last.name}, {last.ip}) Exception when ConsolidateData", x);
+                LogException<GwExplorer>($"Exception when ConsolidateData", x, default, default, last.name);
             }
             finally
             {
@@ -837,7 +835,7 @@ namespace U5kManServer
             {
                     LogException<GwExplorer>(String.Format(" Explorando Slot. CGW {0}.{1}",
                     obj == null ? "null" : ((KeyValuePair<stdPhGw, int>)obj).Key.ip,
-                    obj == null ? "null" : ((KeyValuePair<stdPhGw, int>)obj).Value.ToString()), x);
+                    obj == null ? "null" : ((KeyValuePair<stdPhGw, int>)obj).Value.ToString()), x, default, default, gw.name);
             }
         }
         void SnmpExploraRecurso(object obj)
@@ -852,7 +850,7 @@ namespace U5kManServer
             OctetString community = new OctetString("public");
 
             if (gw.name == "" && nslot == 0 && ires == 1)
-                LogTrace<GwExplorer>(String.Format("Presencia (1) Slot 0, Recurso 1: {0}", gw.slots[0].rec[1].presente));
+                LogTrace<GwExplorer>(String.Format("Presencia (1) Slot 0, Recurso 1: {0}", gw.slots[0].rec[1].presente), default, default, gw.name);
 
             try
             {
@@ -904,13 +902,13 @@ namespace U5kManServer
                     else if (ntipo != 9 && ntipo != -1)
                     {
                         LogWarn<GwExplorer>(String.Format("Error Explorando Recurso {0}:{1}: Tipo Notificado <{2}> Erroneo.",
-                                    gw.ip, nres, ntipo));
+                                    gw.ip, nres, ntipo), default, default, gw.name);
                     }
                 }
             }
             catch (Exception x)
             {
-                LogException<GwExplorer>(String.Format(" Explorando recurso en {0}: Rec:{1}-{2}", gw.ip, nres, rec.name), x);
+                LogException<GwExplorer>(String.Format(" Explorando recurso en {0}: Rec:{1}-{2}", gw.ip, nres, rec.name), x, default, default, gw.name);
             }
         }
         void SnmpTrapReceived(object from, TrapBus.TrapEventArgs args)
@@ -927,7 +925,7 @@ namespace U5kManServer
                         .FirstOrDefault();
                     if (gw != null)
                     {
-                        LogInfo<GwExplorer>($"GW Trap Received => {args}");
+                        LogInfo<GwExplorer>($"GW Trap Received => {args}", default, default, gw.name);
                         var pgw = gw.gwA.ip == ipfrom ? gw.gwA : gw.gwB;
                         ProcessTrap(gw, pgw, args.TrapOid, args.VarOid, args.VarData);
                     }
@@ -953,7 +951,7 @@ namespace U5kManServer
                 case ".1.3.6.1.4.1.7916.8.3.2.1.5":         // Evento de Historicos.
                     if (oidvar == ".1.3.6.1.4.1.7916.8.3.2.1.7.0")
                     {
-                        LogTrace<GwExplorer>(String.Format("GWU-HISTORICO: <<<{0}>>>", data.ToString()));
+                        LogTrace<GwExplorer>(String.Format("GWU-HISTORICO: <<<{0}>>>", data.ToString()), default, default, pgw.name);
 
                         using (var hist = new Redan2UlisesHist(data.ToString()))
                         {
@@ -971,7 +969,7 @@ namespace U5kManServer
                                         var msg = $" Historico fuera de sincronismo: GW => [{pgw.name},{pgw.ip}], " +
                                             $"GW UTC date => {date}, Local date => {DateTime.Now}, " +
                                             $"Inci => {inci}";
-                                        LogWarn<GwExplorer>(msg);
+                                        LogWarn<GwExplorer>(msg, default, default, pgw.name);
                                         RecordEvent<GwExplorer>(DateTime.Now,
                                             eIncidencias.IGRL_U5KI_SERVICE_ERROR,
                                             eTiposInci.TEH_SISTEMA, "SPV",
@@ -983,14 +981,14 @@ namespace U5kManServer
                                     }
                                 }
                                 else
-                                    LogWarn<GwExplorer>(String.Format("GWU-HISTORICO NO CONVERTIDO: <<<{0}>>>", data.ToString()));
+                                    LogWarn<GwExplorer>(String.Format("GWU-HISTORICO NO CONVERTIDO: <<<{0}>>>", data.ToString()), default, default, pgw.name);
                             });
                         }
                     }
                     break;
 
                 default:
-                    LogWarn<GwExplorer>(String.Format("Recibido TRAP-GW OID-Desconocida de {0}, OID={1}", gw?.ip, oidEnt));
+                    LogWarn<GwExplorer>(String.Format("Recibido TRAP-GW OID-Desconocida de {0}, OID={1}", gw?.ip, oidEnt), default, default, pgw.name);
                     break;
             }
         }
@@ -1222,6 +1220,9 @@ namespace U5kManServer
             return TipoNotificado;
         }
 
+        void IDisposable.Dispose()
+        {
+        }
     }   // clase
 
 } // namespace.

@@ -25,7 +25,7 @@ namespace XProccessUnitTests
         void PrepareTest(Action<ExtEquSpv, MockedExtEq> cont)
         {
             var mockedData = new MockedExtEq(true, true);
-            var proc = new ExtEquSpv(mockedData.ProcessData, mockedData.ProcessPing, mockedData.ProcessSip);
+            var proc = new ExtEquSpv(mockedData.DataService, mockedData.PingService, mockedData.SipService);
             proc.Start();
             cont(proc, mockedData);
             proc.Stop(TimeSpan.FromSeconds(5));

@@ -15,40 +15,40 @@ namespace XProccessUnitTests.MockedClasss
 {
     public class MockedExtEq
     {
-        public IDataService ProcessData => ProcessDataMock.Object;
-        public IPingService ProcessPing => ProcessPingMock.Object;
-        public ICommSipService ProcessSip => ProcessSipMock.Object;
+        public IDataService DataService => DataServiceMock.Object;
+        public IPingService PingService => PingServiceMock.Object;
+        public ICommSipService SipService => SipServiceMock.Object;
 
         public MockedExtEq(bool presente = true, bool sipagent=true) 
         {
-            ProcessDataMock = new Mock<IDataService>();
-            ProcessPingMock = new Mock<IPingService>();
-            ProcessSipMock = new Mock<ICommSipService>();
+            DataServiceMock = new Mock<IDataService>();
+            PingServiceMock = new Mock<IPingService>();
+            SipServiceMock = new Mock<ICommSipService>();
             Presente = presente;
             SipAgent = sipagent;
 
-            SetupProcessData();
-            SetupProcessPing();
-            SetupProcessSip();
+            DataServiceSetup();
+            PingServiceSetup();
+            SipServiceSetup();
         }
-        void SetupProcessData()
+        void DataServiceSetup()
         {
-            ProcessDataMock.Setup(library => library.Data)
+            DataServiceMock.Setup(library => library.Data)
                 .Returns(mockedData);
-            ProcessDataMock.Setup(x => x.IsMaster)
+            DataServiceMock.Setup(x => x.IsMaster)
                 .Returns(true);
         }
-        void SetupProcessPing()
+        void PingServiceSetup()
         {
-            ProcessPingMock
+            PingServiceMock
                 .Setup(proc => proc.Ping(
                     It.IsAny<string>(),
                     It.IsAny<bool>()))
                 .Returns(Task.Run(() => Presente));
         }
-        void SetupProcessSip()
+        void SipServiceSetup()
         {
-            ProcessSipMock
+            SipServiceMock
                 .Setup(proc => proc.Ping(
                     It.IsAny<string>(),
                     It.IsAny<string>(),
@@ -64,9 +64,9 @@ namespace XProccessUnitTests.MockedClasss
                 new EquipoEurocae(){ Id="MK-EQ1", Ip1="127.0.0.1", sip_port=5060, sip_user="MK-RC02", Tipo=1}
             }
         };
-        readonly Mock<IDataService> ProcessDataMock;
-        readonly Mock<IPingService> ProcessPingMock;
-        readonly Mock<ICommSipService> ProcessSipMock;
+        readonly Mock<IDataService> DataServiceMock;
+        readonly Mock<IPingService> PingServiceMock;
+        readonly Mock<ICommSipService> SipServiceMock;
         readonly bool Presente;
         readonly bool SipAgent;
     }

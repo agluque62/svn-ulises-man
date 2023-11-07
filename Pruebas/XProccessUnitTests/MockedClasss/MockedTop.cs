@@ -15,19 +15,19 @@ namespace XProccessUnitTests.MockedClass
 {
     public class MockedTop
     {
-        public IDataService ProcessData => ProcessDataMock.Object;
-        public ICommSnmpService ProcessSnmp => ProcessSnmpMock.Object;
+        public IDataService DataService => DataServiceMock.Object;
+        public ICommSnmpService SnmpService => SnmpServiceMock.Object;
 
         public MockedTop()
         {
-            ProcessDataMock = new Mock<IDataService>();
-            ProcessSnmpMock = new Mock<ICommSnmpService>();
-            SetupProcessData();
-            SetupProcessSndmp();
+            DataServiceMock = new Mock<IDataService>();
+            SnmpServiceMock = new Mock<ICommSnmpService>();
+            DataServiceSetup();
+            SnmpServiceSetup();
         }
         public void RaiseTrap()
         {
-            ProcessSnmpMock.Raise(x => x.TrapReceived += null,
+            SnmpServiceMock.Raise(x => x.TrapReceived += null,
                 new TrapBus.TrapEventArgs()
                 {
                     From = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 161),
@@ -36,16 +36,16 @@ namespace XProccessUnitTests.MockedClass
                     VarData = new OctetString("hola")
                 });
         }
-        void SetupProcessData()
+        void DataServiceSetup()
         {
-            ProcessDataMock.Setup(library => library.Data)
+            DataServiceMock.Setup(library => library.Data)
                 .Returns(mockedData);
-            ProcessDataMock.Setup(x => x.IsMaster)
+            DataServiceMock.Setup(x => x.IsMaster)
                 .Returns(true);
         }
-        void SetupProcessSndmp()
+        void SnmpServiceSetup()
         {
-            ProcessSnmpMock.Setup(x => x.GetData(It.IsAny<object>(), It.IsAny<IList<Variable>>()))
+            SnmpServiceMock.Setup(x => x.GetData(It.IsAny<object>(), It.IsAny<IList<Variable>>()))
                 .Returns<object, IList<Variable>>((from, input) => SimulatedSnmpData(input));
         }
         U5kManStdData mockedData => new U5kManStdData()
@@ -66,7 +66,7 @@ namespace XProccessUnitTests.MockedClass
                         new Variable(new ObjectIdentifier(".1.3.6.1.4.1.7916.8.2.2.3.0"), new Integer32(1))
                     }));
         }
-        readonly Mock<IDataService> ProcessDataMock;
-        readonly Mock<ICommSnmpService> ProcessSnmpMock;
+        readonly Mock<IDataService> DataServiceMock;
+        readonly Mock<ICommSnmpService> SnmpServiceMock;
     }
 }

@@ -190,11 +190,11 @@ namespace U5kManServer.Procesos
         private SipSupervisor sips = null;
     }
 
-    public interface IProcessHttp : IDisposable
+    public interface ICommHttpService : IDisposable
     {
         Task<QueryServiceResult<string>> Get(string url, TimeSpan timeout);
     }
-    public class RuntimeHttpService : IProcessHttp
+    public class RuntimeHttpService : ICommHttpService
     {
         public void Dispose()
         {
