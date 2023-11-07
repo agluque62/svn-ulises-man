@@ -14,7 +14,6 @@ using WebSocket4Net;
 using Newtonsoft.Json;
 
 using Utilities;
-using NucleoGeneric;
 using System.Threading.Tasks;
 
 namespace U5kManServer
@@ -26,12 +25,17 @@ namespace U5kManServer
         IDataService dataService = null;
         IPingService pingService = null;
         IPbxWsService pbxWsService = null;
-        public PabxItfService(IDataService dataService = null, IPingService pingService=null, IPbxWsService pbxWsService=null)
+        ICommFtpService ftpService = null;
+        public PabxItfService(IDataService dataService = null, IPingService pingService=null, IPbxWsService pbxWsService=null, ICommFtpService ftpService=null)
         {
             Int32.TryParse(Properties.u5kManServer.Default.PabxWsPort, out int port);
             this.dataService = dataService ?? new RunTimeData();
             this.pingService = pingService ?? new RuntimePingService();
             this.pbxWsService = pbxWsService ?? new RuntimePbxWsService(port, "sa", Properties.u5kManServer.Default.PabxSaPwd);
+            this.ftpService = ftpService ?? new RuntimeCommFtpService(
+                Properties.u5kManServer.Default.ProxyFtpUser, 
+                Properties.u5kManServer.Default.ProxyFtpPwd,
+                (int)TimeSpan.FromSeconds(Properties.u5kManServer.Default.ProxyFtpTimeout).TotalMilliseconds);
         }
         public new string Name => "PabxItfService";
         public ServiceStatus Status => _Status;
@@ -48,10 +52,10 @@ namespace U5kManServer
                     _Status = ServiceStatus.Running;
                     _WorkingThread.Start();
 
-                    pbxWsService.Connect(dataService.PbxIp);
+                    pbxWsService.Connect(dataService.PbxIp).Wait();
                     ConnectTheEvents();
-                    pbxWsService.Open();
-                    _pabxStatus = EPabxStatus.epsConectando;
+                    
+                    WsStatus = pbxWsService.Open().Result == true ? EPabxStatus.epsConectando : EPabxStatus.epsDesconectado;
 
                     _TimerPbax = new Timer();
                     _TimerPbax.Interval = 5000;
@@ -127,38 +131,42 @@ namespace U5kManServer
         #region Private Members
         enum EPabxStatus { epsDesconectado, epsConectando, epsConectado };
         private EPabxStatus _pabxStatus = EPabxStatus.epsDesconectado;
+        EPabxStatus WsStatus 
+        { 
+            get => _pabxStatus;
+            set
+            {
+                LogTrace<PabxItfService>($"WsStatus => {value}", default, default, Name);
+                _pabxStatus = value;
+            }
+        }
         private ServiceStatus _Status = ServiceStatus.Stopped;
         private EventQueue _WorkingThread = new EventQueue();
         private Timer _TimerPbax = null;
-        private string InfoString { get => String.Format("HayPbx={0}, PbxUrl={1}, Estado={2}", dataService.IsTherePbx, pbxWsService.Url, _pabxStatus); }
+        private string InfoString { get => String.Format("HayPbx={0}, PbxUrl={1}, Estado={2}", dataService.IsTherePbx, pbxWsService.Url, WsStatus); }
         private bool IsOperative => dataService.IsMaster && dataService.IsTherePbx;
         #endregion
 
         #region Callbacks
         private void OnWebsocketOpen(object sender, EventArgs e)
         {
-            U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_opened");
+            LogInfo<PabxItfService>($"WebSocketOpen Event on status {WsStatus} url {pbxWsService.Url} ", default, default, Name);
             if (IsOperative)
             {
             }
-            LogTrace<PabxItfService>("WebSocket Abierto en " + pbxWsService.Url, default, default, Name);
         }
-        private void OnWebsocketError(object sender, SuperSocket.ClientEngine.ErrorEventArgs e)
+        private void OnWebsocketError(object sender, WsErrorEventArgs e)
         {
-            U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_error");
+            LogWarn<PabxItfService>($"WebSocketError Event on status {WsStatus} url {pbxWsService.Url} Error {e.Exception.Message}", default, default, Name);
             if (IsOperative)
             {
             }
-            LogWarn<PabxItfService>("WebSocketError en " + pbxWsService.Url + ": " + e.Exception.Message, default, default, Name);
         }
         private void OnWebsocketClosed(object sender, EventArgs e)
         {
-            U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_closed");
-
+            LogInfo<PabxItfService>($"WebSocketClose Event on status {WsStatus} url {pbxWsService.Url} ", default, default, Name);
             _WorkingThread.Enqueue("websocket_Closed", delegate ()
             {
-                U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_closed enqueue");
-
                 GlobalServices.GetWriteAccess(() =>
                 {
                     U5KStdGeneral stdg = dataService.Data.STDG;
@@ -166,7 +174,7 @@ namespace U5kManServer
                     {
                         if (IsOperative)
                         {
-                            _pabxStatus = EPabxStatus.epsDesconectado;
+                            WsStatus = EPabxStatus.epsDesconectado;
 
                             if (stdg.stdPabx.Estado != std.NoInfo)
                                 RecordEvent<PabxItfService>(DateTime.Now, U5kBaseDatos.eIncidencias.IGRL_U5KI_SERVICE_ERROR, U5kBaseDatos.eTiposInci.TEH_SISTEMA, "SPV",
@@ -186,15 +194,13 @@ namespace U5kManServer
                     }
                 });
             });
-            LogInfo<PabxItfService>("WebSocket Cerrado en " + pbxWsService.Url, default, default, Name);
         }
-        private void OnWebsocketMessageReceived(object sender, MessageReceivedEventArgs e)
+        private void OnWebsocketMessageReceived(object sender, WsMessageEventArgs e)
         {
-            U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_msg");
+            LogTrace<PabxItfService>($"WebSocketMessageReceived Event on status {WsStatus}, msg {e.Message}, ", default, default, Name);
 
             _WorkingThread.Enqueue("websocket_MessageReceived", delegate ()
             {
-                U5kGenericos.TraceCurrentThread(this.GetType().Name + " websocket_msg enqueue");
                 // Como este evento puede tocar la tabla de estado, adquiero el acceso.
                 GlobalServices.GetWriteAccess(() =>
                 {
@@ -225,93 +231,89 @@ namespace U5kManServer
                     }
                 });
             });
-
-            LogTrace<PabxItfService>(String.Format("WebSocket en {0}: Mensaje Recibido: {1}", pbxWsService.Url, e.Message), default, default, Name);
         }
         private void OnTimePabxElapsed(object sender, ElapsedEventArgs e)
         {
-            U5kGenericos.TraceCurrentThread(this.GetType().Name + " TimePbxElapsed");
+            //U5kGenericos.TraceCurrentThread(this.GetType().Name + " TimePbxElapsed");
 
             _WorkingThread.Enqueue("OnTimePabxElapsed", delegate ()
             {
-                U5kGenericos.TraceCurrentThread(this.GetType().Name + " TimePbxElapsed enqueue");
+                //U5kGenericos.TraceCurrentThread(this.GetType().Name + " TimePbxElapsed enqueue");
                 ConfigCultureSet();
                 try
                 {
+                    LogTrace<PabxItfService>($"OnTimePabxElapsed entry => {WsStatus}", default, default, Name);
                     if (IsOperative)
                     {
-                        if (Properties.u5kManServer.Default.PabxSimulada == false)
+                        /** 20181114. Supervisa los cambios de configuracion */
+                        ChangeConfigSpv(() =>
                         {
-                            /** 20181114. Supervisa los cambios de configuracion */
-                            ChangeConfigSpv(() =>
+                            GlobalServices.GetWriteAccess(() =>
                             {
-                                GlobalServices.GetWriteAccess(() =>
-                                {
-                                    dataService.Data.STDG.stdPabx.Estado = std.NoInfo;
-                                });
-
-                                if (_pabxStatus != EPabxStatus.epsDesconectado)
-                                {
-                                    try
-                                    {
-                                       pbxWsService.Close();
-                                    }
-                                    finally
-                                    {
-                                    }
-                                }
-
-                                pbxWsService.Connect(dataService.PbxIp);
-                                ConnectTheEvents();
-                                _pabxStatus = EPabxStatus.epsDesconectado;
-                                LogInfo<PabxItfService>("Servicio Reinicializado por cambio de configuracion.", default, default, Name);
+                                dataService.Data.STDG.stdPabx.Estado = std.NoInfo;
                             });
 
-                            switch (_pabxStatus)
+                            if (WsStatus != EPabxStatus.epsDesconectado)
                             {
-                                case EPabxStatus.epsDesconectado:
-                                    var resp = pingService.Ping(dataService.PbxIp, _pabxStatus == EPabxStatus.epsConectado).Result;
-                                    if (resp)
-                                    {
-                                        pbxWsService.Open();
-                                        _pabxStatus = EPabxStatus.epsConectando;
-                                    }
-                                    break;
-
-                                case EPabxStatus.epsConectando:
-                                    /** 20181114. Han pasado 5 segundos sin respuesta. Fuerzo otro ping....*/
-                                    _pabxStatus = EPabxStatus.epsDesconectado;
-                                    pbxWsService.Close();
-                                    break;
-
-                                case EPabxStatus.epsConectado:
-                                    resp = pingService.Ping(dataService.PbxIp, _pabxStatus == EPabxStatus.epsConectado).Result;
-                                    if (resp)
-                                    {
-                                        LogWarn<PabxItfService>("Fallo de Ping....Cierro WS", default, default, Name);
-                                        _pabxStatus = EPabxStatus.epsDesconectado;
-                                        pbxWsService.Close();
-
-                                        GlobalServices.GetWriteAccess(() =>
-                                        {
-                                            if (dataService.Data.STDG.stdPabx.Estado != std.NoInfo)
-                                                RecordEvent<PabxItfService>(DateTime.Now, U5kBaseDatos.eIncidencias.IGRL_U5KI_SERVICE_ERROR, U5kBaseDatos.eTiposInci.TEH_SISTEMA, "SPV",
-                                                    Params(idiomas.strings.PBX_Desconectada/*"PBX Desconectada"*/, "", "", ""));
-
-                                            dataService.Data.STDG.stdPabx.Estado = std.NoInfo;
-
-                                            /* Desregistrar. */
-                                            dataService.Data.STDPBXS.ForEach(d => d.Estado = std.NoInfo);
-                                        });
-                                    }
-                                    break;
-
-                                default:
-                                    break;
+                                try
+                                {
+                                    pbxWsService.Close().Wait();
+                                }
+                                finally
+                                {
+                                }
                             }
+
+                            pbxWsService.Connect(dataService.PbxIp).Wait();
+                            ConnectTheEvents();
+                            WsStatus = EPabxStatus.epsDesconectado;
+                            LogInfo<PabxItfService>("Servicio Reinicializado por cambio de configuracion.", default, default, Name);
+                        });
+
+                        switch (WsStatus)
+                        {
+                            case EPabxStatus.epsDesconectado:
+                                var resp = pingService.Ping(dataService.PbxIp, WsStatus == EPabxStatus.epsConectado).Result;
+                                if (resp)
+                                {
+                                    WsStatus = pbxWsService.Open().Result == true ? EPabxStatus.epsConectando : EPabxStatus.epsDesconectado;
+                                }
+                                break;
+
+                            case EPabxStatus.epsConectando:
+                                /** 20181114. Han pasado 5 segundos sin respuesta. Fuerzo otro ping....*/
+                                WsStatus = EPabxStatus.epsDesconectado;
+                                pbxWsService.Close().Wait();
+                                break;
+
+                            case EPabxStatus.epsConectado:
+                                resp = pingService.Ping(dataService.PbxIp, WsStatus == EPabxStatus.epsConectado).Result;
+                                if (resp == false)
+                                {
+                                    LogWarn<PabxItfService>("Fallo de Ping....Cierro WS", default, default, Name);
+                                    WsStatus = EPabxStatus.epsDesconectado;
+                                    pbxWsService.Close().Wait();
+
+                                    GlobalServices.GetWriteAccess(() =>
+                                    {
+                                        if (dataService.Data.STDG.stdPabx.Estado != std.NoInfo)
+                                            RecordEvent<PabxItfService>(DateTime.Now, U5kBaseDatos.eIncidencias.IGRL_U5KI_SERVICE_ERROR, U5kBaseDatos.eTiposInci.TEH_SISTEMA, "SPV",
+                                                Params(idiomas.strings.PBX_Desconectada/*"PBX Desconectada"*/, "", "", ""));
+
+                                        dataService.Data.STDG.stdPabx.Estado = std.NoInfo;
+
+                                        /* Desregistrar. */
+                                        dataService.Data.STDPBXS.ForEach(d => d.Estado = std.NoInfo);
+                                    });
+                                }
+                                break;
+
+                            default:
+                                break;
                         }
                     }
                     GetProxyDataAndVersions(null);
+                    LogTrace<PabxItfService>($"OnTimePabxElapsed exit => {WsStatus}", default, default, Name);
                 }
                 catch (Exception x)
                 {
@@ -341,15 +343,15 @@ namespace U5kManServer
         {
             _TimerPbax.Enabled = false;
 
-            if (_pabxStatus == EPabxStatus.epsConectado)
+            if (WsStatus == EPabxStatus.epsConectado)
             {
-                pbxWsService.Close();
-                _pabxStatus = EPabxStatus.epsDesconectado;
+                pbxWsService.Close().Wait();
+                WsStatus = EPabxStatus.epsDesconectado;
             }
             // AGL. Al ser llamada desde 'fuera', no utilizare el control de acceso para evitar Lazos no deseados...
-            GlobalServices.GetWriteAccess((data) =>
+            GlobalServices.GetWriteAccess(() =>
             {
-                data.STDG.stdPabx.Estado = std.NoInfo;
+                dataService.Data.STDG.stdPabx.Estado = std.NoInfo;
             }, false);
         }
         private void ProcessEvent(U5kManStdData gdata, PabxEvent _event)
@@ -375,7 +377,7 @@ namespace U5kManServer
             switch (info.Status)
             {
                 case "active":
-                    _pabxStatus = EPabxStatus.epsConectado;
+                    WsStatus = EPabxStatus.epsConectado;
                     U5KStdGeneral stdg = gdata.STDG;
                     if (stdg.stdPabx.Estado != std.Ok)
                     {
@@ -386,8 +388,8 @@ namespace U5kManServer
                     stdg.stdPabx.name = String.Format("{0}:{1}", dataService.PbxIp, Properties.u5kManServer.Default.PabxWsPort);
                     break;
                 default:
-                    pbxWsService.Close();
-                    _pabxStatus = EPabxStatus.epsDesconectado;
+                    pbxWsService.Close().Wait();
+                    WsStatus = EPabxStatus.epsDesconectado;
                     break;
             }
             LogDebug<PabxItfService>("Server Status=>" + info.Status, default, default, Name);
@@ -431,54 +433,40 @@ namespace U5kManServer
                 LogTrace<PabxItfService>($"GetProxyDataAndVersions entry...", default, default, Name);
                 var FileName = "SipProxyPBXVersions.json";
                 var RemotePath = "/home/user";
-                var ftpUser = Properties.u5kManServer.Default.ProxyFtpUser;
-                var ftpPassword = Properties.u5kManServer.Default.ProxyFtpPwd;
-                var ftpTimeout = (int)TimeSpan.FromSeconds(Properties.u5kManServer.Default.ProxyFtpTimeout).TotalMilliseconds;
                 var ftpLocalServer = $"ftp://{Properties.u5kManServer.Default.ProxyLocalAdd}";
-                // Leer el Fichero Local para las versiones.
-                U5kGenericos.Ping(Properties.u5kManServer.Default.ProxyLocalAdd, true, (presente, status) =>
+
+                var resping = pingService.Ping(Properties.u5kManServer.Default.ProxyLocalAdd, true).Result;
+                if (resping)
                 {
-                    if (presente)
-                    {
-                        using (var ftp = new FtpClient(ftpLocalServer, ftpUser, ftpPassword, ftpTimeout))
-                        {
-                            ftp.Download($"{RemotePath}/{FileName}", FileName, (res, ex) =>
-                            {
-                                LogDebug<PabxItfService>($"Getting Local PBXVersion file on {ftpLocalServer} Result: {res}, Error: {ex?.Message}", default, default, Name);
-                               //if (!res && File.Exists(FileName)) File.Delete(FileName);
-                           });
-                        }
-                    }
-                    else
-                    {
-                        LogTrace<PabxItfService>($"GetProxyDataAndVersions {Properties.u5kManServer.Default.ProxyLocalAdd} No Presente.", default, default, Name);
-                    }
-                });
+                    var resftp = ftpService.Download(ftpLocalServer, $"{RemotePath}/{FileName}", FileName).Result;
+                    LogDebug<PabxItfService>($"Getting Local PBXVersion file on {ftpLocalServer} Result: {resftp.Success}, Error: {resftp.Result?.Message}", default, default, Name);
+                }
+                else
+                {
+                    LogTrace<PabxItfService>($"GetProxyDataAndVersions LocalHost {Properties.u5kManServer.Default.ProxyLocalAdd} No Presente.", default, default, Name);
+                }
                 if (IsOperative)
                 {
                     var resp = pingService.Ping(dataService.PbxIp, true).Result;
                     if (resp)
                     {
                         var ftpActiveServer = $"ftp://{dataService.PbxIp}";
-                        using (var ftp = new FtpClient(ftpActiveServer, ftpUser, ftpPassword, ftpTimeout))
+                        var resftp = ftpService.Download(ftpActiveServer, $"{RemotePath}/{FileName}").Result;
+                        var error = resftp.Success ? "" : resftp.Result;
+                        LogDebug<PabxItfService>($"Getting Active PBXVersion file on {ftpActiveServer} Result: {resftp.Success}, Error: {error}", default, default, Name);
+                        if (resftp.Success)
                         {
-                            ftp.Download($"{RemotePath}/{FileName}", (res, data, ex) =>
-                            {
-                                LogDebug<PabxItfService>($"Getting Active PBXVersion file on {ftpActiveServer} Result: {res}, Error: {ex?.Message}", default, default, Name);
-                                if (res)
-                                {
-                                    var jdata = JsonHelper.SafeJObjectParse(data);
-                                    NodeId = jdata != null ? jdata["local_node"]?.ToString() : "Error";
-                                    NodeStatus = jdata != null ? jdata["node_status"]?.ToString() : "Error";
-                                }
-                            });
+                            var jdata = JsonHelper.SafeJObjectParse(resftp.Result);
+                            NodeId = jdata != null ? jdata["local_node"]?.ToString() : "Error";
+                            NodeStatus = jdata != null ? jdata["node_status"]?.ToString() : "Error";
                         }
                     }
                     else
                     {
-                        LogTrace<PabxItfService>($"GetProxyDataAndVersions {dataService.PbxIp} No Presente.", default, default, Name);
+                        LogTrace<PabxItfService>($"GetProxyDataAndVersions Configured PBX {dataService.PbxIp} No Presente.", default, default, Name);
                     }
                 }
+
                 LastTestProxyData = DateTime.Now;
                 LogTrace<PabxItfService>($"GetProxyDataAndVersions exit...", default, default, Name);
             }

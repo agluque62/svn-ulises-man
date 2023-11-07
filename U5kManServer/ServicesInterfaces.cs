@@ -16,6 +16,8 @@ using U5kBaseDatos;
 using NucleoGeneric;
 using Utilities;
 using NAudio.Gui;
+using System.Runtime.InteropServices;
+using System.Xml.Linq;
 
 namespace U5kManServer
 {
@@ -23,7 +25,7 @@ namespace U5kManServer
     {
         public bool Success { get; set; }
         public T Result { get; set; }
-        public QueryServiceResult(bool success, T result)
+        public QueryServiceResult(bool success = default, T result = default)
         {
             Success = success;
             Result = result;
@@ -222,23 +224,31 @@ namespace U5kManServer
         }
     }
 
+    public class WsErrorEventArgs : EventArgs
+    {
+        public Exception Exception { get; set; }
+    }
+    public class WsMessageEventArgs : EventArgs
+    {
+        public string Message { get; set; }
+    }
     public interface IPbxWsService : IDisposable
     {
         event EventHandler<EventArgs> WsOpen;
         event EventHandler<EventArgs> WsClosed;
-        event EventHandler<SuperSocket.ClientEngine.ErrorEventArgs> WsError;
-        event EventHandler<MessageReceivedEventArgs> WsMessage;
-        void Connect(string ip);
-        bool Open();
-        void Close();
+        event EventHandler<WsErrorEventArgs> WsError;
+        event EventHandler<WsMessageEventArgs> WsMessage;
+        Task Connect(string ip);
+        Task<bool> Open();
+        Task Close();
         string Url { get; set; }
     }
     public class RuntimePbxWsService : IPbxWsService
     {
         public event EventHandler<EventArgs> WsOpen = null;
         public event EventHandler<EventArgs> WsClosed = null;
-        public event EventHandler<SuperSocket.ClientEngine.ErrorEventArgs> WsError;
-        public event EventHandler<MessageReceivedEventArgs> WsMessage;
+        public event EventHandler<WsErrorEventArgs> WsError;
+        public event EventHandler<WsMessageEventArgs> WsMessage;
 
         public string Url { get; set; } = null;
         public RuntimePbxWsService(int port, string  username, string password)
@@ -252,23 +262,29 @@ namespace U5kManServer
             ws?.Dispose();
             ws = null;
         }
-        public bool Open()
+        public Task<bool> Open()
         {
-            if (ws?.State == WebSocketState.Closed || ws.State == WebSocketState.None)
+            return Task.Run(() =>
             {
-                ws?.Open();
-                return true;
-            }
-            return false;
+                if (ws?.State == WebSocketState.Closed || ws.State == WebSocketState.None)
+                {
+                    ws?.Open();
+                    return true;
+                }
+                return false;
+            });
         }
-        public void Close()
+        public Task Close()
         {
-            ws?.Close();
+            return Task.Run(() => ws?.Close());
         }
-        public void Connect(string ip)
+        public Task Connect(string ip)
         {
-            Dispose();
-            Setup(ip);
+            return Task.Run(() =>
+            {
+                Dispose();
+                Setup(ip);
+            });
         }
         void Setup(string ip)
         {
@@ -276,8 +292,8 @@ namespace U5kManServer
             ws = new WebSocket(Url);
             ws.Opened += (from, data) => WsOpen?.Invoke(from, data);
             ws.Closed += (from, data) => WsClosed?.Invoke(from, data);
-            ws.Error += (from, data) => WsError?.Invoke(from, data);
-            ws.MessageReceived += (from, data) => WsMessage(from, data);
+            ws.Error += (from, data) => WsError?.Invoke(from, new WsErrorEventArgs() { Exception = data.Exception });
+            ws.MessageReceived += (from, data) => WsMessage(from, new WsMessageEventArgs() { Message = data.Message });
         }
         WebSocket ws = null;
         int port = 0;
@@ -287,12 +303,56 @@ namespace U5kManServer
 
     public interface ICommFtpService : IDisposable
     {
+        Task<QueryServiceResult<Exception>> Download(string host, string remotePath, string localPath);
+        Task<QueryServiceResult<string>> Download(string host, string remotePath);
     }
     public class RuntimeCommFtpService : ICommFtpService
     {
         public void Dispose()
         {
-            throw new NotImplementedException();
         }
+        public Task<QueryServiceResult<Exception>> Download(string host, string remotePath, string localPath)
+        {
+            return Task.Run(() =>
+            {
+                QueryServiceResult<Exception> result = new QueryServiceResult<Exception>();
+                using (var ftp = new FtpClient(host, user, password, timeout))
+                {
+                    ftp.Download(remotePath, localPath, (res, ex) =>
+                    {
+                        result.Success = res;
+                        result.Result = ex;
+                    });
+                }
+                return result;
+            });
+        }
+
+        public Task<QueryServiceResult<string>> Download(string host, string remotePath)
+        {
+            return Task.Run(() =>
+            {
+                QueryServiceResult<string> result = new QueryServiceResult<string>();
+                using (var ftp = new FtpClient(host, user, password, timeout))
+                {
+                    ftp.Download(remotePath, (res, data, ex) =>
+                    {
+                        result.Success = res;
+                        result.Result = res ? data : ex.Message;
+                    });
+                }
+                return result;
+            });
+        }
+
+        public RuntimeCommFtpService(string user, string password, int timeout)
+        {
+            this.user = user;
+            this.password = password;
+            this.timeout = timeout;
+        }
+        string user = null;
+        string password = null;
+        int timeout = 0;
     }
 }
