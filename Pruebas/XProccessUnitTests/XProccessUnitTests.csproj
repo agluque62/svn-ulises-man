@@ -58,9 +58,11 @@
     <Compile Include="ExtEquSpvTests.cs" />
     <Compile Include="GenericTest.cs" />
     <Compile Include="GwExplorerTests.cs" />
-    <Compile Include="MockedClasss\MockedExtEq.cs" />
-    <Compile Include="MockedClasss\MockedGw.cs" />
-    <Compile Include="MockedClasss\MockedTop.cs" />
+    <Compile Include="MockedClasses\MockedExtEq.cs" />
+    <Compile Include="MockedClasses\MockedGw.cs" />
+    <Compile Include="MockedClasses\MockedPbx.cs" />
+    <Compile Include="MockedClasses\MockedTop.cs" />
+    <Compile Include="PbxServiceTests.cs" />
     <Compile Include="TopExplorerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
