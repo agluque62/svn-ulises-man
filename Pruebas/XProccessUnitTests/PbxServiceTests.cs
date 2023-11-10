@@ -15,15 +15,39 @@ namespace XProccessUnitTests
     public class PbxServiceTests
     {
         [Fact]
-        public void PbxServiceTest1()
+        public void StartingAndChangeIpPbx()
         {
             PrepareTest((service, mock) =>
             {
                 service.Start();
-                Task.Delay(TimeSpan.FromSeconds(25)).Wait();
                 mock.InDb = true;
-                Task.Delay(TimeSpan.FromSeconds(25)).Wait();
                 mock.Reachable = true;
+                mock.Connected = true;
+                mock.WithVersion = true;
+                mock.Ip = "11.20.91.1";
+                Task.Delay(TimeSpan.FromSeconds(25)).Wait();
+                Task.Delay(TimeSpan.FromSeconds(25)).Wait();
+                mock.Ip = "11.20.91.2";
+                Task.Delay(TimeSpan.FromSeconds(25)).Wait();
+                Task.Delay(TimeSpan.FromSeconds(25)).Wait();
+                service.Stop(TimeSpan.FromSeconds(2));
+            });
+        }
+        [Fact]
+        public void ChangingSlaveToMasterToSlave()
+        {
+            PrepareTest((service, mock) =>
+            {
+                mock.Master = false;
+                mock.InDb = true;
+                mock.Reachable = true;
+                mock.Connected = true;
+                mock.WithVersion = true;
+                service.Start();
+                Task.Delay(TimeSpan.FromSeconds(25)).Wait();
+                mock.Master = true;
+                Task.Delay(TimeSpan.FromSeconds(25)).Wait();
+                mock.Master = false;
                 Task.Delay(TimeSpan.FromSeconds(25)).Wait();
                 service.Stop(TimeSpan.FromSeconds(2));
             });

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using Lextm.SharpSnmpLib.Messaging;
 using Moq;
 using U5kManServer;
 using Utilities;
+using static U5kManServer.PabxItfService;
 
 namespace XProccessUnitTests.MockedClasss
 {
@@ -19,6 +21,7 @@ namespace XProccessUnitTests.MockedClasss
         public ICommFtpService FtpService => FtpServiceMock?.Object;
         public IPbxWsService PbxWsService => PbxWsServiceMock?.Object;
 
+        public bool Master {  get; set; }
         public bool InDb {  get; set; }
         public string Ip { get; set; }
         public bool Reachable {  get; set; }
@@ -27,23 +30,27 @@ namespace XProccessUnitTests.MockedClasss
 
         public void RaiseWsOpenEvent()
         {
+            Debug.WriteLine("Raising open event");
             PbxWsServiceMock.Raise(
                 x => x.WsOpen += null, new EventArgs());
         }
         public void RaiseWsClosedEvent()
         {
+            Debug.WriteLine("Raising close event");
             PbxWsServiceMock.Raise(
                 x => x.WsClosed += null, new EventArgs());
         }
         public void RaiseWsErrorEvent(Exception exception)
         {
+            Debug.WriteLine("Raising error event");
             PbxWsServiceMock.Raise(
                 x => x.WsError += null, new WsErrorEventArgs() { Exception = exception });
         }
-        public void RaiseWsMessageEvent()
+        public void RaiseWsMessageEvent(string data)
         {
+            Debug.WriteLine("Raising data event");
             PbxWsServiceMock.Raise(
-                x => x.WsMessage += null, new WsMessageEventArgs() { Message = "None"});
+                x => x.WsMessage += null, new WsMessageEventArgs() { Message = data });
         }
 
         #endregion
@@ -55,6 +62,7 @@ namespace XProccessUnitTests.MockedClasss
             PbxWsServiceMock = new Mock<IPbxWsService>();
             FtpServiceMock = new Mock<ICommFtpService>();
 
+            Master = true;
             InDb = false;
             Ip = "127.0.0.1";
             Reachable = false;
@@ -76,7 +84,7 @@ namespace XProccessUnitTests.MockedClasss
                 {
                 });
             DataServiceMock.Setup(prop => prop.IsMaster)
-                .Returns(true);
+                .Returns(() => Master);
             DataServiceMock.Setup(prop => prop.IsTherePbx)
                 .Returns(() => InDb);
             DataServiceMock.Setup(prop => prop.PbxIp) 
@@ -98,22 +106,18 @@ namespace XProccessUnitTests.MockedClasss
                 .Returns(() => RuntimeUrl);
             PbxWsServiceMock
                 .Setup(
-                    method => method.Connect(It.IsAny<string>()))
+                    method => method.Connect(It.IsAny<string>()).Result)
                 .Callback((string ip) =>
                 {
                     RuntimeUrl = $"ws://{ip}:8080/pbx/ws?login_user=mock&login_password=none&user=*&registered=True&status=True&line=*";
+                    RaisePostOpenEvents();
                 })
-                .Returns<string>((ip) => Task.Run(() => { }));
+                .Returns(() => true);
             PbxWsServiceMock
                 .Setup(
-                    method => method.Open().Result)
-                .Callback(() => { RaisePostOpenEvents(); })
-                .Returns(() => Reachable); // Todo. Conditional and delayed event (close, open or error)
-            PbxWsServiceMock
-                .Setup(
-                    method => method.Close())
+                    method => method.Disconnect().Result)
                 .Callback(() => { RaisePostCloseEvents(); }) // Todo. Conditional and delayed event (close, open or error)
-                .Returns(() => Task.Run(() => { }));
+                .Returns(() => true);
         }
         void FtpServiceSetup()
         {
@@ -137,6 +141,8 @@ namespace XProccessUnitTests.MockedClasss
                 {
                     Task.Delay(200).Wait();
                     RaiseWsOpenEvent();
+                    Task.Delay(200).Wait();
+                    RaiseWsMessageEvent(ServerActiveEvent);
                 }
                 else
                 {
@@ -152,7 +158,7 @@ namespace XProccessUnitTests.MockedClasss
             {
                 if (Connected)
                 {
-                    Task.Delay(200).Wait();
+                    Task.Delay(100).Wait();
                     RaiseWsClosedEvent();
                 }
                 else
@@ -162,6 +168,16 @@ namespace XProccessUnitTests.MockedClasss
                 }
             });
         }
+
+        string ServerActiveEvent => new PabxEvent() 
+        { 
+            Jsonrpc = "none", 
+            Method = "notify_serverstatus", 
+            Parametros = new PabxParamInfo() 
+            { 
+                Status = "active"
+            } 
+        }.ToString();
 
         string RuntimeUrl { get; set; } = "none";
         readonly Mock<IDataService> DataServiceMock;

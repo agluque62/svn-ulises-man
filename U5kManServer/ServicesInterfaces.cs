@@ -238,9 +238,8 @@ namespace U5kManServer
         event EventHandler<EventArgs> WsClosed;
         event EventHandler<WsErrorEventArgs> WsError;
         event EventHandler<WsMessageEventArgs> WsMessage;
-        Task Connect(string ip);
-        Task<bool> Open();
-        Task Close();
+        Task<bool> Connect(string ip);
+        Task<bool> Disconnect();
         string Url { get; set; }
     }
     public class RuntimePbxWsService : IPbxWsService
@@ -259,46 +258,106 @@ namespace U5kManServer
         }
         public void Dispose()
         {
+            ws.Opened += null;
+            ws.Closed += null;
+            ws.Error += null;
+            ws.MessageReceived += null;
             ws?.Dispose();
             ws = null;
         }
-        public Task<bool> Open()
+        public Task<bool> Connect(string ip)
         {
             return Task.Run(() =>
             {
-                if (ws?.State == WebSocketState.Closed || ws.State == WebSocketState.None)
+                if (!isCreated)
                 {
-                    ws?.Open();
-                    return true;
+                    try
+                    {
+                        Url = $"ws://{ip}:{port}/pbx/ws?login_user={username}&login_password={password}&user=*&registered=True&status=True&line=*";
+                        ws = new WebSocket(Url);
+                        ws.Opened += (from, data) => WsOpen?.Invoke(from, data);
+                        ws.Closed += (from, data) => WsClosed?.Invoke(from, data);
+                        ws.Error += (from, data) => WsError?.Invoke(from, new WsErrorEventArgs() { Exception = data.Exception });
+                        ws.MessageReceived += (from, data) => WsMessage(from, new WsMessageEventArgs() { Message = data.Message });
+                        ws.Open();
+                        isCreated = true;
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+
+                        throw;
+                    }
+
                 }
                 return false;
             });
         }
-        public Task Close()
-        {
-            return Task.Run(() => ws?.Close());
-        }
-        public Task Connect(string ip)
+        public Task<bool> Disconnect()
         {
             return Task.Run(() =>
             {
-                Dispose();
-                Setup(ip);
+                if (isCreated)
+                {
+                    try
+                    {
+                        ws.Close();
+                        Task.Delay(100).Wait(); // Para que entre el evento close.
+                        Dispose();
+                        isCreated = false;
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+
+                        throw;
+                    }
+
+                }
+                return false;
             });
         }
-        void Setup(string ip)
-        {
-            Url = $"ws://{ip}:{port}/pbx/ws?login_user={username}&login_password={password}&user=*&registered=True&status=True&line=*";
-            ws = new WebSocket(Url);
-            ws.Opened += (from, data) => WsOpen?.Invoke(from, data);
-            ws.Closed += (from, data) => WsClosed?.Invoke(from, data);
-            ws.Error += (from, data) => WsError?.Invoke(from, new WsErrorEventArgs() { Exception = data.Exception });
-            ws.MessageReceived += (from, data) => WsMessage(from, new WsMessageEventArgs() { Message = data.Message });
-        }
+
+        //Task<bool> Open()
+        //{
+        //    return Task.Run(() =>
+        //    {
+        //        if (ws?.State == WebSocketState.Closed || ws.State == WebSocketState.None)
+        //        {
+        //            ws?.Open();
+        //            return true;
+        //        }
+        //        return false;
+        //    });
+        //}
+        //Task Close()
+        //{
+        //    return Task.Run(() => ws?.Close());
+        //}
+        //Task Connect1(string ip)
+        //{
+        //    return Task.Run(() =>
+        //    {
+        //        Dispose();
+        //        Setup(ip);
+        //    });
+        //}
+        //void Setup(string ip)
+        //{
+        //    Url = $"ws://{ip}:{port}/pbx/ws?login_user={username}&login_password={password}&user=*&registered=True&status=True&line=*";
+        //    ws = new WebSocket(Url);
+        //    ws.Opened += (from, data) => WsOpen?.Invoke(from, data);
+        //    ws.Closed += (from, data) => WsClosed?.Invoke(from, data);
+        //    ws.Error += (from, data) => WsError?.Invoke(from, new WsErrorEventArgs() { Exception = data.Exception });
+        //    ws.MessageReceived += (from, data) => WsMessage(from, new WsMessageEventArgs() { Message = data.Message });
+        //}
+
+
         WebSocket ws = null;
         int port = 0;
         string username = null;
         string password = null;
+        bool isCreated = false;
     }
 
     public interface ICommFtpService : IDisposable
