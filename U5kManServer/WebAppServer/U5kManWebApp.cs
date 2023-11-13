@@ -829,11 +829,12 @@ namespace U5kManServer.WebAppServer
                 /** Payload { id: "", ... }*/
                 using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
                 {
-                    var data = JsonConvert.DeserializeObject(reader.ReadToEnd()) as JObject;
+                    var rawdata = reader.ReadToEnd();
+                    var data = JsonConvert.DeserializeObject(rawdata) as JObject;
                     if (JsonHelper.JObjectPropertyExist(data, "id") && JsonHelper.JObjectPropertyExist(data, "command"))
                     {
                         // var idEquipo = (string)data["id"];
-                        Services.CentralServicesMonitor.Monitor.RdUnoMasUnoCommand(data, (success, msg) =>
+                        Services.CentralServicesMonitor.Monitor.RdUnoMasUnoCommand(rawdata, (success, msg) =>
                         {
                             if (success)
                             {

@@ -194,7 +194,7 @@ namespace U5kManServer.Services
             };
             reply(data);
         }
-        public void RdUnoMasUnoCommand(object command, Action<bool, string> reply)
+        public void RdUnoMasUnoCommand(string command, Action<bool, string> reply)
         {
             if (GetDataAccess())
             {
@@ -207,12 +207,14 @@ namespace U5kManServer.Services
                 if (master != null)
                 {
                     var url = HttpHelper.URL(master?.ip, master?.WebPort, "/rd11");
-                    HttpHelper.PostSync(url,  command, 
-                        TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout), 
-                        (success, data) => 
-                        {
-                            reply(success, data);
-                        });
+                    var res = httpService.Post(url, command, TimeSpan.FromSeconds(5)).Result;
+                    reply(res.Success, res.Result);
+                    //HttpHelper.PostSync(url,  command, 
+                    //    TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout), 
+                    //    (success, data) => 
+                    //    {
+                    //        reply(success, data);
+                    //    });
                 }
                 else
                 {
@@ -264,6 +266,7 @@ namespace U5kManServer.Services
 
         public CentralServicesMonitor(
             IRawUdpCommService udpService,
+            ICommHttpService commHttpService,
             Func<bool> masterStateInfo,
             Action<bool, string, string, string> internalEvent,
             Action<String, Exception> notify,
@@ -272,8 +275,9 @@ namespace U5kManServer.Services
         {
             this.udpService = udpService ?? new RuntimeUdpCommService();
             this.udpService.DataReceived += (from, ev) => ReceiveCallback(ev.from, ev.data);
-
             UdpPort = Port;
+            this.httpService = commHttpService ?? new RuntimeHttpService();
+
             //UdpServer = new UdpClient(Port);
             SmpAccess = new Semaphore(1, 1);
             DataAndStates = new Dictionary<String, ServerDataAndState>();
@@ -595,10 +599,15 @@ namespace U5kManServer.Services
 
                                 TraceMsg(2, "Getting Data Of Radio...");
 
-                                string LocalRadioSessionsString = HttpHelper.GetSync(master.ip, master.WebPort, "/rdsessions", Timeout, "[]");
-                                string LocalRadioMNDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/gestormn", Timeout, "[]");
-                                string LocalHFRadioDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/rdhf", Timeout, "[]");
-                                string LocalUnoMasUnoDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/rd11", Timeout, "[]");
+                                //string LocalRadioSessionsString = HttpHelper.GetSync(master.ip, master.WebPort, "/rdsessions", Timeout, "[]");
+                                //string LocalRadioMNDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/gestormn", Timeout, "[]");
+                                //string LocalHFRadioDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/rdhf", Timeout, "[]");
+                                //string LocalUnoMasUnoDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/rd11", Timeout, "[]");
+
+                                string LocalRadioSessionsString = httpService.Get(HttpHelper.URL(master.ip, master.WebPort, "/rdsessions"), Timeout, "[]").Result.Result;
+                                string LocalRadioMNDataString = httpService.Get(HttpHelper.URL(master.ip, master.WebPort, "/gestormn"), Timeout, "[]").Result.Result;
+                                string LocalHFRadioDataString = httpService.Get(HttpHelper.URL(master.ip, master.WebPort, "/rdhf"), Timeout, "[]").Result.Result;
+                                string LocalUnoMasUnoDataString = httpService.Get(HttpHelper.URL(master.ip, master.WebPort, "/rd11"), Timeout, "[]").Result.Result;
 
                                 if (GetDataAccess())
                                 {
@@ -664,9 +673,11 @@ namespace U5kManServer.Services
                                 var Timeout = TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout);
 
                                 TraceMsg(2, "Getting Data Of Telephony...");
+                                //string LocalPresenceDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/tifxinfo", Timeout);
+                                //string LocalPhoneDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/phone", Timeout);
 
-                                string LocalPresenceDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/tifxinfo", Timeout);
-                                string LocalPhoneDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/phone", Timeout);
+                                string LocalPresenceDataString = httpService.Get(HttpHelper.URL(master.ip, master.WebPort, "/tifxinfo"), Timeout).Result.Result;
+                                string LocalPhoneDataString = httpService.Get(HttpHelper.URL(master.ip, master.WebPort, "/phone"), Timeout).Result.Result;
 
                                 if (GetDataAccess())
                                 {
@@ -823,6 +834,8 @@ namespace U5kManServer.Services
         // private UdpClient UdpServer { get; set; }
         IRawUdpCommService udpService = null;
         int UdpPort;
+        ICommHttpService httpService = null;
+
         Task SpvTask { get; set; }
         Dictionary<String, ServerDataAndState> DataAndStates { get; set; }
         Semaphore SmpAccess { get; set; }

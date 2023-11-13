@@ -280,6 +280,7 @@ namespace U5kManServer
     public interface ICommHttpService : IDisposable
     {
         Task<QueryServiceResult<string>> Get(string url, TimeSpan timeout, string defaultValue = default);
+        Task<QueryServiceResult<string>> Post(string url, string data, TimeSpan timeout);
     }
     public class RuntimeHttpService : ICommHttpService
     {
@@ -299,6 +300,22 @@ namespace U5kManServer
                 {
                     BaseCode.LogException<RuntimeSnmpService>("Http exception", x, default, default, url);
                     return new QueryServiceResult<string>(false, defaultValue);
+                }
+            });
+        }
+        public Task<QueryServiceResult<string>> Post(string url, string data, TimeSpan timeout)
+        {
+            return Task.Run(async () =>
+            {
+                try
+                {
+                    var res = await HttpHelper.PostAsync(url, data, timeout);
+                    return new QueryServiceResult<string>(true, res);
+                }
+                catch (Exception x)
+                {
+                    BaseCode.LogException<RuntimeSnmpService>("Http exception", x, default, default, url);
+                    return new QueryServiceResult<string>(false, x.Message);
                 }
             });
         }

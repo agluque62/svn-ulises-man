@@ -317,5 +317,12 @@ namespace Utilities
             var response = await httpClient.GetAsync(url);
             return await response.Content.ReadAsStringAsync();
         }
+        public static async Task<string> PostAsync(string url, string content, TimeSpan timeout)
+        {
+            var client = new HttpClient() { Timeout = timeout };
+            var HttpContent = new StringContent(content);
+            var response = await client.PostAsync(url, HttpContent);
+            return await response.Content.ReadAsStringAsync();
+        }
     }
 }
