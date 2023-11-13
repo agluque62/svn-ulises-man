@@ -262,13 +262,20 @@ namespace U5kManServer.Services
 
 #region Constructores
 
-        public CentralServicesMonitor(Func<bool> masterStateInfo,
+        public CentralServicesMonitor(
+            IRawUdpCommService udpService,
+            Func<bool> masterStateInfo,
             Action<bool, string, string, string> internalEvent,
             Action<String, Exception> notify,
-            Action<int, String> trace = null, int Port = 1022)
+            Action<int, String> trace = null, 
+            int Port = 1022)
         {
+            this.udpService = udpService ?? new RuntimeUdpCommService();
+            this.udpService.DataReceived += (from, ev) => ReceiveCallback(ev.from, ev.data);
+
+            UdpPort = Port;
+            //UdpServer = new UdpClient(Port);
             SmpAccess = new Semaphore(1, 1);
-            UdpServer = new UdpClient(Port);
             DataAndStates = new Dictionary<String, ServerDataAndState>();
             SpvTask = null;
 
@@ -283,14 +290,15 @@ namespace U5kManServer.Services
 
         public void Dispose()
         {
-
             if (SpvTask != null && GetDataAccess())
             {
                 SpvTask = null;
                 
                 Events.Stop();
 
-                UdpServer.Close();
+                //UdpServer.Close();
+                udpService.DataReceived -= (from, ev) => ReceiveCallback(ev.from, ev.data);
+                udpService.Dispose();
                 ReleaseDataAccess();
             }
         }
@@ -303,7 +311,8 @@ namespace U5kManServer.Services
         {
             if (SpvTask == null)
             {
-                UdpServer.BeginReceive(ReceiveCallback, null);
+                //UdpServer.BeginReceive(ReceiveCallback, null);
+                udpService.Open(UdpPort); 
                 SpvTask = Task.Factory.StartNew(SupervisionCallback);
 
                 Events.Start();
@@ -363,71 +372,114 @@ namespace U5kManServer.Services
 #endregion
 
 #region Callbacks
+        void ReceiveCallback(string from, byte[] data)
+        {
+            Task.Factory.StartNew(() =>
+            {
+                try
+                {
+                    var str = System.Text.Encoding.Default.GetString(data);
+                    var not = JsonConvert.DeserializeObject<ServerDataAndState>(str);
+
+                    not.ip = from;
+                    not.url = "http://" + not.ip + ":" + not.WebPort + "/";
+
+                    var key = string.Format("{0}#{1}", not.ip, not.ServerType);
+
+                    if (MasterStateInfo() && GetDataAccess())
+                    {
+                        try
+                        {
+                            if (DataAndStates.Keys.Contains(key) == false)
+                            {
+                                /** Evento de Activacion de server */
+                                //RaiseInternalEvent(false, not.ServerType, not.Machine, "Activado");
+                                RaiseInternalEvent(false, "Detectado NBX en ", not.Machine);
+                            }
+                            /** Actualizo la tabla */
+                            not.TimeStamp = DateTime.Now;
+                            DataAndStates[key] = not;
+                        }
+                        catch (Exception x)
+                        {
+                            RaiseMessage(x.Message, x);
+                        }
+                        ReleaseDataAccess();
+                    }
+
+                    TraceMsg(3, String.Format("Frame Received from {0} en {1}", not.ServerType, not.ip));
+                }
+                catch (Exception x)
+                {
+                    RaiseMessage(x.Message, x);
+                }
+            });
+        }
         /// <summary>
         /// 
         /// </summary>
         /// <param name="ar"></param>
-        void ReceiveCallback(IAsyncResult ar)
-        {
-            Task.Factory.StartNew(() =>
-            {
-                if (UdpServer != null && UdpServer.Client != null)
-                {
-                    try
-                    {
-                        IPEndPoint remote = null;
-                        byte[] data = UdpServer.EndReceive(ar, ref remote);
-                        var str = System.Text.Encoding.Default.GetString(data);
-                        var not = JsonConvert.DeserializeObject<ServerDataAndState>(str);
+        //void ReceiveCallback(IAsyncResult ar)
+        //{
+        //    Task.Factory.StartNew(() =>
+        //    {
+        //        if (UdpServer != null && UdpServer.Client != null)
+        //        {
+        //            try
+        //            {
+        //                IPEndPoint remote = null;
+        //                byte[] data = UdpServer.EndReceive(ar, ref remote);
+        //                var str = System.Text.Encoding.Default.GetString(data);
+        //                var not = JsonConvert.DeserializeObject<ServerDataAndState>(str);
 
-                        not.ip = remote.Address.ToString();
-                        not.url = "http://" + not.ip + ":" + not.WebPort + "/";
+        //                not.ip = remote.Address.ToString();
+        //                not.url = "http://" + not.ip + ":" + not.WebPort + "/";
 
-                        var key = string.Format("{0}#{1}", not.ip, not.ServerType);
+        //                var key = string.Format("{0}#{1}", not.ip, not.ServerType);
 
-                        if (MasterStateInfo() && GetDataAccess())
-                        {
-                            try
-                            {
-                                if (DataAndStates.Keys.Contains(key) == false)
-                                {
-                                    /** Evento de Activacion de server */
-                                    //RaiseInternalEvent(false, not.ServerType, not.Machine, "Activado");
-                                    RaiseInternalEvent(false, "Detectado NBX en ", not.Machine);
-                                }
-                                /** Actualizo la tabla */
-                                not.TimeStamp = DateTime.Now;
-                                DataAndStates[key] = not;
-                            }
-                            catch (Exception x)
-                            {
-                                RaiseMessage(x.Message, x);
-                            }
-                            ReleaseDataAccess();
-                        }
+        //                if (MasterStateInfo() && GetDataAccess())
+        //                {
+        //                    try
+        //                    {
+        //                        if (DataAndStates.Keys.Contains(key) == false)
+        //                        {
+        //                            /** Evento de Activacion de server */
+        //                            //RaiseInternalEvent(false, not.ServerType, not.Machine, "Activado");
+        //                            RaiseInternalEvent(false, "Detectado NBX en ", not.Machine);
+        //                        }
+        //                        /** Actualizo la tabla */
+        //                        not.TimeStamp = DateTime.Now;
+        //                        DataAndStates[key] = not;
+        //                    }
+        //                    catch (Exception x)
+        //                    {
+        //                        RaiseMessage(x.Message, x);
+        //                    }
+        //                    ReleaseDataAccess();
+        //                }
 
-                        TraceMsg(3, String.Format("Frame Received from {0} en {1}", not.ServerType, not.ip));
-                    }
-                    catch (Exception x)
-                    {
-                        RaiseMessage(x.Message, x);
-                    }
-                    finally
-                    {
-                        if (UdpServer != null && UdpServer.Client != null)
-                            UdpServer.BeginReceive(ReceiveCallback, null);
-                        else
-                        {
-                            RaiseMessage("CentralServiceMonitor Stopped: Invalid UdpServer...");
-                        }
-                    }
-                }
-                else
-                {
-                    RaiseMessage("CentralServiceMonitor not started: Invalid UdpServer...");
-                }
-            });
-        }
+        //                TraceMsg(3, String.Format("Frame Received from {0} en {1}", not.ServerType, not.ip));
+        //            }
+        //            catch (Exception x)
+        //            {
+        //                RaiseMessage(x.Message, x);
+        //            }
+        //            finally
+        //            {
+        //                if (UdpServer != null && UdpServer.Client != null)
+        //                    UdpServer.BeginReceive(ReceiveCallback, null);
+        //                else
+        //                {
+        //                    RaiseMessage("CentralServiceMonitor Stopped: Invalid UdpServer...");
+        //                }
+        //            }
+        //        }
+        //        else
+        //        {
+        //            RaiseMessage("CentralServiceMonitor not started: Invalid UdpServer...");
+        //        }
+        //    });
+        //}
         /// <summary>
         /// 
         /// </summary>
@@ -764,11 +816,13 @@ namespace U5kManServer.Services
             });
         }
 
-#endregion Metodos Privados.
+        #endregion Metodos Privados.
 
-#region Atributos privados
+        #region Atributos privados
 
-        private UdpClient UdpServer { get; set; }
+        // private UdpClient UdpServer { get; set; }
+        IRawUdpCommService udpService = null;
+        int UdpPort;
         Task SpvTask { get; set; }
         Dictionary<String, ServerDataAndState> DataAndStates { get; set; }
         Semaphore SmpAccess { get; set; }

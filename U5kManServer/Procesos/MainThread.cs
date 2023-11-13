@@ -125,7 +125,7 @@ namespace U5kManServer
 #if _HAY_NODEBOX__
                 _nbx_scan = new NbxSpv();
 #else
-                MonitorOfServices = new Services.CentralServicesMonitor(() => 
+                MonitorOfServices = new Services.CentralServicesMonitor(null, () => 
                     {
                         NucleoGeneric.BaseCode.ConfigCultureSet();
                         return U5kManService._Master;

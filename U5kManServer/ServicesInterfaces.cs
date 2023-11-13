@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading.Tasks;
@@ -57,6 +58,85 @@ namespace U5kManServer
             }
             return nuevo;
         }
+    }
+
+    public class RawUdpCommServiceArgs : EventArgs
+    {
+        public string from;
+        public byte[] data;
+    }
+    public interface IRawUdpCommService : IDisposable
+    {
+        event EventHandler<RawUdpCommServiceArgs> DataReceived;
+        bool Open(int port, string ip = default);
+        int Send(byte[] data);
+    }
+    public class RuntimeUdpCommService : IRawUdpCommService
+    {
+        public event EventHandler<RawUdpCommServiceArgs> DataReceived;
+
+        public void Dispose()
+        {
+            try
+            {
+                if (UdpServer != null)
+                    UdpServer.Close();
+            }
+            catch (Exception x)
+            {
+                BaseCode.LogException<RuntimeUdpCommService>("Dispose Exception", x);
+            }
+            UdpServer = null;
+        }
+
+        public bool Open(int port, string ip = null)
+        {
+            if (UdpServer == null)
+            {
+                try
+                {
+                    UdpServer = ip == null ? new UdpClient(port) : new UdpClient(ip, port);
+                    UdpServer.BeginReceive(ReceiveCallback, null);
+                    return true;
+                }
+                catch (Exception x)
+                {
+                    BaseCode.LogException<RuntimeUdpCommService>("Open Exception", x);
+                    Dispose();
+                }
+            }
+            return false;
+        }
+        public int Send(byte[] data)
+        {
+            throw new NotImplementedException();
+        }
+        void ReceiveCallback(IAsyncResult ar)
+        {
+            try
+            {
+                if (UdpServer != null && UdpServer.Client != null)
+                {
+                    IPEndPoint remote = null;
+                    var ev = new RawUdpCommServiceArgs()
+                    {
+                        data = UdpServer.EndReceive(ar, ref remote),
+                        from = remote.Address.ToString()
+                    };
+                    DataReceived?.Invoke(this, ev);
+                }
+            }
+            catch (Exception x)
+            {
+                BaseCode.LogException<RuntimeUdpCommService>("Receive Exception", x);
+            }
+            finally
+            {
+                if (UdpServer != null && UdpServer.Client != null)
+                    UdpServer.BeginReceive(ReceiveCallback, null);
+            }
+        }
+        UdpClient UdpServer { get; set; } = null;
     }
 
     public interface ICommSnmpService : IDisposable
@@ -199,14 +279,14 @@ namespace U5kManServer
 
     public interface ICommHttpService : IDisposable
     {
-        Task<QueryServiceResult<string>> Get(string url, TimeSpan timeout);
+        Task<QueryServiceResult<string>> Get(string url, TimeSpan timeout, string defaultValue = default);
     }
     public class RuntimeHttpService : ICommHttpService
     {
         public void Dispose()
         {
         }
-        public Task<QueryServiceResult<string>> Get(string url, TimeSpan timeout)
+        public Task<QueryServiceResult<string>> Get(string url, TimeSpan timeout, string defaultValue = default)
         {
             return Task.Run( async () =>
             {
@@ -218,7 +298,7 @@ namespace U5kManServer
                 catch (Exception x)
                 {
                     BaseCode.LogException<RuntimeSnmpService>("Http exception", x, default, default, url);
-                    return new QueryServiceResult<string>(false, x.Message);
+                    return new QueryServiceResult<string>(false, defaultValue);
                 }
             });
         }
