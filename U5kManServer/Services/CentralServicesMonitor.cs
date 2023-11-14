@@ -13,6 +13,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 using Utilities;
+using U5kBaseDatos;
+using NucleoGeneric;
 
 namespace U5kManServer.Services
 {
@@ -265,14 +267,16 @@ namespace U5kManServer.Services
 #region Constructores
 
         public CentralServicesMonitor(
+            IDataService dataService,
             IRawUdpCommService udpService,
             ICommHttpService commHttpService,
-            Func<bool> masterStateInfo,
-            Action<bool, string, string, string> internalEvent,
-            Action<String, Exception> notify,
-            Action<int, String> trace = null, 
+            //Func<bool> masterStateInfo,
+            //Action<bool, string, string, string> internalEvent,
+            //Action<String, Exception> notify,
+            //Action<int, String> trace = null, 
             int Port = 1022)
         {
+            this.dataService = dataService ?? new RunTimeData();
             this.udpService = udpService ?? new RuntimeUdpCommService();
             this.udpService.DataReceived += (from, ev) => ReceiveCallback(ev.from, ev.data);
             UdpPort = Port;
@@ -284,10 +288,10 @@ namespace U5kManServer.Services
             SpvTask = null;
 
             //
-            MasterStateInfo = masterStateInfo;
-            InternalEvent = internalEvent;
-            Notify = notify;
-            Trace = trace;
+            //MasterStateInfo = masterStateInfo;
+            //InternalEvent = internalEvent;
+            //Notify = notify;
+            //Trace = trace;
 
             Monitor = this;
         }
@@ -390,7 +394,7 @@ namespace U5kManServer.Services
 
                     var key = string.Format("{0}#{1}", not.ip, not.ServerType);
 
-                    if (MasterStateInfo() && GetDataAccess())
+                    if (dataService.IsMaster && GetDataAccess())
                     {
                         try
                         {
@@ -499,7 +503,7 @@ namespace U5kManServer.Services
 
             do
             {
-                if (MasterStateInfo() && GetDataAccess())
+                if (dataService.IsMaster && GetDataAccess())
                 {
                     try
                     {
@@ -516,7 +520,7 @@ namespace U5kManServer.Services
 
                     ReleaseDataAccess();
                 }
-                else if (!MasterStateInfo())
+                else if (!dataService.IsMaster)
                 {
                     // Si es Slave limpia las tablas...
                     ClearDataOnSlave();
@@ -806,24 +810,29 @@ namespace U5kManServer.Services
             string exString = String.Format("RaiseErrorMessage from [{0},{1}] => {2}", caller, lineNumber, msg);
             Task.Factory.StartNew(() =>
             {
-                Notify(exString, x);
+                if (x != null)
+                {
+                    BaseCode.LogException<CentralServicesMonitor>("", x, default, default, "NBX", lineNumber, caller);
+                }
+                else
+                {
+                    BaseCode.LogDebug<CentralServicesMonitor>(msg, default, default, "NBX", lineNumber, caller);
+                }
             });
         }
 
-        protected void TraceMsg(int level, string msg)
+        protected void TraceMsg(int level, string msg, [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string caller = null)
         {
-            Trace?.Invoke(level, msg);
+            Task.Run(() => BaseCode.LogTrace<CentralServicesMonitor>(msg, default, default, "NBX", lineNumber, caller));
         }
 
         protected void RaiseInternalEvent(bool alarma = false, string str1 = "", string str2 = "", string str3 = "")
         {
-            //Task.Factory.StartNew(() =>
-            //{
-            //    InternalEvent?.Invoke(alarma, str1, str2, str3);
-            //});
             Events.Enqueue("RaiseInternalEvent", () =>
             {
-                InternalEvent?.Invoke(alarma, str1, str2, str3);
+                var inci = alarma == true ? eIncidencias.IGRL_NBXMNG_ALARM : eIncidencias.IGRL_NBXMNG_EVENT;
+                BaseCode.RecordEvent<CentralServicesMonitor>(DateTime.Now, inci, eTiposInci.TEH_SISTEMA, "SPV",
+                    new object[] { str1, str2, str3, "", "", "", "", "" });
             });
         }
 
@@ -832,6 +841,7 @@ namespace U5kManServer.Services
         #region Atributos privados
 
         // private UdpClient UdpServer { get; set; }
+        IDataService dataService = null;
         IRawUdpCommService udpService = null;
         int UdpPort;
         ICommHttpService httpService = null;
@@ -896,10 +906,10 @@ namespace U5kManServer.Services
         GlobalStateItem RadioServerState = new GlobalStateItem() { State = GlobalStates.Inicio, DateOfChange = DateTime.Now };
         GlobalStateItem PhoneServerState = new GlobalStateItem() { State = GlobalStates.Inicio, DateOfChange = DateTime.Now };
 
-        readonly Action<String, Exception> Notify;
-        readonly Action<bool, string, string, string> InternalEvent;
-        readonly Func<bool> MasterStateInfo;
-        readonly Action<int, string> Trace;
+        //readonly Action<String, Exception> Notify;
+        //readonly Action<bool, string, string, string> InternalEvent;
+        //readonly Func<bool> MasterStateInfo;
+        //readonly Action<int, string> Trace;
 
         private EventQueue Events { get; } = new EventQueue();
 

@@ -125,28 +125,29 @@ namespace U5kManServer
 #if _HAY_NODEBOX__
                 _nbx_scan = new NbxSpv();
 #else
-                MonitorOfServices = new Services.CentralServicesMonitor(null, null, () => 
-                    {
-                        NucleoGeneric.BaseCode.ConfigCultureSet();
-                        return U5kManService._Master;
-                    },
-                    (alarma, str1, str2, str3) =>                
-                    {
-                        eIncidencias inci = alarma == true ? eIncidencias.IGRL_NBXMNG_ALARM : eIncidencias.IGRL_NBXMNG_EVENT;
-                        RecordEvent<Services.CentralServicesMonitor>(DateTime.Now, inci, eTiposInci.TEH_SISTEMA, "SPV",
-                            new object[] { str1, str2, str3, "", "", "", "", "" });
-                    },
-                    (m, x) =>
-                    {
-                        if (x != null)
-                            LogException<Services.CentralServicesMonitor>("CentralServiceMonitor", x);
-                        else
-                            LogDebug<Services.CentralServicesMonitor>(m);
-                    },
-                    (l, m) =>
-                    {
-                        LogTrace<Services.CentralServicesMonitor>(m);
-                    },
+                MonitorOfServices = new Services.CentralServicesMonitor(null, null, null,
+                    //() => 
+                    //{
+                    //    NucleoGeneric.BaseCode.ConfigCultureSet();
+                    //    return U5kManService._Master;
+                    //},
+                    //(alarma, str1, str2, str3) =>                
+                    //{
+                    //    eIncidencias inci = alarma == true ? eIncidencias.IGRL_NBXMNG_ALARM : eIncidencias.IGRL_NBXMNG_EVENT;
+                    //    RecordEvent<Services.CentralServicesMonitor>(DateTime.Now, inci, eTiposInci.TEH_SISTEMA, "SPV",
+                    //        new object[] { str1, str2, str3, "", "", "", "", "" });
+                    //},
+                    //(m, x) =>
+                    //{
+                    //    if (x != null)
+                    //        LogException<Services.CentralServicesMonitor>("CentralServiceMonitor", x);
+                    //    else
+                    //        LogDebug<Services.CentralServicesMonitor>(m);
+                    //},
+                    //(l, m) =>
+                    //{
+                    //    LogTrace<Services.CentralServicesMonitor>(m);
+                    //},
                         Properties.u5kManServer.Default.nbxSupPort
                 );
                 MonitorOfServices.Start();
