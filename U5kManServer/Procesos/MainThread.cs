@@ -209,6 +209,10 @@ namespace U5kManServer
                             retorno = false;
                         }
                     }
+                    stdg.HayPbx = U5kManService.PbxEndpoint != null;
+                    stdg.stdPabx.name = String.Format("{0}:{1}",
+                        U5kManService.PbxEndpoint == null ? "none" : U5kManService.PbxEndpoint.Address.ToString(),
+                        Properties.u5kManServer.Default.PabxWsPort);
                     if (retorno == true)
                     {
                         // 20170802. Carga de Usuarios....
@@ -401,17 +405,37 @@ namespace U5kManServer
         void LoadEquiposEurocae(U5kManStdData gdata)
         {
 #if DEBUG1
-            List<BdtEuEq> equipos = new List<BdtEuEq>()
+            //List<BdtEuEq> equipos = new List<BdtEuEq>()
+            //{
+            //    new BdtEuEq(){ Id="RD-01",Ip="192.168.0.51", Ip2="192.168.1.51",  Tipo=2, IdDestino="", IdRecurso="RD-01", RxOrTx=4, Modelo=1000, SipPort=5060},
+            //    new BdtEuEq(){ Id="RD-02",Ip="192.168.0.129", Ip2="192.168.0.129",  Tipo=2, IdDestino="", IdRecurso="RD-02", RxOrTx=5, Modelo=1001, SipPort=5060},
+            //    new BdtEuEq(){ Id="RD-03",Ip="192.168.0.155", Ip2="192.168.0.155",  Tipo=2, IdDestino="", IdRecurso="RD-02", RxOrTx=5, Modelo=1001, SipPort=5060},
+            //    new BdtEuEq(){ Id="BC_4", Ip="192.168.0.155",Ip2="192.168.0.155", Tipo=3, IdDestino="", IdRecurso="BC_4",  RxOrTx=0, Modelo=1000, SipPort=5060},
+            //    new BdtEuEq(){ Id="BC-1", Ip="192.168.0.51",Ip2="192.168.0.51", Tipo=3, IdDestino="", IdRecurso="BC-1",  RxOrTx=0, Modelo=1000, SipPort=5060},
+            //    new BdtEuEq(){ Id="LC_22",Ip="192.168.0.129",Ip2="192.168.0.129", Tipo=3, IdDestino="", IdRecurso="LC_22", RxOrTx=0, Modelo=1000, SipPort=5060},
+            //    new BdtEuEq(){ Id="REC_A",Ip="192.168.0.129",Ip2="192.168.0.129", Tipo=5, IdDestino="", IdRecurso="REC_A", RxOrTx=0, Modelo=1000, SipPort=5060},
+            //    new BdtEuEq(){ Id="REC_B",Ip="192.168.0.155",Ip2="192.168.0.155", Tipo=5, IdDestino="", IdRecurso="REC_B", RxOrTx=0, Modelo=1000, SipPort=5060},
+            //};
+            var equipos = new List<BdtEuEq>();
+            var nequipos = 200;
+            var nresources = 512;
+            /* 512 Receptores */
+            for (int i=0; i < nresources; i++)
             {
-                new BdtEuEq(){ Id="RD-01",Ip="192.168.0.51", Ip2="192.168.1.51",  Tipo=2, IdDestino="", IdRecurso="RD-01", RxOrTx=4, Modelo=1000, SipPort=5060},
-                new BdtEuEq(){ Id="RD-02",Ip="192.168.0.129", Ip2="192.168.0.129",  Tipo=2, IdDestino="", IdRecurso="RD-02", RxOrTx=5, Modelo=1001, SipPort=5060},
-                new BdtEuEq(){ Id="RD-03",Ip="192.168.0.155", Ip2="192.168.0.155",  Tipo=2, IdDestino="", IdRecurso="RD-02", RxOrTx=5, Modelo=1001, SipPort=5060},
-                new BdtEuEq(){ Id="BC_4", Ip="192.168.0.155",Ip2="192.168.0.155", Tipo=3, IdDestino="", IdRecurso="BC_4",  RxOrTx=0, Modelo=1000, SipPort=5060},
-                new BdtEuEq(){ Id="BC-1", Ip="192.168.0.51",Ip2="192.168.0.51", Tipo=3, IdDestino="", IdRecurso="BC-1",  RxOrTx=0, Modelo=1000, SipPort=5060},
-                new BdtEuEq(){ Id="LC_22",Ip="192.168.0.129",Ip2="192.168.0.129", Tipo=3, IdDestino="", IdRecurso="LC_22", RxOrTx=0, Modelo=1000, SipPort=5060},
-                new BdtEuEq(){ Id="REC_A",Ip="192.168.0.129",Ip2="192.168.0.129", Tipo=5, IdDestino="", IdRecurso="REC_A", RxOrTx=0, Modelo=1000, SipPort=5060},
-                new BdtEuEq(){ Id="REC_B",Ip="192.168.0.155",Ip2="192.168.0.155", Tipo=5, IdDestino="", IdRecurso="REC_B", RxOrTx=0, Modelo=1000, SipPort=5060},
-            };
+                var SimRad = $"SIMRAD-{i % nequipos:000}";
+                equipos.Add(new BdtEuEq()
+                {
+                    Id = SimRad,
+                    Ip = $"11.20.91.{(i % nequipos) +1}",
+                    Ip2 = "",
+                    Tipo = 2,
+                    IdDestino = "",
+                    IdRecurso = $"SIM-RD-TXRX-{i}",
+                    RxOrTx = 5,
+                    Modelo = 0,
+                    SipPort = 5060
+                });
+            }
 #else
             List<BdtEuEq> equipos = U5kManService.Database.ListaEquiposEurocae(Properties.u5kManServer.Default.stringSistema);
 #endif

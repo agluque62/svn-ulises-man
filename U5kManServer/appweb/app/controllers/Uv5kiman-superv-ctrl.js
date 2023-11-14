@@ -459,19 +459,77 @@ angular.module("Uv5kiman")
                 .select('$.key()')
                 .toArray());
 
-        ctrl.ext_res_show = () => Enumerable.from(ctrl.ext_res) // Lista de Recursos mostrados.
-            .where(function (res) {
-                return ext_filter_equ(res);
-            })
-            .orderBy('$.equipo')
-            .thenBy('$.name')
-            .toArray();
+        ctrl.epg = 0;
+        ctrl.elen = 0;
+        ctrl.enp = 0;
+        ctrl.einfo = () => ctrl.elen + " Res. Pg: " + ctrl.epshow() + " de " + ctrl.enp;
+        ctrl.efirst = () => { ctrl.epg = 0; }
+        ctrl.enext = () => { if (ctrl.epg < ctrl.enp) ctrl.epg++; }
+        ctrl.elast = () => { ctrl.epg = ctrl.enp == 0 ? 0 : ctrl.enp-1; }
+        ctrl.eprev = () => { if (ctrl.epg > 0) ctrl.epg--; }
+        ctrl.epshow = () => ctrl.enp == 0 ? 0 : ctrl.epg + 1;
+        ctrl.ehash = "";
+        ctrl.elinq = {
+            total: 0,
+            max: 0,
+            min: 100000,
+            media: 0,
+            process: (val) => {
+                var This = ctrl.elinq;
+                This.media = (This.media + val) / 2;
+                This.max = val > This.max ? val : This.max;
+                This.min = val < This.min ? val : This.min;
+                This.total = This.total + 1;
+            }
+        };
+
+        ctrl.ext_res_show = () => {
+            if (ctrl.epg != ext_res_lastp || ext_res_lastf != ext_res_currentf()) {
+                ext_res_show_a = ext_res_calculate_show();
+                ext_res_lastp = ctrl.epg;
+                ext_res_lastf = ext_res_currentf();
+            }
+            return ext_res_show_a;
+        }
+
+        var ext_res_show_a = [];
+        var ext_res_lastp = -1;
+        var ext_res_lastf = "";
+        var ext_res_currentf = () => {
+            return ctrl.ext_selected_type + ctrl.ext_selected_eq.join("##");
+        };
+        var ext_res_calculate_show = () => {
+            var start = moment();
+            var toPaginate = Enumerable.from(ctrl.ext_res) // Lista de Recursos mostrados.
+                .where(function (res) {
+                    return ext_filter_equ(res);
+                })
+                .orderBy('$.equipo')
+                .thenBy('$.name');
+
+            const psize = 18;
+            ctrl.elen = toPaginate.count();
+            ctrl.enp = Math.ceil(ctrl.elen / psize);
+
+            if (ctrl.epg * psize > ctrl.elen) {
+                ctrl.epg = 0;
+            }
+            var toShow = toPaginate
+                .skip(ctrl.epg * psize)
+                .take(psize);
+            var add = toShow.count() != psize ? Enumerable.repeat(null, psize - toShow.count()) : Enumerable.empty();
+
+            ctrl.elinq.process(moment().diff(start));
+            return toShow.concat(add).toArray();
+        };
 
         ctrl.ext_res_show_names = () => Enumerable.from(ctrl.ext_res_show())
             .select('$.name')
             .toArray();
 
         ctrl.ext_equ_reset = () => ctrl.ext_selected_eq = [ctrl.translate("Todos")];
+
+        media = (actual, proximo) => (actual + proximo) / 2;
 
         function ext_filter_type(item) {
             return (ctrl.ext_selected_type == "0" || ctrl.ext_selected_type == item.tipo);
@@ -484,7 +542,11 @@ angular.module("Uv5kiman")
         /** */
         function get_exteq() {
             $serv.exteq_get().then(function (response) {
-                ctrl.ext_res = response.data.lista;
+                if (ctrl.ehash != response.data.hash) {
+                    ctrl.ehash = response.data.hash;
+                    ctrl.ext_res = response.data.lista;
+                    ext_res_show_a = ext_res_calculate_show();
+                }
             }, function (response) {
                 console.log(response);
             });
@@ -588,9 +650,6 @@ angular.module("Uv5kiman")
             var isVisible = current.data('bs.popover').tip().hasClass('in');
 
             if (isVisible == false) {
-                //current.popover({
-                //    container: 'body'
-                //});
                 current.popover('show');
 
                 /** Timeout de 10 segundos */
@@ -642,7 +701,6 @@ angular.module("Uv5kiman")
 
         /** */
         function get_std() {
-            //ctrl.std = $lserv.GlobalStd();
             $serv.stdgen_get().then((response) => {
                 ctrl.std = response.data;
             });
@@ -657,7 +715,6 @@ angular.module("Uv5kiman")
                 if (new_cwps(sortedData)) {
                     ctrl.cwps = sortedData;
                 }
-                // console.log(ctrl.cwps);
             }
                 , function (response) {
                     console.log(response);
@@ -668,7 +725,6 @@ angular.module("Uv5kiman")
         function get_gws() {
             $serv.gws_get().then(function (response) {
 
-                // ctrl.gws = response.data.lista;
                 ctrl.gws = response.data.lista.sort(function (a, b) {
                     return a.name > b.name ? 1 : a.name < b.name ? -1 : 0;
                 });
@@ -753,8 +809,7 @@ angular.module("Uv5kiman")
             ctrl.ext_selected_eq = [ctrl.translate("Todos")];    // Al depender del idioma, hay que retrasar la inicializacion.
         }
 
-        /** Funcion Periodica del controlador */
-        var timer = $interval(function () {
+        function refresh() {
             if (ctrl.pagina() == 0 || ctrl.pagina() == 3)
                 get_std();
             else if (ctrl.pagina() == 1)
@@ -765,12 +820,12 @@ angular.module("Uv5kiman")
                 get_pbxab();
             else if (ctrl.pagina() == 5)
                 get_exteq();
-        }, pollingTime);
-
+        }
         /** */
-        $scope.$on('$viewContentLoaded', function () {
-            console.log("Supervisor viewContentLoaded...");
-            data_init();
+        $scope.$on(eventPolling, function () {
+            //            console.log("superv => ", eventPolling);
+            console.log("ctrl.ext_res_show ", ctrl.elinq);
+            refresh();
         });
 
         $scope.$on('GlobalStarted', function (data) {
@@ -780,7 +835,6 @@ angular.module("Uv5kiman")
 
         /** Salida del Controlador. Borrado de Variables */
         $scope.$on("$destroy", function () {
-            $interval.cancel(timer);
         });
         console.log("Supervisor Controller end...");
     });

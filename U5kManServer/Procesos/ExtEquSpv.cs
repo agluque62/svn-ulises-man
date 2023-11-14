@@ -295,6 +295,11 @@ namespace U5kManServer.ExtEquSpvSpace
             sips.Dispose();
             LogDebug<ExtEquSpv>("ExtEquSpv Dispose...");
         }
+        protected int AdjustedInterval(int nequipos, Decimal timeoutDefault)
+        {
+            Decimal equiposTimeout = (Decimal)(nequipos * 100);
+            return (int)(equiposTimeout > timeoutDefault ? equiposTimeout : timeoutDefault);
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -302,7 +307,7 @@ namespace U5kManServer.ExtEquSpvSpace
         {
             U5kGenericos.TraceCurrentThread(this.GetType().Name);
 
-            Decimal interval = Properties.u5kManServer.Default.SpvInterval;     // Tiempo de Polling,
+            Decimal interval = Properties.u5kManServer.Default.SpvInterval;     // Tiempo de Polling (se ajusta con el número de equipos 100 msg por equipo,
             Decimal threadTimeout = 2 * interval / 3;                           // Tiempo de proceso individual.
             Decimal poolTimeout = 3 * interval / 4;                             // Tiempo máximo del Pool de Procesos.
 
@@ -315,26 +320,26 @@ namespace U5kManServer.ExtEquSpvSpace
                         List<EquipoEurocae> localequ = null;    // new List<EquipoEurocae>();
                         try
                         {
-                            Utilities.TimeMeasurement itm = new Utilities.TimeMeasurement("EXT Explorer");
-
                             // Copia de equipo configurados.
                             GlobalServices.GetWriteAccess((gdata) => localequ = gdata.STDEQS.Select(eq => new EquipoEurocae(eq)).ToList());
                             List<Task> tasks = new List<Task>();
-
-                            var grupos = localequ?.GroupBy(eq => eq.Ip1)
+                            var equipos = localequ?.GroupBy(eq => eq.Ip1)
                                 .ToDictionary(grp => grp.Key, grp => grp.ToList());
-                            if (grupos != null)
+
+                            if (equipos != null)
                             {
-                                LogTrace<ExtEquSpv>($"Supervisando equipos y recursos externos ({grupos.Count}) ...");
-                                foreach (var grp in grupos)
+                                var skipped = 0;
+                                LogInfo<ExtEquSpv>($"Supervisando equipos y recursos externos ({equipos.Count}) ...");
+
+                                foreach (var equipo in equipos)
                                 {
-                                    if (grp.Value[0].IsPollingTime() == true)
+                                    if (equipo.Value[0].IsPollingTime() == true)
                                     {
-                                        tasks.Add(BackgroundTaskFactory.StartNew(grp.Key, () =>
+                                        tasks.Add(BackgroundTaskFactory.StartNew(equipo.Key, () =>
                                         {
                                             try
                                             {
-                                                SupervisaEquipo(grp.Key, grp.Value);
+                                                SupervisaEquipo(equipo.Key, equipo.Value);
                                             }
                                             catch (Exception x)
                                             {
@@ -343,11 +348,12 @@ namespace U5kManServer.ExtEquSpvSpace
                                         },
                                         (id, excep) => { },
                                         TimeSpan.FromMilliseconds((double)threadTimeout)));
-                                        LogTrace<ExtEquSpv>($"PING Executed: {grp.Key}");
+                                        LogTrace<ExtEquSpv>($"PING Executed: {equipo.Key}");
                                     }
                                     else
                                     {
-                                        LogTrace<ExtEquSpv>($"PING Skipped : {grp.Key}");
+                                        skipped++;
+                                        LogTrace<ExtEquSpv>($"PING Skipped : {equipo.Key}");
                                     }
                                 }
 #if DEBUG1
@@ -361,9 +367,11 @@ namespace U5kManServer.ExtEquSpvSpace
                                     });
                                 });
 #endif
-                                /** Agruparlos por equipo */
+                                LogInfo<ExtEquSpv>($"Waiting for ({tasks.Count}). Skipped {skipped} ...");
+                                // Ajuste del tiempo
+                                timer.Interval = TimeSpan.FromMilliseconds(AdjustedInterval(equipos.Count, interval));
                                 var waitingResult = Task.WaitAll(tasks.ToArray(), TimeSpan.FromMilliseconds((double)poolTimeout));
-                                LogTrace<ExtEquSpv>($"Fin de Supervision de equipos y recursos externos ({tasks.Count}, {waitingResult})...");
+                                LogInfo<ExtEquSpv>($"Fin de Supervision de equipos y recursos externos ({tasks.Count}, {waitingResult})...");
                             }
                         }
                         catch (Exception x)
@@ -390,9 +398,13 @@ namespace U5kManServer.ExtEquSpvSpace
                                 SetEstadoGlobalEquipos(gdata, localequ);
                             });
                         }
-                        tm.StopAndPrint((msg) => LogTrace<ExtEquSpv>(msg));
+                        tm.StopAndPrint((msg) => LogInfo<ExtEquSpv>(msg));
                     }
+#if DEBUG1
+                    Task.Delay(TimeSpan.FromMilliseconds((int)interval)).Wait();
+#else
                     GoToSleepInTimer();
+#endif
                 }
             }
             LocalDispose();
@@ -457,6 +469,12 @@ namespace U5kManServer.ExtEquSpvSpace
                                     }
                                 }));
                             }
+                        }
+                        else
+                        {
+                            // RM#7285. Si no hay RED, se resetea el estado sip del recurso.
+                            recurso.EstadoSip = std.Error;
+                            recurso.LastOptionsResponse = "";
                         }
                         LogTrace<ExtEquSpv>($"Process {(res ? "Ok  " : "Fail")} executed: {recurso.sip_user}.");
                     }
@@ -536,4 +554,4 @@ namespace U5kManServer.ExtEquSpvSpace
         private List<string> AllowedSipResponses = null;
     }
 #endif
-}
+                }

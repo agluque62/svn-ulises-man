@@ -25,9 +25,60 @@ using Newtonsoft.Json.Converters;
 using Utilities;
 using U5kBaseDatos;
 using NucleoGeneric;
+using System.Xml.Linq;
+using NLog.Targets;
 
 namespace U5kManServer
 {
+    public static class ScvModelExtensions
+    {
+        public static bool SmartCompare<T>(this IEnumerable<T> A, IEnumerable<T> B) where T : IEquatable<T>
+        {
+            var OnANotB = A.Where(e => B.Where(a => a.Equals(e)).Count() == 0).Any();
+            var OnBNotA = B.Where(e => A.Where(a => a.Equals(e)).Count() == 0).Any();
+            return (A.Count() == B.Count() && (!OnANotB || !OnBNotA));
+        }
+        public static IEnumerable<T> SmartLoad<T>(this List<T> target, IEnumerable<T> data) where T : IEquatable<T>
+        {
+            /** Para borrar => Estan en TARGET pero no en data */
+            var ToDelete = target.Where(e => data.Where(a => a.Equals(e)).Count() == 0).Select(a => a);
+            /** Nuevas => estan en data pero no en Target */
+            var ToAdd = data.Where(e => target.Where(a => a.Equals(e)).Count() == 0).Select(a => a);
+            /** Borramos */
+            foreach (var kvp in ToDelete)
+            {
+                BaseCode.LogDebug<U5kManService>($"On Load Configuration delete item {kvp}");
+                target = target.Where(a => a.Equals(kvp) == false).ToList();
+                //target.Remove(kvp);
+            }
+            /** Añadimos las nuevas */
+            foreach (var kvp in ToAdd)
+            {
+                BaseCode.LogDebug<U5kManService>($"On Load Configuration add item {kvp}");
+                target.Add(kvp);
+            }
+            /** Actualizar el resto para valores que no ponderan en los equals */
+            foreach (var kvp in data)
+            {
+                var item = target.Where(a => a.Equals(kvp)).FirstOrDefault();
+                if (item != null)
+                {
+                    /* En CWP URIS y/o SECTORES que pueden haber cambiado*/
+                    if (item is stdPos)
+                    {
+                        (item as stdPos).uris = (kvp as stdPos).uris;
+                        (item as stdPos).SectorOnPos = (kvp as stdPos).SectorOnPos;
+                    }
+                    /* En Recursos de Equipos Externos puede haber cambiado la Frecuecia en la que está asignado */
+                    else if (item is EquipoEurocae)
+                    {
+                        (item as EquipoEurocae).fid = (kvp as EquipoEurocae).fid;
+                    }
+                }
+            }
+            return target;
+        }
+    }
 #if DEBUG
     class DebugHelper
     {
@@ -176,7 +227,7 @@ namespace U5kManServer
                 jversion == other.jversion &&
                 timer == other.timer
                 );
-#if DEBUG
+#if DEBUG1
             if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en StdServ");
 #endif
             return retorno;
@@ -414,7 +465,7 @@ namespace U5kManServer
                 stdGlobalGw2 == other.stdGlobalGw2 &&
                 stdGlobalExt == other.stdGlobalExt
                 );
-#if DEBUG
+#if DEBUG1
             if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en StdGeneral");
 #endif
             return retorno;
@@ -644,7 +695,7 @@ namespace U5kManServer
     }
 
     [DataContract]
-    public class stdPos : SupervisedItem
+    public class stdPos : SupervisedItem, IEquatable<stdPos>
     {
         [DataMember]
         public string name { get; set; }    // = "";
@@ -806,8 +857,9 @@ namespace U5kManServer
         public bool Equals(stdPos other)
         {
             /* Se incluyen los Sectores y uris asignadas en los criterios de igualdad de puesto */
-            bool retorno = (other == null ? false : (name == other.name && ip == other.ip && SectorOnPos == other.SectorOnPos && uris.SequenceEqual(other.uris)));
-#if DEBUG
+            /** RM6956. Se excluyen los sectores y uris porque generan falsos históticos */
+            bool retorno = (other == null ? false : (name == other.name && ip == other.ip /*&& SectorOnPos == other.SectorOnPos && uris.SequenceEqual(other.uris)*/));
+#if DEBUG1
             if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en StdPos");
 #endif
             return retorno;
@@ -829,13 +881,14 @@ namespace U5kManServer
             lan2,
             ntp = NtpInfo.LastInfoFromClient
         };
+        public override string ToString() => $"stdPos: {name} ({ip})";
     }
 
     /// <summary>
     /// 
     /// </summary>
     [DataContract]
-    public class stdRec
+    public class stdRec : IEquatable<stdRec>
     {
         [DataMember]
         public string name = "";
@@ -941,7 +994,7 @@ namespace U5kManServer
         public bool Equals(stdRec other)
         {
             bool retorno = tipo == other.tipo && bdt == other.bdt && name == other.name;
-#if DEBUG
+#if DEBUG1
             if (!retorno && DebugHelper.checkEquals) Console.WriteLine($"Hallada Discrepancia en StdRecurso <{name}>");
 #endif
             return retorno;
@@ -967,7 +1020,7 @@ namespace U5kManServer
     /// 
     /// </summary>
     [DataContract]
-    public class stdSlot
+    public class stdSlot : IEquatable<stdSlot>
     {
         [DataMember]
         public std std_cfg = std.NoInfo;
@@ -1027,7 +1080,7 @@ namespace U5kManServer
         public bool Equals(stdSlot other)
         {
             bool retorno = (std_cfg == other.std_cfg && rec[0].Equals(other.rec[0]) && rec[1].Equals(other.rec[1]) && rec[2].Equals(other.rec[2]) && rec[3].Equals(other.rec[3]));
-#if DEBUG
+#if DEBUG1
             if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en StdSlot");
 #endif
             return retorno;
@@ -1048,7 +1101,7 @@ namespace U5kManServer
     /// 
     /// </summary>
     [DataContract]
-    public class stdPhGw 
+    public class stdPhGw : IEquatable<stdPhGw>
     {
         public stdPhGw() : base()
         {
@@ -1242,7 +1295,7 @@ namespace U5kManServer
                 slots[1].Equals(other.slots[1]) && 
                 slots[2].Equals(other.slots[2]) && 
                 slots[3].Equals(other.slots[3]));
-#if DEBUG
+#if DEBUG1
             if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en StdPhGw");
 #endif
             return retorno;
@@ -1278,7 +1331,7 @@ namespace U5kManServer
     /// 
     /// </summary>
     [DataContract]
-    public class stdGw
+    public class stdGw : IEquatable<stdGw>
     {
         /****/
         [DataContract]
@@ -1363,7 +1416,7 @@ namespace U5kManServer
         public bool Equals(stdGw other)
         {
             bool retorno = (other==null ? false : (name == other.name && ip == other.ip && gwA.Equals(other.gwA) && gwB.Equals(other.gwB)));
-#if DEBUG
+#if DEBUG1
             if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en StdGw");
 #endif
             return retorno;
@@ -1380,7 +1433,7 @@ namespace U5kManServer
             gwA = gwA.Data,
             gwB = gwB.Data
         };
-    
+        public override string ToString() => $"GW: {name} ({ip})";
     }
 
     [DataContract]
@@ -1448,9 +1501,11 @@ namespace U5kManServer
 
         public bool Equals(EquipoEurocae other)
         {
-            bool retorno = other == null ? false : (Id == other.Id && Ip1 == other.Ip1 && Tipo == other.Tipo && Modelo == other.Modelo && RxTx == other.RxTx && fid == other.fid && sip_port == other.sip_port && sip_user == other.sip_user);
-#if DEBUG
-                if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en EquipoEurocae");
+            /** RM6956. Se excluye el FID porque en determinadas ccircustancias puede generar falsos históricos*/
+            bool retorno = other == null ? false : (Id == other.Id && Ip1 == other.Ip1 && Tipo == other.Tipo && Modelo == other.Modelo && RxTx == other.RxTx && /*fid == other.fid && */sip_port == other.sip_port && sip_user == other.sip_user);
+#if DEBUG1
+                if (!retorno && DebugHelper.checkEquals) 
+                    Console.WriteLine("Hallada Discrepancia en EquipoEurocae");
 #endif
             return retorno;
         }
@@ -1478,6 +1533,7 @@ namespace U5kManServer
         /** */
         //public string Key { get => sip_user ?? Id; }
         public string Key { get => string.Join("_", sip_user ?? Id, Tipo.ToString()); }
+        public override string ToString() => $"EE: {Id},{fid??"null"},{sip_user??"null"}";
     }
 
     /// <summary>
@@ -1700,6 +1756,13 @@ namespace U5kManServer
         {
             set
             {
+#if !_NO_SMART_LOAD_
+                lock(lockConcurrent)
+                {
+                    var actual = stdpos.Values.Select(p => p).ToList();
+                    stdpos = actual.SmartLoad(value).ToDictionary(i => i.name, i => i);
+                }
+#else
                 List<stdPos> paraBorrar = STDTOPS.Select(pos => new stdPos(pos) { name = pos.name, ip = pos.ip, snmpport = pos.snmpport }).ToList();
                 lock (lockConcurrent)
                 {
@@ -1745,6 +1808,7 @@ namespace U5kManServer
                     }
                     LogTrace<stdPos>($"Configuracion de Puesto cargada...");
                 }
+#endif
             }
         }
         public Dictionary<string, stdPos> POSDIC { get => stdpos; set => stdpos = value; }
@@ -1823,6 +1887,13 @@ namespace U5kManServer
         {
             set
             {
+#if !_NO_SMART_LOAD_
+                lock (lockConcurrent)
+                {
+                    var actual = stdgws.Values.Select(g => g).ToList();
+                    stdgws = actual.SmartLoad(value).ToDictionary(g => g.name, g => g);
+                }
+#else
                 List<stdGw> paraBorrar = STDGWS.Select(g => new stdGw(g)).ToList();
                 lock (lockConcurrent)
                 {
@@ -1870,13 +1941,14 @@ namespace U5kManServer
                         LogTrace<stdGw>($"Pasarela {gw.name} eliminada...");
                     }
                 }
+#endif
             }
         }
 #endif
 
-        /// <summary>
-        /// 
-        /// </summary>
+                /// <summary>
+                /// 
+                /// </summary>
 #if _NO_DICTIONARY_OF_ITEMS
         public List<EquipoEurocae> STDEQS
         {
@@ -1947,6 +2019,13 @@ namespace U5kManServer
         {
             set
             {
+#if !_NO_SMART_LOAD_
+                lock (lockConcurrent)
+                {
+                    var actual = stdequ.Values.Select(f => f).ToList();
+                    stdequ = actual.SmartLoad(value).ToDictionary(e => e.Key, e => e);
+                }
+#else
                 List<EquipoEurocae> paraBorrar = STDEQS.Select(e => new EquipoEurocae(e) { }).ToList();
                 lock (lockConcurrent)
                 {
@@ -1957,7 +2036,7 @@ namespace U5kManServer
                         if (local != null)
                         {
                             paraBorrar.Remove(local);
-                            LogTrace<EquipoEurocae>($"Equipo Externo {equ.Id} no ha cambiado...");
+                            LogTrace<EquipoEurocae>($"Equipo Externo {equ} no ha cambiado...");
                         }
                         else
                         {
@@ -1969,16 +2048,16 @@ namespace U5kManServer
                                 if (local != null)
                                 {
                                     paraBorrar.Remove(local);
-                                    LogTrace<EquipoEurocae>($"Equipo Externo {equ.Id} ha cambiado...");
+                                    LogDebug<EquipoEurocae>($"Equipo Externo {equ}, {local} ha cambiado...");
                                 }
                                 else
                                 {
-                                    LogTrace<EquipoEurocae>($"Equipo Externo {equ.Id}: Error al cargar en memoria...");
+                                    LogError<EquipoEurocae>($"Equipo Externo {equ}: Error al cargar en memoria...");
                                 }
                             }
                             else
                             {
-                                LogTrace<EquipoEurocae>($"Equipo Externo {equ.Id} añadido...");
+                                LogDebug<EquipoEurocae>($"Equipo Externo {equ} añadido...");
                             }
                             stdequ[equ.Key]= equ;
                         }
@@ -1987,16 +2066,17 @@ namespace U5kManServer
                     foreach (var equ in paraBorrar)
                     {
                         stdequ.Remove(equ.Key);
-                        LogTrace<EquipoEurocae>($"Equipo Externo {equ.Id} eliminado...");
+                        LogDebug<EquipoEurocae>($"Equipo Externo {equ.Id} eliminado...");
                     }
                 }
+#endif
             }
         }
         public Dictionary<string, EquipoEurocae> EQUDIC { get => stdequ; set => stdequ = value; }
 #endif
-        /// <summary>
-        /// 
-        /// </summary>
+                /// <summary>
+                /// 
+                /// </summary>
         public List<Uv5kManDestinosPabx.DestinoPabx> STDPBXS
         {
             get
@@ -2036,6 +2116,13 @@ namespace U5kManServer
         {
             set
             {
+#if !_NO_SMART_LOAD_
+                lock (lockConcurrent)
+                {
+                    var actual = pabxdest.Destinos.Select(f => f).ToList();
+                    pabxdest.Destinos = actual.SmartLoad(value).ToList();
+                }
+#else
                 List<Uv5kManDestinosPabx.DestinoPabx> paraBorrar = pabxdest.Destinos.Select(e => new Uv5kManDestinosPabx.DestinoPabx(e) { Id = e.Id }).ToList();
                 lock (lockConcurrent)
                 {
@@ -2061,6 +2148,7 @@ namespace U5kManServer
                         LogTrace<Uv5kManDestinosPabx.DestinoPabx>($"Abonado PBX {dst.Id} eliminado...");
                     }
                 }
+#endif
             }
         }
 
@@ -2076,7 +2164,7 @@ namespace U5kManServer
             return retorno;
         }
 #endif
-    }
+            }
 
     [DataContract]
     public class U5kManLastInciList
@@ -2100,7 +2188,7 @@ namespace U5kManServer
     public class Uv5kManDestinosPabx
     {
         [DataContract]
-        public class DestinoPabx
+        public class DestinoPabx : IEquatable<DestinoPabx>
         {
             [DataMember]
             public string Id { get; set; }
@@ -2119,11 +2207,12 @@ namespace U5kManServer
             public bool Equals(DestinoPabx otro)
             {
                 bool retorno = otro==null ? false : Id == otro.Id;
-#if DEBUG
+#if DEBUG1
                 if (!retorno && DebugHelper.checkEquals) Console.WriteLine("Hallada Discrepancia en DestinoPbx");
 #endif
                 return retorno;
             }
+            public override string ToString() => $"PBX SCB: {Id}";
         }
 
         [DataMember]

@@ -149,7 +149,7 @@ namespace U5kManServer
             {
                 Assembly asm = Assembly.GetExecutingAssembly();
                 FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(asm.Location);
-                return String.Format("{0}.{1}.{2}", fvi.ProductMajorPart, fvi.ProductMinorPart, fvi.ProductBuildPart);
+                return $"{fvi.ProductVersion}";    // String.Format("{0}.{1}.{2}", fvi.ProductMajorPart, fvi.ProductMinorPart, fvi.ProductBuildPart);
             }
         }
 

@@ -87,6 +87,7 @@
     <Compile Include="SyncServersTest.cs" />
     <Compile Include="HourNotifierTests.cs" />
     <Compile Include="RepeatedHistoricTests.cs" />
+    <Compile Include="ConcurrentNtpInfoClassTests.cs" />
     <Compile Include="WebServerTests.cs" />
   </ItemGroup>
   <ItemGroup>

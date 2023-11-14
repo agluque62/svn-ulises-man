@@ -125,12 +125,16 @@ angular.module("Uv5kiman")
 
     /** Funcion Periodica del controlador */
     tlfTifxDataGet();
-    var timer = $interval(function () {
+    $scope.$on(eventPolling, function () {
+        console.log("phone => ", eventPolling);
         tlfTifxDataGet();
-    }, pollingTime);
+    });
+    //var timer = $interval(function () {
+    //    tlfTifxDataGet();
+    //}, pollingTime);
 
     /** Salida del Controlador. Borrado de Variables */
     $scope.$on("$destroy", function () {
-        $interval.cancel(timer);
+        //$interval.cancel(timer);
     });
 });

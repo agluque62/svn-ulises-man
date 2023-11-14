@@ -87,7 +87,8 @@ namespace U5kManServer.WebAppServer
                 "/listinci",
                 "/images/corporativo-a.png",
                 "/favicon.ico",
-                "/images/corporativo-a.png"
+                "/images/corporativo-a.png",
+                "/db/systemusers"
             };
             /** Rutina a la que llama el servidor base para autentificar un usuario */
             AuthenticateUser = (data, response) =>
@@ -109,7 +110,8 @@ namespace U5kManServer.WebAppServer
                         var pass = items["password"];
                         U5kBdtService.SystemUserInfo loggeduser = null;
                         // Obtengo la Info de usuario
-                        GlobalServices.GetWriteAccess((gdt) => { loggeduser = gdt.SystemUsers.Where(u => u.id == user && u.pwd == pass).FirstOrDefault(); }, false);
+                        // RM#7287. Al testear el LOGIN. El usuario debe ser case insensitive
+                        GlobalServices.GetWriteAccess((gdt) => { loggeduser = gdt.SystemUsers.Where(u => u.id.ToLower() == user.ToLower() && u.pwd == pass).FirstOrDefault(); }, false);
                         if (loggeduser == null)
                         {
                             response(false, "Usuario o password incorrecta", null);

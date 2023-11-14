@@ -1,6 +1,7 @@
 /** Variables Globales */
 var Simulate = location.port == 1445;
 var pollingTime = 5000;
+var eventPolling = "pollingTick";
 var maxPreconf = 8;
 var InciPoll = 10;
 var userLang = navigator.language;

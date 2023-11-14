@@ -1,8 +1,8 @@
 ﻿using MySql.Data.MySqlClient;
-using NLog;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
@@ -10,8 +10,25 @@ using System.Linq;
 using System.Security.Principal;
 using System.Text;
 
+using Utilities;
+
 namespace U5kBaseDatos
 {
+    internal class Helper
+    {
+        public static T DataRowField<T>(string id, DataRow row, string fieldname) 
+        {
+            try
+            {
+                return row.Field<T>(fieldname);
+            }
+            catch (Exception x)
+            {
+                Uv5kLog.Exception<U5kBdtService>(id, fieldname, x);
+                return default(T);
+            }
+        }
+    }
     public enum eTiposInci { TEH_TOP = 0, TEH_TIFX = 1, TEH_EXTERNO_RADIO, TEH_EXTERNO_TELEFONIA, TEH_SISTEMA, TEH_RADIOHF, TEH_RADIOMN, TEH_RECORDER }
     /// <summary>
     /// 
@@ -268,7 +285,6 @@ namespace U5kBaseDatos
         /// <summary>
         /// 
         /// </summary>
-        protected Logger _logger = LogManager.GetCurrentClassLogger();
         object _DB = null;
         string _strConn = String.Empty;
         System.Globalization.CultureInfo _idioma = new System.Globalization.CultureInfo("es");
@@ -325,13 +341,13 @@ namespace U5kBaseDatos
                     }
                     catch (Exception x)
                     {
-                        _logger.Error(x, "U5kBdtService.GetListaTop Exception.");
+                        Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On GetListaTop, top {top}");
                     }
                 }
             }
             catch (Exception x)
             {
-                _logger.Error(x, "U5kBdtService.GetListaTop Exception.");
+                Uv5kLog.Exception<BdtTop>("", "U5kBdtService", x, $"On GetListaTop");
             }
             return lista;
         }
@@ -395,7 +411,7 @@ namespace U5kBaseDatos
                             }
                             catch (Exception x)
                             {
-                                _logger.Error(x, "U5kBdtService.GetListaGw (Recursos) Exception.");
+                                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On GetListaGw, res {bdtres}");
                             }
                         }
 
@@ -403,13 +419,13 @@ namespace U5kBaseDatos
                     }
                     catch (Exception x)
                     {
-                        _logger.Error(x, "U5kBdtService.GetListaGw Exception.");
+                        Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On GetListaGw, gw {gw}");
                     }
                 }
             }
             catch (Exception x)
             {
-                _logger.Error(x, "U5kBdtService.GetListaGw Exception.");
+                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On GetListaGw");
             }
             return gws;
         }
@@ -447,13 +463,13 @@ namespace U5kBaseDatos
                     }
                     catch (Exception x)
                     {
-                        _logger.Error(x, "U5kBdtService.BdtListaEquiposMN Exception.");
+                        Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On BdtListaEquiposMN, top {top}");
                     }
                 }
             }
             catch (Exception x)
             {
-                _logger.Error(x, "U5kBdtService.BdtListaEquiposMN Exception.");
+                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On BdtListaEquiposMN");
             }
 
             return _lista;
@@ -482,13 +498,13 @@ namespace U5kBaseDatos
                     }
                     catch (Exception x)
                     {
-                        _logger.Error(x, "U5kBdtService.BdtListaDestinosRadio Exception.");
+                        Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On BdtListaDestinosRadio, top {top}");
                     }
                 }
             }
             catch (Exception x)
             {
-                _logger.Error(x, "U5kBdtService.BdtListaDestinosRadio Exception.");
+                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On BdtListaDestinosRadio");
             }
 
             return _lista;
@@ -526,47 +542,60 @@ namespace U5kBaseDatos
                 DataTable tb = data.Tables[0];
                 foreach (DataRow row in tb.Rows)
                 {
-                    string id="", ip="", ip2="", iddestino="", idrecurso="";
-                    int tipo = 0, sip_port = 5060;
-                    long? modelo = null;
-                    ulong? rxortx = null;
-                    try
-                    {
-                        id = row.Field<string>("IDEQUIPOS");                            // Nombre del Equipo Externo.
-                        ip = row.Field<string>("IPRED1");                               // Ip del Equipo Externo
-                        ip2 = row.Field<string>("IPRED2");                              // Ip2 (no se utiliza) del Equipo externo.
-                        iddestino = ver < 2 ? "" : row.Field<string>("IDDESTINO");      //
-                        idrecurso = ver < 2 ? "" : row.Field<string>("IDRECURSO");      //
-                        tipo = (int)row.Field<uint>("TIPOEQUIPO");                      // 2: Radio, 3: Telefonia, 5: Grabadores
-                        sip_port = ver < 2 ? 5060 : row.Field<int>("SIPPORT");          // Puerto SIP del equipo.
-                        modelo = ver < 1 ? 0 : row.Field<long?>("MODELOEQUIPO");        // Modelo Equipo Radio
-                        rxortx = ver < 1 ? 0 : row.Field<ulong?>("TIPORADIO");          // Tipo de equipo Radio (Rx, Tx o RxTx)
-                    }
-                    catch (Exception x)
-                    {
-                        _logger.Error<Exception>("U5kBdtService.ListaEquiposEurocae Exception.", x);
-                    }
-                    finally
-                    {
-                        equipos.Add(new BdtEuEq()
-                        {
-                            Id = id,
-                            Ip = ip,
-                            Ip2 = ip2,
-                            Tipo = (int)tipo,
-                            Modelo = modelo == null ? 0 : (int)modelo,
-                            RxOrTx = rxortx == null ? 0 : (int)rxortx,
-                            IdDestino = iddestino,
-                            IdRecurso = idrecurso,
-                            SipPort = sip_port
-                        });
+                    //string id="", ip="", ip2="", iddestino="", idrecurso="";
+                    //int tipo = 0, sip_port = 5060;
+                    //long? modelo = null;
+                    //ulong? rxortx = null;
+                    //try
+                    //{
+                    //    id = row.Field<string>("IDEQUIPOS");                            // Nombre del Equipo Externo.
+                    //    ip = row.Field<string>("IPRED1");                               // Ip del Equipo Externo
+                    //    ip2 = row.Field<string>("IPRED2");                              // Ip2 (no se utiliza) del Equipo externo.
+                    //    iddestino = ver < 2 ? "" : row.Field<string>("IDDESTINO");      //
+                    //    idrecurso = ver < 2 ? "" : row.Field<string>("IDRECURSO");      //
+                    //    tipo = (int)row.Field<uint>("TIPOEQUIPO");                      // 2: Radio, 3: Telefonia, 5: Grabadores
+                    //    sip_port = ver < 2 ? 5060 : row.Field<int>("SIPPORT");          // Puerto SIP del equipo.
+                    //    modelo = ver < 1 ? 0 : row.Field<long?>("MODELOEQUIPO");        // Modelo Equipo Radio
+                    //    rxortx = ver < 1 ? 0 : row.Field<ulong?>("TIPORADIO");          // Tipo de equipo Radio (Rx, Tx o RxTx)
+                    //}
+                    //catch (Exception x)
+                    //{
+                    //    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On ListaEquiposEurocae, equ {id}:{idrecurso}");
+                    //}
+                    //finally
+                    //{
+                    //    equipos.Add(new BdtEuEq()
+                    //    {
+                    //        Id = id,
+                    //        Ip = ip,
+                    //        Ip2 = ip2,
+                    //        Tipo = (int)tipo,
+                    //        Modelo = modelo == null ? 0 : (int)modelo,
+                    //        RxOrTx = rxortx == null ? 0 : (int)rxortx,
+                    //        IdDestino = iddestino,
+                    //        IdRecurso = idrecurso,
+                    //        SipPort = sip_port
+                    //    });
 
-                    }
+                    //}
+                    var id = Helper.DataRowField<string>("first", row, "IDEQUIPOS") ?? string.Empty;
+                    equipos.Add(new BdtEuEq()
+                    {
+                        Id = id,
+                        Ip = Helper.DataRowField<string>(id, row, "IPRED1") ?? string.Empty,
+                        Ip2 = Helper.DataRowField<string>(id, row, "IPRED2") ?? string.Empty,
+                        Tipo = Helper.DataRowField<int>(id, row, "TIPOEQUIPO"),
+                        Modelo = Helper.DataRowField<int?>(id, row, "MODELOEQUIPO") ?? 0,
+                        RxOrTx = Helper.DataRowField<int?>(id, row, "TIPORADIO") ?? 0,
+                        IdDestino = Helper.DataRowField<string>(id, row, "IDDESTINO"),
+                        IdRecurso = Helper.DataRowField<string>(id, row, "IDRECURSO"),
+                        SipPort = Helper.DataRowField<int?>(id, row, "SIPPORT") ?? 5060
+                    });
                 }
             }
             catch (Exception x)
             {
-                _logger.Error(x, "U5kBdtService.ListaEquiposEurocae Exception.");
+                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On ListaEquiposEurocae");
             }
             return equipos;
         }
@@ -644,7 +673,7 @@ namespace U5kBaseDatos
                         }
                         catch (Exception x)
                         {
-                            _logger.Error(x, "U5kBdtService.ListaDestinosPABX Exception.");
+                            Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On ListaDestinosPbx, pbxdes {r}");
                         }
                     }
                 }
@@ -652,65 +681,10 @@ namespace U5kBaseDatos
             }
             catch (Exception x)
             {
-                _logger.Error(x, "U5kBdtService.ListaDestinosPABX Exception.");
+                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On ListaDestinosPbx");
             }
             return ldest;
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        //public List<U5kIncidenciaDescr> ListaDeIncidencias(System.Collections.Specialized.StringCollection filtro)
-        //{
-        //    List<U5kIncidenciaDescr> _lst = new List<U5kIncidenciaDescr>();
-
-        //    string strsql = _idioma.Name.StartsWith("en") ? "select * from incidencias_ingles" :
-        //        _idioma.Name.StartsWith("fr") ? "select * from incidencias_frances" : "select * from incidencias";
-
-        //    DataSet dsInci = GetDataSet(strsql);
-        //    DataTable incis = dsInci.Tables[0];
-
-        //    int nInci = -1;
-        //    int alarma = 0;
-        //    foreach (System.Data.DataRow inci in incis.Rows)
-        //    {
-        //        try
-        //        {
-        //            if (inci.IsNull("IdIncidencia"))
-        //            {
-        //                _logger.Error("Lista de Incidencias. Error. Registro de Incidencia NULO");
-        //                continue;
-        //            }
-
-        //            nInci = inci.IsNull("IdIncidencia") ? -1 :
-        //                incis.Columns["IdIncidencia"].DataType.Name == "UInt32" ? (int)inci.Field<uint>("IdIncidencia") :
-        //                inci.Field<int>("IdIncidencia");
-
-        //            var fInci = inci.IsNull("Incidencia") ? "ERROR Incidencia " + nInci.ToString() : inci.Field<string>("Incidencia");
-        //            var strf = inci.IsNull("Descripcion") ? "ERROR Descripcion " + nInci.ToString() : inci.Field<string>("Descripcion");
-
-        //            alarma = inci.IsNull("generaerror") ? 0 :
-        //                incis.Columns["generaerror"].DataType.Name == "Boolean" ? (inci.Field<bool>("generaerror") ? 1 : 0) :
-        //                inci.Field<int>("generaerror");
-
-        //            if (filtro == null || filtro.Count == 0 || filtro.Contains(nInci.ToString()) == false)
-        //            {
-        //                _lst.Add(new U5kIncidenciaDescr
-        //                {
-        //                    id = nInci,
-        //                    desc = fInci,
-        //                    alarm = alarma == 0 ? false : true,
-        //                    strformat = strf
-        //                });
-        //            }
-        //        }
-        //        catch (Exception x)
-        //        {
-        //            _logger.Error(x, String.Format("ListaDeIncidencias. Excepcion en Incidencia {0}", nInci));
-        //        }
-        //    }
-        //    return _lst;
-        //}
 
         public List<U5kIncidenciaDescr> ListaDeIncidencias(System.Collections.Specialized.StringCollection filtro)
         {
@@ -730,7 +704,7 @@ namespace U5kBaseDatos
                 {
                     if (inci.IsNull("IdIncidencia"))
                     {
-                        _logger.Error("Lista de Incidencias. Error. Registro de Incidencia NULO");
+                        Uv5kLog.Error<U5kBdtService>("", "U5kBdtService", "Lista de Incidencias. Error. Registro de Incidencia NULO");
                         continue;
                     }
 
@@ -763,7 +737,7 @@ namespace U5kBaseDatos
                 }
                 catch (Exception x)
                 {
-                    _logger.Error(x, String.Format("ListaDeIncidencias. Excepcion en Incidencia {0}", nInci));
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On ListaDeIncidencias, Inci {nInci}");
                 }
             }
             return _lst;
@@ -944,8 +918,7 @@ namespace U5kBaseDatos
                 }
                 catch (Exception x)
                 {
-                    _logger.Error("U5kBdtService.ConsultaHistoricoList Exception: {0}", x.Message);
-                    _logger.Trace(x, "U5kBdtService.ConsultaHistoricoList Exception");
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On historical query");
                 }
             }
 
@@ -1029,7 +1002,7 @@ namespace U5kBaseDatos
                         }
                         catch (Exception x)
                         {
-                            _logger.Error(x, String.Format("GetUsersOnTop. Excepcion en Fila {0}", tb_user));
+                            Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On user {tb_user}");
                         }
                     }
                 }
@@ -1067,7 +1040,7 @@ namespace U5kBaseDatos
                         }
                         catch (Exception x)
                         {
-                            _logger.Error(x, String.Format("GetUsersOnTop. Excepcion en Fila {0}", tb_user));
+                            Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On user {tb_user}");
                         }
                     }
                 }
@@ -1092,14 +1065,13 @@ namespace U5kBaseDatos
                 }
                 else
                 {
-                    _logger.Error($"GetSystemParams. No data get..");
+                    Uv5kLog.Error<U5kBdtService>("", "U5kBdtService", $"On GetCfgActiva, no data!!");
                 }
             }
             catch (Exception x)
             {
-                _logger.Error(x, "");
+                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On GetCfgActiva");
             }
-
         }
         public void GetSystemParams(string systemid, Action<string, uint> notify)
         {
@@ -1115,12 +1087,12 @@ namespace U5kBaseDatos
                 }
                 else
                 {
-                    _logger.Error($"GetSystemParams. No data get..");
+                    Uv5kLog.Error<U5kBdtService>("", "U5kBdtService", $"On GetSystemParams, no data!!");
                 }
             }
             catch (Exception x)
             {
-                _logger.Error(x, "");
+                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On GetSystemParams");
             }
         }
         /// <summary>
@@ -1151,7 +1123,7 @@ namespace U5kBaseDatos
             catch (Exception x)
             {
                 prefix = "?";
-                _logger.Error(x, String.Format("GetAtsPrefix. Excepcion"));
+                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On GetAtsPrefix");
             }
 
             return prefix;
@@ -1173,7 +1145,7 @@ namespace U5kBaseDatos
                 }
                 catch(Exception x)
                 {
-                    _logger.Error(x, String.Format("PbxEndpoint. Excepcion"));
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On PbxEndpoint");
                 }
                 return "";
             }
@@ -1213,9 +1185,8 @@ namespace U5kBaseDatos
             }
             catch (Exception x)
             {
-                _logger.Error(x, String.Format("GetClusterInfo. Excepcion"));
+                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On GetClusterInfo");
             }
-
             return cluster;
         }
 
@@ -1261,13 +1232,13 @@ namespace U5kBaseDatos
                     }
                     catch (Exception x)
                     {
-                        _logger.Error<Exception>("U5kBdtService.ListaDestinosAtsExternos Exception.", x);
+                        Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On ListaDestinosAtsExterno, dst {row}");
                     }
                 }
             }
             catch (Exception x)
             {
-                _logger.Error(x, "U5kBdtService.ListaDestinosAtsExternos Exception.");
+                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On ListaDestinosAtsExternos");
             }
 
             return atsDest;
@@ -1315,13 +1286,13 @@ namespace U5kBaseDatos
                     }
                     catch (Exception x)
                     {
-                        _logger.Error<Exception>("U5kBdtService.ListaDestinosAtsExternos Exception.", x);
+                        Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On ListaDestinosAtsExterno, dst {row}");
                     }
                 }
             }
             catch (Exception x)
             {
-                _logger.Error(x, "U5kBdtService.ListaOperadoresSistema Exception.");
+                Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On ListaDestinosAtsExterno");
             }
             return operadores;
         }
@@ -1354,7 +1325,7 @@ namespace U5kBaseDatos
                 }
                 catch (MySqlException e)
                 {
-                    _logger.Error(e, "BdtOpen Exception: ");
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", e, $"On Open");
                     throw new Exception(e.Message);
                 }
             }
@@ -1367,7 +1338,7 @@ namespace U5kBaseDatos
                 }
                 catch (SQLiteException e)
                 {
-                    _logger.Error(e, "BdtOpen Exception: ");
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", e, $"On Open");
                     throw new Exception(e.Message);
                 }
             }
@@ -1388,7 +1359,7 @@ namespace U5kBaseDatos
             ConnectionState bdtState = Tipo == eBdt.bdtMySql ? ((MySqlConnection)_DB).State : Tipo == eBdt.bdtSqlite ? ((SQLiteConnection)_DB).State : ConnectionState.Closed;
             if (bdtState != ConnectionState.Open)
             {
-                _logger.Error("BDT_NO_OPEN: {0}", bdtState);
+                Uv5kLog.Error<U5kBdtService>("", "U5kBdtService", $"On Reopen, state: {bdtState}");
                 Open();
             }
         }
@@ -1419,7 +1390,7 @@ namespace U5kBaseDatos
                 }
                 catch (MySqlException e)
                 {
-                    _logger.Error(e, "GetDataSet Exception: " + consulta);
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", e, $"On GetDataSet, query: {consulta}");
                     throw new Exception(e.Message);
                 }
                 return DataSetResultado;
@@ -1439,7 +1410,7 @@ namespace U5kBaseDatos
                 }
                 catch (SQLiteException e)
                 {
-                    _logger.Error(e, "GetDataSet Exception: " + consulta);
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", e, $"On GetDataSet, query: {consulta}");
                     throw new Exception(e.Message);
                 }
                 return DataSetResultado;
@@ -1470,7 +1441,7 @@ namespace U5kBaseDatos
                 }
                 catch (MySqlException e)
                 {
-                    _logger.Error(e, "SqlExecute Exception: " + sql);
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", e, $"On SqlExecute, query: {sql}");
                     throw new Exception(e.Message);
                 }
                 return _ret;
@@ -1487,7 +1458,7 @@ namespace U5kBaseDatos
                 }
                 catch (SQLiteException e)
                 {
-                    _logger.Error(e, "SqlExecute Exception: " + sql);
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", e, $"On SqlExecute, query: {sql}");
                     throw new Exception(e.Message);
                 }
                 return _ret;
@@ -1519,7 +1490,7 @@ namespace U5kBaseDatos
                 }
                 catch (MySqlException e)
                 {
-                    _logger.Error(e, "SqlExecute Exception: " + sql);
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", e, $"On SqlExecuteScalar, query: {sql}");
                     throw new Exception(e.Message);
                 }
                 return (UInt64)_ret;
@@ -1537,7 +1508,7 @@ namespace U5kBaseDatos
                 }
                 catch (SQLiteException e)
                 {
-                    _logger.Error(e, "SqlExecuteScalar Exception: " + sql);
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", e, $"On SqlExecuteScalar, query: {sql}");
                     throw new Exception(e.Message);
                 }
                 return (UInt64)_ret;
@@ -1572,7 +1543,7 @@ namespace U5kBaseDatos
                 }
                 catch (Exception x)
                 {
-                    LogManager.GetCurrentClassLogger().Error(x, String.Format("CheckMySqlBdtConnection <{0}>", strConn));
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On Checking Bdt Connection: {strConn}");
                 }
             }
             else if (tipo == eBdt.bdtSqlite)
@@ -1587,7 +1558,7 @@ namespace U5kBaseDatos
                 }
                 catch (Exception x)
                 {
-                    LogManager.GetCurrentClassLogger().Error(x, String.Format("CheckSqLiteBdtConnection <{0}>", strConn));
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On Checking Bdt Connection: {strConn}");
                 }
             }
 
@@ -1888,7 +1859,7 @@ namespace U5kBaseDatos
                 }
                 catch (Exception x)
                 {
-                    LogManager.GetCurrentClassLogger().Error(x, "U5kiDbHelper.GetFiles Exception");
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On GetFiles of Path");
                 }
                 string[] files = null;
                 try
@@ -1897,7 +1868,7 @@ namespace U5kBaseDatos
                 }
                 catch (Exception x)
                 {
-                    LogManager.GetCurrentClassLogger().Error(x, "U5kiDbHelper.GetFiles Exception");
+                    Uv5kLog.Exception<U5kBdtService>("", "U5kBdtService", x, $"On GetFiles of Path");
                 }
                 if (files != null)
                 {

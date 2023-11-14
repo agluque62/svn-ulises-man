@@ -824,11 +824,18 @@ namespace U5kManServer.WebAppServer
             public int std_sip { get; set; }
             public string uri { get; set; }
             public string lor { get; set; }
+
+            public override string ToString()
+            {
+                return $"{equipo}##{name}##{uri}##{std}";
+            }
+            public string hash => EncryptionHelper.StringMd5Hash(ToString());
         }
         /// <summary>
         /// 
         /// </summary>
         public List<itemEqu> lista = new List<itemEqu>();
+        public string hash { get; set; } = string.Empty;
         /// <summary>
         /// 
         /// </summary>
@@ -871,6 +878,7 @@ namespace U5kManServer.WebAppServer
                         uri = String.Format("sip:{0}@{1}:{2}", equipo.sip_user, equipo.Ip1, equipo.sip_port),
                         lor = equipo.LastOptionsResponse
                     }).ToList();
+                hash = EncryptionHelper.StringMd5Hash(lista.Select(i => i.hash).Aggregate("", (p, s) => p + s));
 #endif
             }
         }

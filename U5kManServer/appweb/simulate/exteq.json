@@ -5,13 +5,13 @@
 			"name": "AB-EXTERNO",
 			"ip1": "192.168.3.61",
 			"ip2": "192.168.3.61",
-			"std": 0,
+			"std": 1,
 			"tipo": 3,
-			"lan1": 0,
+			"lan1": 1,
 			"lan2": 0,
 			"modelo": 0,
 			"txrx": 0,
-			"std_sip": 0,
+			"std_sip": 1,
 			"uri": "sip:AB-EXTERNO@192.168.3.61:5060",
 			"lor": null
 		},
@@ -629,8 +629,24 @@
 			"std_sip": 0,
 			"uri": "sip:tx.m.f01.site_b@10.30.184.112:5060",
 			"lor": null
+		},
+		{
+			"equipo": "TLD_TV_mas",
+			"name": "tx.m.f01.site_c",
+			"ip1": "10.30.184.113",
+			"ip2": "10.30.184.113",
+			"std": 0,
+			"tipo": 2,
+			"lan1": 0,
+			"lan2": 0,
+			"modelo": 0,
+			"txrx": 1,
+			"std_sip": 0,
+			"uri": "sip:tx.m.f01.site_v@10.30.184.113:5060",
+			"lor": null
 		}
 	],
 	"IamAlive": {},
-	"ServiceSite": "NUCLEODF-VM01"
+	"ServiceSite": "NUCLEODF-VM01",
+	"hash": "hola1"
 }
