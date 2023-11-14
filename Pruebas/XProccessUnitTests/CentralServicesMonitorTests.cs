@@ -23,14 +23,31 @@ namespace XProccessUnitTests
             }
         }
         [Fact]
-        public void CentralServicesMonitorTest()
+        public void CentralServicesMonitorTest_01()
+        {
+            PrepareTest((service, mock) =>
+            {
+                service.Start();
+                Task.Delay(TimeSpan.FromSeconds(20)).Wait();
+                mock.IsActive = false;
+                Task.Delay(TimeSpan.FromSeconds(20)).Wait();
+                mock.IsActive = true;
+                Task.Delay(TimeSpan.FromSeconds(20)).Wait();
+            });
+        }
+
+        [Fact]
+        public void CentralServicesMonitorTest_02()
         {
             PrepareTest((service, mock) =>
             {
                 service.Start();
                 Task.Delay(TimeSpan.FromSeconds(60)).Wait();
+                mock.IsMaster = false;
+                Task.Delay(TimeSpan.FromSeconds(60)).Wait();
+                mock.IsMaster = true;
+                Task.Delay(TimeSpan.FromSeconds(60)).Wait();
             });
         }
-
     }
 }

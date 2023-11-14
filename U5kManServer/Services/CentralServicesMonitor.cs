@@ -211,12 +211,6 @@ namespace U5kManServer.Services
                     var url = HttpHelper.URL(master?.ip, master?.WebPort, "/rd11");
                     var res = httpService.Post(url, command, TimeSpan.FromSeconds(5)).Result;
                     reply(res.Success, res.Result);
-                    //HttpHelper.PostSync(url,  command, 
-                    //    TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout), 
-                    //    (success, data) => 
-                    //    {
-                    //        reply(success, data);
-                    //    });
                 }
                 else
                 {
@@ -270,10 +264,6 @@ namespace U5kManServer.Services
             IDataService dataService,
             IRawUdpCommService udpService,
             ICommHttpService commHttpService,
-            //Func<bool> masterStateInfo,
-            //Action<bool, string, string, string> internalEvent,
-            //Action<String, Exception> notify,
-            //Action<int, String> trace = null, 
             int Port = 1022)
         {
             this.dataService = dataService ?? new RunTimeData();
@@ -282,16 +272,9 @@ namespace U5kManServer.Services
             UdpPort = Port;
             this.httpService = commHttpService ?? new RuntimeHttpService();
 
-            //UdpServer = new UdpClient(Port);
             SmpAccess = new Semaphore(1, 1);
             DataAndStates = new Dictionary<String, ServerDataAndState>();
             SpvTask = null;
-
-            //
-            //MasterStateInfo = masterStateInfo;
-            //InternalEvent = internalEvent;
-            //Notify = notify;
-            //Trace = trace;
 
             Monitor = this;
         }
@@ -304,7 +287,6 @@ namespace U5kManServer.Services
                 
                 Events.Stop();
 
-                //UdpServer.Close();
                 udpService.DataReceived -= (from, ev) => ReceiveCallback(ev.from, ev.data);
                 udpService.Dispose();
                 ReleaseDataAccess();
@@ -319,7 +301,6 @@ namespace U5kManServer.Services
         {
             if (SpvTask == null)
             {
-                //UdpServer.BeginReceive(ReceiveCallback, null);
                 udpService.Open(UdpPort); 
                 SpvTask = Task.Factory.StartNew(SupervisionCallback);
 
@@ -394,7 +375,7 @@ namespace U5kManServer.Services
 
                     var key = string.Format("{0}#{1}", not.ip, not.ServerType);
 
-                    if (dataService.IsMaster && GetDataAccess())
+                    if (IamMaster() && GetDataAccess())
                     {
                         try
                         {
@@ -426,71 +407,6 @@ namespace U5kManServer.Services
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="ar"></param>
-        //void ReceiveCallback(IAsyncResult ar)
-        //{
-        //    Task.Factory.StartNew(() =>
-        //    {
-        //        if (UdpServer != null && UdpServer.Client != null)
-        //        {
-        //            try
-        //            {
-        //                IPEndPoint remote = null;
-        //                byte[] data = UdpServer.EndReceive(ar, ref remote);
-        //                var str = System.Text.Encoding.Default.GetString(data);
-        //                var not = JsonConvert.DeserializeObject<ServerDataAndState>(str);
-
-        //                not.ip = remote.Address.ToString();
-        //                not.url = "http://" + not.ip + ":" + not.WebPort + "/";
-
-        //                var key = string.Format("{0}#{1}", not.ip, not.ServerType);
-
-        //                if (MasterStateInfo() && GetDataAccess())
-        //                {
-        //                    try
-        //                    {
-        //                        if (DataAndStates.Keys.Contains(key) == false)
-        //                        {
-        //                            /** Evento de Activacion de server */
-        //                            //RaiseInternalEvent(false, not.ServerType, not.Machine, "Activado");
-        //                            RaiseInternalEvent(false, "Detectado NBX en ", not.Machine);
-        //                        }
-        //                        /** Actualizo la tabla */
-        //                        not.TimeStamp = DateTime.Now;
-        //                        DataAndStates[key] = not;
-        //                    }
-        //                    catch (Exception x)
-        //                    {
-        //                        RaiseMessage(x.Message, x);
-        //                    }
-        //                    ReleaseDataAccess();
-        //                }
-
-        //                TraceMsg(3, String.Format("Frame Received from {0} en {1}", not.ServerType, not.ip));
-        //            }
-        //            catch (Exception x)
-        //            {
-        //                RaiseMessage(x.Message, x);
-        //            }
-        //            finally
-        //            {
-        //                if (UdpServer != null && UdpServer.Client != null)
-        //                    UdpServer.BeginReceive(ReceiveCallback, null);
-        //                else
-        //                {
-        //                    RaiseMessage("CentralServiceMonitor Stopped: Invalid UdpServer...");
-        //                }
-        //            }
-        //        }
-        //        else
-        //        {
-        //            RaiseMessage("CentralServiceMonitor not started: Invalid UdpServer...");
-        //        }
-        //    });
-        //}
-        /// <summary>
-        /// 
-        /// </summary>
         void SupervisionCallback()
         {
             DateTime lastOperationalRadioData = DateTime.MinValue;
@@ -503,7 +419,7 @@ namespace U5kManServer.Services
 
             do
             {
-                if (dataService.IsMaster && GetDataAccess())
+                if (IamMaster() && GetDataAccess())
                 {
                     try
                     {
@@ -520,7 +436,7 @@ namespace U5kManServer.Services
 
                     ReleaseDataAccess();
                 }
-                else if (!dataService.IsMaster)
+                else if (!IamMaster())
                 {
                     // Si es Slave limpia las tablas...
                     ClearDataOnSlave();
@@ -603,11 +519,6 @@ namespace U5kManServer.Services
 
                                 TraceMsg(2, "Getting Data Of Radio...");
 
-                                //string LocalRadioSessionsString = HttpHelper.GetSync(master.ip, master.WebPort, "/rdsessions", Timeout, "[]");
-                                //string LocalRadioMNDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/gestormn", Timeout, "[]");
-                                //string LocalHFRadioDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/rdhf", Timeout, "[]");
-                                //string LocalUnoMasUnoDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/rd11", Timeout, "[]");
-
                                 string LocalRadioSessionsString = httpService.Get(HttpHelper.URL(master.ip, master.WebPort, "/rdsessions"), Timeout, "[]").Result.Result;
                                 string LocalRadioMNDataString = httpService.Get(HttpHelper.URL(master.ip, master.WebPort, "/gestormn"), Timeout, "[]").Result.Result;
                                 string LocalHFRadioDataString = httpService.Get(HttpHelper.URL(master.ip, master.WebPort, "/rdhf"), Timeout, "[]").Result.Result;
@@ -677,8 +588,6 @@ namespace U5kManServer.Services
                                 var Timeout = TimeSpan.FromMilliseconds(Properties.u5kManServer.Default.HttpGetTimeout);
 
                                 TraceMsg(2, "Getting Data Of Telephony...");
-                                //string LocalPresenceDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/tifxinfo", Timeout);
-                                //string LocalPhoneDataString = HttpHelper.GetSync(master.ip, master.WebPort, "/phone", Timeout);
 
                                 string LocalPresenceDataString = httpService.Get(HttpHelper.URL(master.ip, master.WebPort, "/tifxinfo"), Timeout).Result.Result;
                                 string LocalPhoneDataString = httpService.Get(HttpHelper.URL(master.ip, master.WebPort, "/phone"), Timeout).Result.Result;
@@ -836,6 +745,16 @@ namespace U5kManServer.Services
             });
         }
 
+        bool IamMaster()
+        {
+            var currentMasterFlag = dataService.IsMaster;
+            if (currentMasterFlag != lastMasterFlag)
+            {
+                RaiseMessage($"Dectected Master Status Change => {currentMasterFlag}");
+                lastMasterFlag = currentMasterFlag;
+            }
+            return lastMasterFlag;
+        }
         #endregion Metodos Privados.
 
         #region Atributos privados
@@ -905,14 +824,8 @@ namespace U5kManServer.Services
         };
         GlobalStateItem RadioServerState = new GlobalStateItem() { State = GlobalStates.Inicio, DateOfChange = DateTime.Now };
         GlobalStateItem PhoneServerState = new GlobalStateItem() { State = GlobalStates.Inicio, DateOfChange = DateTime.Now };
-
-        //readonly Action<String, Exception> Notify;
-        //readonly Action<bool, string, string, string> InternalEvent;
-        //readonly Func<bool> MasterStateInfo;
-        //readonly Action<int, string> Trace;
-
         private EventQueue Events { get; } = new EventQueue();
-
+        bool lastMasterFlag {  get; set; } = false;
 #endregion Atributos Privados
     }
 }
