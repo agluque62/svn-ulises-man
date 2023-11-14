@@ -47,6 +47,9 @@
     <PackageReference Include="Moq">
       <Version>4.17.2</Version>
     </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>7.0.1</Version>
+    </PackageReference>
     <PackageReference Include="NLog">
       <Version>4.5.11</Version>
     </PackageReference>
@@ -55,11 +58,13 @@
     <PackageReference Include="coverlet.collector" Version="1.0.1" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CentralServicesMonitorTests.cs" />
     <Compile Include="ExtEquSpvTests.cs" />
     <Compile Include="GenericTest.cs" />
     <Compile Include="GwExplorerTests.cs" />
     <Compile Include="MockedClasses\MockedExtEq.cs" />
     <Compile Include="MockedClasses\MockedGw.cs" />
+    <Compile Include="MockedClasses\MockedNbx.cs" />
     <Compile Include="MockedClasses\MockedPbx.cs" />
     <Compile Include="MockedClasses\MockedTop.cs" />
     <Compile Include="PbxServiceTests.cs" />
@@ -81,6 +86,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="nbxdata.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

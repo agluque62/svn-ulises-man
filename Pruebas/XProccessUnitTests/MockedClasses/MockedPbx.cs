@@ -10,7 +10,7 @@ using U5kManServer;
 using Utilities;
 using static U5kManServer.PabxItfService;
 
-namespace XProccessUnitTests.MockedClasss
+namespace XProccessUnitTests.MockedClass
 {
     public class MockedPbx
     {

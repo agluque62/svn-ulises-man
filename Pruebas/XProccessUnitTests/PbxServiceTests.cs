@@ -8,7 +8,6 @@ using Xunit;
 using U5kManServer;
 using U5kBaseDatos;
 using XProccessUnitTests.MockedClass;
-using XProccessUnitTests.MockedClasss;
 
 namespace XProccessUnitTests
 {

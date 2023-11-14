@@ -75,7 +75,7 @@ namespace XProccessUnitTests.MockedClasss
         void HttpServiceSetup(bool active)
         {
             HttpServiceMock = new Mock<ICommHttpService>();
-            HttpServiceMock.Setup(proc => proc.Get(It.IsAny<string>(), It.IsAny<TimeSpan>()))
+            HttpServiceMock.Setup(proc => proc.Get(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<string>()))
                 .Returns<string, TimeSpan>((url, timeout) => Task.Run(() => SimulatedHttpData(active, url)));
         }
 
