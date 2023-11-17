@@ -12,7 +12,7 @@ namespace U5kManServer.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.10.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.7.0.0")]
     internal sealed partial class u5kManServer : global::System.Configuration.ApplicationSettingsBase {
         
         private static u5kManServer defaultInstance = ((u5kManServer)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new u5kManServer())));
@@ -20,65 +20,6 @@ namespace U5kManServer.Properties {
         public static u5kManServer Default {
             get {
                 return defaultInstance;
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
-<ArrayOfString xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
-  <string>Top:.1.1.1000.0</string>
-  <string>EstadoTop:.1.1.1000.0</string>
-  <string>EstadoAltavozRadio:.1.1.1000.1.2.0</string>
-  <string>EstadoAltavozLC:.1.1.1000.1.2.1</string>
-  <string>EstadoJacksEjecutivo:.1.1.1000.1.3.0</string>
-  <string>EstadoJacksAyudante:.1.1.1000.1.3.1</string>
-  <string>EstadoPtt:.1.1.1000.2</string>
-  <string>EstadoPanel:.1.1.1000.1.4</string>
-  <string>EstadoLan1:.1.1.1000.3.1</string>
-  <string>EstadoLan2:.1.1.1000.3.2</string>
-  <string>SeleccionPaginaRadio:.1.1.1000.6</string>
-  <string>LlamadaSaliente:.1.1.1000.7</string>
-  <string>LlamadaEntrante:.1.1.1000.9</string>
-  <string>LlamadaEstablecida:.1.1.1000.11</string>
-  <string>LlamadaFinaliza:.1.1.1000.10</string>
-  <string>FacilidadTelefonia:.1.1.1000.8</string>
-  <string>Briefing:.1.1.1000.12</string>
-  <string>Replay:.1.1.1000.13</string>
-</ArrayOfString>")]
-        public global::System.Collections.Specialized.StringCollection TopOids {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["TopOids"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
-<ArrayOfString xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
-  <string>ED137NombreSistema:.1.3.6.1.2.1.1.2.0</string>
-  <string>ED137Descripcion:.1.3.6.1.2.1.1.1.0</string>
-  <string>ED137NumeroItfs:.1.3.6.1.2.1.2.1.0</string>
-  <string>ED137TablaItfs:.1.3.6.1.2.1.2.2.1</string>
-  <string>U5KDualidad:.1.3.6.1.4.1.7916.8.1.1.1.0</string>
-  <string>U5KServidorDual:.1.3.6.1.4.1.7916.8.1.1.2.0</string>
-  <string>U5KScvA:.1.3.6.1.4.1.7916.8.1.1.3.0</string>
-  <string>U5KScvB:.1.3.6.1.4.1.7916.8.1.1.4.0</string>
-  <string>U5KServ1:.1.3.6.1.4.1.7916.8.1.1.5.0</string>
-  <string>U5KServ2:.1.3.6.1.4.1.7916.8.1.1.6.0</string>
-  <string>U5KNtp:.1.3.6.1.4.1.7916.8.1.1.7.0</string>
-  <string>U5KSacta1:.1.3.6.1.4.1.7916.8.1.1.8.0</string>
-  <string>U5KSacta2:.1.3.6.1.4.1.7916.8.1.1.9.0</string>
-  <string>U5KNPuestos:.1.3.6.1.4.1.7916.8.1.2.1.0</string>
-  <string>U5KPuestos:.1.3.6.1.4.1.7916.8.1.2.2.1</string>
-  <string>U5KNRadios:.1.3.6.1.4.1.7916.8.1.3.1.0</string>
-  <string>U5KRadios:.1.3.6.1.4.1.7916.8.1.3.2.1</string>
-  <string>U5KNLineas:.1.3.6.1.4.1.7916.8.1.4.1.0</string>
-  <string>U5KLineas:.1.3.6.1.4.1.7916.8.1.4.2.1</string>
-</ArrayOfString>")]
-        public global::System.Collections.Specialized.StringCollection ScvOids {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["ScvOids"]));
             }
         }
         
@@ -211,97 +152,6 @@ namespace U5kManServer.Properties {
         public string FiltroGW {
             get {
                 return ((string)(this["FiltroGW"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
-<ArrayOfString xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
-  <string>EstadoGw:.1.1.100.2.0</string>
-  <string>TipoSlot0:.1.1.100.31.1.1.0</string>
-  <string>TipoSlot1:.1.1.100.31.1.1.1</string>
-  <string>TipoSlot2:.1.1.100.31.1.1.2</string>
-  <string>TipoSlot3:.1.1.100.31.1.1.3</string>
-  <string>EstadoSlot0:.1.1.100.31.1.2.0</string>
-  <string>EstadoSlot1:.1.1.100.31.1.2.1</string>
-  <string>EstadoSlot2:.1.1.100.31.1.2.2</string>
-  <string>EstadoSlot3:.1.1.100.31.1.2.3</string>
-  <string>PrincipalReserva:.1.1.100.21.0</string>
-  <string>EstadoLan:.1.1.100.22.0</string>
-  <string>TipoRecurso:.1.1.100.100.0</string>
-  <string>TipoRecursoRadio:.1.1.200</string>
-  <string>EstadoRecursoRadio:.1.1.200.2.0</string>
-  <string>TipoRecursoLC:.1.1.300</string>
-  <string>EstadoRecursoLC:.1.1.300.2.0</string>
-  <string>TipoRecursoTF:.1.1.400</string>
-  <string>EstadoRecursoTF:.1.1.400.2.0</string>
-  <string>TipoRecursoATS:.1.1.500</string>
-  <string>EstadoRecursoATS:.1.1.500.2.0</string>
-</ArrayOfString>")]
-        public global::System.Collections.Specialized.StringCollection GwOids {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["GwOids"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
-<ArrayOfString xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
-  <string>S:.1.1.200.3.1</string>
-  <string>0:.1.1.200.3.1.13.1</string>
-  <string>1:.1.1.200.3.1.17.1</string>
-  <string>2:.1.1.200.3.1.18.1</string>
-</ArrayOfString>")]
-        public global::System.Collections.Specialized.StringCollection RadioOids {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["RadioOids"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
-<ArrayOfString xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
-  <string>S:.1.1.300.3.1</string>
-  <string>0:.1.1.300.3.1.9.1</string>
-  <string>1:.1.1.300.3.1.13.1</string>
-  <string>2:.1.1.300.3.1.14.1</string>
-</ArrayOfString>")]
-        public global::System.Collections.Specialized.StringCollection LcenOids {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["LcenOids"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
-<ArrayOfString xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
-  <string>S:.1.1.400.3.1</string>
-  <string>0:.1.1.400.3.1.10.1</string>
-  <string>1:.1.1.400.3.1.14.1</string>
-  <string>2:.1.1.400.3.1.15.1</string>
-</ArrayOfString>")]
-        public global::System.Collections.Specialized.StringCollection TelefOids {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["TelefOids"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
-<ArrayOfString xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
-  <string>S:.1.1.500.3.1</string>
-  <string>0:.1.1.500.3.1.13.1</string>
-  <string>1:.1.1.500.3.1.17.1</string>
-  <string>2:.1.1.500.3.1.18.1</string>
-</ArrayOfString>")]
-        public global::System.Collections.Specialized.StringCollection AtsOids {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["AtsOids"]));
             }
         }
         
@@ -470,24 +320,6 @@ namespace U5kManServer.Properties {
             }
             set {
                 this["HayAltavozHF"] = value;
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
-<ArrayOfString xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
-  <string>1021</string>
-  <string>1022</string>
-  <string>2050</string>
-  <string>2051</string>
-  <string>2052</string>
-  <string>2053</string>
-  <string>2300</string>
-</ArrayOfString>")]
-        public global::System.Collections.Specialized.StringCollection FiltroIncidencias {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["FiltroIncidencias"]));
             }
         }
         
@@ -662,19 +494,6 @@ namespace U5kManServer.Properties {
             }
         }
         
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("<?xml version=\"1.0\" encoding=\"utf-16\"?>\r\n<ArrayOfString xmlns:xsi=\"http://www.w3." +
-            "org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" />")]
-        public global::System.Collections.Specialized.StringCollection Snmp_V3Users {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["Snmp_V3Users"]));
-            }
-            set {
-                this["Snmp_V3Users"] = value;
-            }
-        }
-        
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("{ \"TeamingType\": \"Intel\", \"WindowsLog\": \"System\", \"EventSource\":\"iANSMiniport\", \"" +
@@ -745,17 +564,6 @@ namespace U5kManServer.Properties {
         public int LogRepeatSupervisionMin {
             get {
                 return ((int)(this["LogRepeatSupervisionMin"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("<?xml version=\"1.0\" encoding=\"utf-16\"?>\r\n<ArrayOfString xmlns:xsi=\"http://www.w3." +
-            "org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\r\n  <s" +
-            "tring>200</string>\r\n  <string>405</string>\r\n</ArrayOfString>")]
-        public global::System.Collections.Specialized.StringCollection AllowedResponsesToSipOptions {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["AllowedResponsesToSipOptions"]));
             }
         }
         
@@ -1005,6 +813,207 @@ namespace U5kManServer.Properties {
         public int IgmpMinTimeout {
             get {
                 return ((int)(this["IgmpMinTimeout"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
+<ArrayOfString xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <string>Top:.1.1.1000.0</string>
+  <string>EstadoTop:.1.1.1000.0</string>
+  <string>EstadoAltavozRadio:.1.1.1000.1.2.0</string>
+  <string>EstadoAltavozLC:.1.1.1000.1.2.1</string>
+  <string>EstadoJacksEjecutivo:.1.1.1000.1.3.0</string>
+  <string>EstadoJacksAyudante:.1.1.1000.1.3.1</string>
+  <string>EstadoPtt:.1.1.1000.2</string>
+  <string>EstadoPanel:.1.1.1000.1.4</string>
+  <string>EstadoLan1:.1.1.1000.3.1</string>
+  <string>EstadoLan2:.1.1.1000.3.2</string>
+  <string>SeleccionPaginaRadio:.1.1.1000.6</string>
+  <string>LlamadaSaliente:.1.1.1000.7</string>
+  <string>LlamadaEntrante:.1.1.1000.9</string>
+  <string>LlamadaEstablecida:.1.1.1000.11</string>
+  <string>LlamadaFinaliza:.1.1.1000.10</string>
+  <string>FacilidadTelefonia:.1.1.1000.8</string>
+  <string>Briefing:.1.1.1000.12</string>
+  <string>Replay:.1.1.1000.13</string>
+</ArrayOfString>")]
+        public global::System.Collections.Specialized.StringCollection TopOids {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["TopOids"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
+<ArrayOfString xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <string>ED137NombreSistema:.1.3.6.1.2.1.1.2.0</string>
+  <string>ED137Descripcion:.1.3.6.1.2.1.1.1.0</string>
+  <string>ED137NumeroItfs:.1.3.6.1.2.1.2.1.0</string>
+  <string>ED137TablaItfs:.1.3.6.1.2.1.2.2.1</string>
+  <string>U5KDualidad:.1.3.6.1.4.1.7916.8.1.1.1.0</string>
+  <string>U5KServidorDual:.1.3.6.1.4.1.7916.8.1.1.2.0</string>
+  <string>U5KScvA:.1.3.6.1.4.1.7916.8.1.1.3.0</string>
+  <string>U5KScvB:.1.3.6.1.4.1.7916.8.1.1.4.0</string>
+  <string>U5KServ1:.1.3.6.1.4.1.7916.8.1.1.5.0</string>
+  <string>U5KServ2:.1.3.6.1.4.1.7916.8.1.1.6.0</string>
+  <string>U5KNtp:.1.3.6.1.4.1.7916.8.1.1.7.0</string>
+  <string>U5KSacta1:.1.3.6.1.4.1.7916.8.1.1.8.0</string>
+  <string>U5KSacta2:.1.3.6.1.4.1.7916.8.1.1.9.0</string>
+  <string>U5KNPuestos:.1.3.6.1.4.1.7916.8.1.2.1.0</string>
+  <string>U5KPuestos:.1.3.6.1.4.1.7916.8.1.2.2.1</string>
+  <string>U5KNRadios:.1.3.6.1.4.1.7916.8.1.3.1.0</string>
+  <string>U5KRadios:.1.3.6.1.4.1.7916.8.1.3.2.1</string>
+  <string>U5KNLineas:.1.3.6.1.4.1.7916.8.1.4.1.0</string>
+  <string>U5KLineas:.1.3.6.1.4.1.7916.8.1.4.2.1</string>
+</ArrayOfString>")]
+        public global::System.Collections.Specialized.StringCollection ScvOids {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["ScvOids"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
+<ArrayOfString xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <string>EstadoGw:.1.1.100.2.0</string>
+  <string>TipoSlot0:.1.1.100.31.1.1.0</string>
+  <string>TipoSlot1:.1.1.100.31.1.1.1</string>
+  <string>TipoSlot2:.1.1.100.31.1.1.2</string>
+  <string>TipoSlot3:.1.1.100.31.1.1.3</string>
+  <string>EstadoSlot0:.1.1.100.31.1.2.0</string>
+  <string>EstadoSlot1:.1.1.100.31.1.2.1</string>
+  <string>EstadoSlot2:.1.1.100.31.1.2.2</string>
+  <string>EstadoSlot3:.1.1.100.31.1.2.3</string>
+  <string>PrincipalReserva:.1.1.100.21.0</string>
+  <string>EstadoLan:.1.1.100.22.0</string>
+  <string>TipoRecurso:.1.1.100.100.0</string>
+  <string>TipoRecursoRadio:.1.1.200</string>
+  <string>EstadoRecursoRadio:.1.1.200.2.0</string>
+  <string>TipoRecursoLC:.1.1.300</string>
+  <string>EstadoRecursoLC:.1.1.300.2.0</string>
+  <string>TipoRecursoTF:.1.1.400</string>
+  <string>EstadoRecursoTF:.1.1.400.2.0</string>
+  <string>TipoRecursoATS:.1.1.500</string>
+  <string>EstadoRecursoATS:.1.1.500.2.0</string>
+</ArrayOfString>")]
+        public global::System.Collections.Specialized.StringCollection GwOids {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["GwOids"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
+<ArrayOfString xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <string>S:.1.1.200.3.1</string>
+  <string>0:.1.1.200.3.1.13.1</string>
+  <string>1:.1.1.200.3.1.17.1</string>
+  <string>2:.1.1.200.3.1.18.1</string>
+</ArrayOfString>")]
+        public global::System.Collections.Specialized.StringCollection RadioOids {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["RadioOids"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
+<ArrayOfString xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <string>S:.1.1.300.3.1</string>
+  <string>0:.1.1.300.3.1.9.1</string>
+  <string>1:.1.1.300.3.1.13.1</string>
+  <string>2:.1.1.300.3.1.14.1</string>
+</ArrayOfString>")]
+        public global::System.Collections.Specialized.StringCollection LcenOids {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["LcenOids"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
+<ArrayOfString xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <string>S:.1.1.400.3.1</string>
+  <string>0:.1.1.400.3.1.10.1</string>
+  <string>1:.1.1.400.3.1.14.1</string>
+  <string>2:.1.1.400.3.1.15.1</string>
+</ArrayOfString>")]
+        public global::System.Collections.Specialized.StringCollection TelefOids {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["TelefOids"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
+<ArrayOfString xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <string>S:.1.1.500.3.1</string>
+  <string>0:.1.1.500.3.1.13.1</string>
+  <string>1:.1.1.500.3.1.17.1</string>
+  <string>2:.1.1.500.3.1.18.1</string>
+</ArrayOfString>")]
+        public global::System.Collections.Specialized.StringCollection AtsOids {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["AtsOids"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
+<ArrayOfString xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <string>1021</string>
+  <string>1022</string>
+  <string>2050</string>
+  <string>2051</string>
+  <string>2052</string>
+  <string>2053</string>
+  <string>2300</string>
+</ArrayOfString>")]
+        public global::System.Collections.Specialized.StringCollection FiltroIncidencias {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["FiltroIncidencias"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("<?xml version=\"1.0\" encoding=\"utf-16\"?>\r\n<ArrayOfString xmlns:xsd=\"http://www.w3." +
+            "org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <s" +
+            "tring>200</string>\r\n  <string>405</string>\r\n</ArrayOfString>")]
+        public global::System.Collections.Specialized.StringCollection AllowedResponsesToSipOptions {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["AllowedResponsesToSipOptions"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("<?xml version=\"1.0\" encoding=\"utf-16\"?>\r\n<ArrayOfString xmlns:xsd=\"http://www.w3." +
+            "org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" />")]
+        public global::System.Collections.Specialized.StringCollection Snmp_V3Users {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["Snmp_V3Users"]));
+            }
+            set {
+                this["Snmp_V3Users"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool https {
+            get {
+                return ((bool)(this["https"]));
             }
         }
     }

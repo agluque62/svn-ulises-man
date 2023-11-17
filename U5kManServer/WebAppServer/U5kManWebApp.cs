@@ -27,7 +27,7 @@ namespace U5kManServer.WebAppServer
         public U5kManWebApp(IHttpServer httpServer=null) 
         {
             //_httpServer = httpServer ?? new HttpServer();
-            _httpServer = httpServer ?? new HttpsServer() { httpOnly = true };
+            _httpServer = httpServer ?? new HttpsServer() { httpOnly = Properties.u5kManServer.Default.https == false };
         }
         public void Start(int port=8090)
         {
