@@ -1282,7 +1282,7 @@ namespace U5kManServer
                                         LogWarn<GwExplorer>(msg);
                                         RecordEvent<GwExplorer>(DateTime.Now, 
                                             eIncidencias.IGRL_U5KI_SERVICE_ERROR,
-                                            eTiposInci.TEH_SISTEMA, "SPV",
+                                            eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                                             new Object[] { "Supervision Pasarelas", msg });
                                     }
                                     else

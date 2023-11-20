@@ -30,6 +30,7 @@ namespace U5kBaseDatos
         }
     }
     public enum eTiposInci { TEH_TOP = 0, TEH_TIFX = 1, TEH_EXTERNO_RADIO, TEH_EXTERNO_TELEFONIA, TEH_SISTEMA, TEH_RADIOHF, TEH_RADIOMN, TEH_RECORDER }
+    public enum eTiposHw { MTTO }
     /// <summary>
     /// 
     /// </summary>

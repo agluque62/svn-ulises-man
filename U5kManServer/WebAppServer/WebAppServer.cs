@@ -955,13 +955,13 @@ namespace U5kManServer.WebAppServer
                 Expired.ForEach((s) =>
                 {
                     var msg = $"La Sesion de {s.UserId} ha expirado";
-                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                         new object[] { msg, "", "", "", "", "", "", "" });
                 });
                 Inactives.ForEach((s) =>
                 {
                     var msg = $"La Sesion de {s.UserId} se ha cancelado por inactividad.";
-                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                         new object[] { msg, "", "", "", "", "", "", "" });
                 });
             });
