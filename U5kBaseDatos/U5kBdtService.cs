@@ -585,7 +585,7 @@ namespace U5kBaseDatos
                         Id = id,
                         Ip = Helper.DataRowField<string>(id, row, "IPRED1") ?? string.Empty,
                         Ip2 = Helper.DataRowField<string>(id, row, "IPRED2") ?? string.Empty,
-                        Tipo = Helper.DataRowField<int>(id, row, "TIPOEQUIPO"),
+                        Tipo = (int)Helper.DataRowField<uint>(id, row, "TIPOEQUIPO"),
                         Modelo = Helper.DataRowField<int?>(id, row, "MODELOEQUIPO") ?? 0,
                         RxOrTx = Helper.DataRowField<int?>(id, row, "TIPORADIO") ?? 0,
                         IdDestino = Helper.DataRowField<string>(id, row, "IDDESTINO"),
