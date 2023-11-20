@@ -30,7 +30,6 @@ namespace U5kBaseDatos
         }
     }
     public enum eTiposInci { TEH_TOP = 0, TEH_TIFX = 1, TEH_EXTERNO_RADIO, TEH_EXTERNO_TELEFONIA, TEH_SISTEMA, TEH_RADIOHF, TEH_RADIOMN, TEH_RECORDER }
-    public enum eTiposHw { MTTO }
     /// <summary>
     /// 
     /// </summary>
@@ -585,7 +584,7 @@ namespace U5kBaseDatos
                         Id = id,
                         Ip = Helper.DataRowField<string>(id, row, "IPRED1") ?? string.Empty,
                         Ip2 = Helper.DataRowField<string>(id, row, "IPRED2") ?? string.Empty,
-                        Tipo = (int)Helper.DataRowField<uint>(id, row, "TIPOEQUIPO"),
+                        Tipo = Helper.DataRowField<int>(id, row, "TIPOEQUIPO"),
                         Modelo = Helper.DataRowField<int?>(id, row, "MODELOEQUIPO") ?? 0,
                         RxOrTx = Helper.DataRowField<int?>(id, row, "TIPORADIO") ?? 0,
                         IdDestino = Helper.DataRowField<string>(id, row, "IDDESTINO"),
