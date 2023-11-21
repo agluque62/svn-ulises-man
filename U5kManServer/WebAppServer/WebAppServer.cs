@@ -686,7 +686,7 @@ namespace U5kManServer.WebAppServer
                     if (httpOnly == false)
                     {
                         var url = new UriBuilder(context.Request.Url) { Port = basePort + 1, Scheme="https" };
-                        context.Response.Redirect(url.ToString());
+                        context?.Response?.Redirect(url.ToString());
                     }
                     else
                     {
@@ -700,6 +700,7 @@ namespace U5kManServer.WebAppServer
                 finally
                 {
                     context?.Response?.Close();
+                    context = null;
                 }
             }
             LogInfo<HttpsServer>($"Listening on port {basePort} for HTTP stopped");
@@ -724,6 +725,7 @@ namespace U5kManServer.WebAppServer
                 finally
                 {
                     context?.Response?.Close();
+                    context = null;
                 }
             }
             LogInfo<HttpsServer>($"Listening on port {basePort+1} for HTTPS stopped");
