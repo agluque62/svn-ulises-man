@@ -12,791 +12,36 @@ using System.Net;
 using NucleoGeneric;
 using Utilities;
 using U5kBaseDatos;
+using static U5kManServer.WebAppServer.HttpServer;
+using Lextm.SharpSnmpLib.Messaging;
+using System.Web.Services.Description;
+using System.Runtime.Remoting.Contexts;
+using static U5kManServer.U5kManService;
 
 namespace U5kManServer.WebAppServer
 {
-    public class OldWebAppServer : BaseCode, IDisposable
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public delegate void wasRestCallBack(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt);
-
-        #region Public
-
-        public string DefaultUrl { get; set; }
-        public string DefaultDir { get; set; }
-        public bool HtmlEncode { get; set; }
-        public bool Enable { get; set; }
-        public string DisableCause { get; set; }
-        public int SyncListenerSpvPeriod { get; set; } = 5;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public OldWebAppServer()
-        {
-            SetRequestRootDirectory();
-            DefaultUrl = "/index.html";
-            DefaultDir = "/appweb";
-            HtmlEncode = true;
-            Enable = false;
-            DisableCause = "";
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="defaultDir"></param>
-        /// <param name="defaultUrl"></param>
-        public OldWebAppServer(string defaultDir, string defaultUrl, bool htmlEncode = true)
-        {
-            SetRequestRootDirectory();
-            DefaultUrl = defaultUrl;
-            DefaultDir = defaultDir;
-            HtmlEncode = htmlEncode;
-            Enable = false;
-            DisableCause = "";
-        }
-        public OldWebAppServer(string rootDirectory)
-        {
-            Directory.SetCurrentDirectory(rootDirectory);
-            DefaultUrl = "/index.html";
-            DefaultDir = "/appweb";
-            HtmlEncode = true;
-            Enable = true;
-            DisableCause = "";
-        }
-        public void Dispose() { }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="port"></param>
-        /// <param name="cfg"></param>
-        public void Start(int port, Dictionary<string, wasRestCallBack> cfg)
-        {
-            LogDebug<OldWebAppServer>($"{Id} Starting WebAppServer");
-            CfgRest = cfg;
-            ExecutiveThreadCancel = new CancellationTokenSource();
-            ExecutiveThread = Task.Run(() =>
-            {
-                DateTime lastListenerTime = DateTime.MinValue;
-                DateTime lastRefreshTime = DateTime.MinValue;
-                // Supervisar la cancelacion.
-                while (ExecutiveThreadCancel.IsCancellationRequested == false)
-                {
-                    Task.Delay(TimeSpan.FromMilliseconds(100)).Wait();
-                    if (DateTime.Now - lastListenerTime >= TimeSpan.FromSeconds(SyncListenerSpvPeriod))
-                    {
-                        // Supervisar la disponibilidad del Listener.
-                        lock (Locker)
-                        {
-                            if (Listener == null)
-                            {
-                                try
-                                {
-                                    LogDebug<OldWebAppServer>($"{Id} Starting HttpListener");
-                                    Listener = new HttpListener();
-                                    Listener.Prefixes.Add("http://*:" + port.ToString() + "/");
-
-                                    /** Configurar la Autentificacion */
-                                    Listener.AuthenticationSchemes = AuthenticationSchemes.Basic | AuthenticationSchemes.Anonymous;
-                                    Listener.AuthenticationSchemeSelectorDelegate = request =>
-                                    {
-                                        /** Todas las operaciones No GET de Usuarios no ulises se consideran inseguras... Habra que autentificarse */
-                                        // return request.HttpMethod == "GET" || request.Headers["UlisesClient"] == "MTTO" ? AuthenticationSchemes.Anonymous : AuthenticationSchemes.Basic;
-                                        return AuthenticationSchemes.Anonymous;
-                                    };
-
-                                    Listener.Start();
-                                    Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
-                                    LogDebug<OldWebAppServer>($"{Id} HttpListener Started");
-                                }
-                                catch (Exception x)
-                                {
-                                    LogException<OldWebAppServer>($"{Id} ", x, false);
-                                    ResetListener();
-                                }
-                            }
-                        }
-                        lastListenerTime = DateTime.Now;
-                    }
-                }
-            });
-            LogDebug<OldWebAppServer>($"{Id} WebAppServer Started");
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public virtual void Stop()
-        {
-            lock (Locker)
-            {
-                LogDebug<OldWebAppServer>($"{Id} Ending WebAppServer");
-
-                ExecutiveThreadCancel?.Cancel();
-                ExecutiveThread?.Wait(TimeSpan.FromSeconds(5));
-                Listener?.Close();
-                Listener = null;
-                CfgRest = null;
-
-                LogDebug<OldWebAppServer>($"{Id} WebAppServer Ended");
-            }
-        }
-
-        #endregion
-
-        #region Protected
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="result"></param>
-        void GetContextCallback(IAsyncResult result)
-        {
-            U5kGenericos.TraceCurrentThread(this.GetType().Name);
-            lock (Locker)
-            {
-                //U5kGenericos.SetCurrentCulture();
-
-                ConfigCultureSet();
-
-                if (Listener == null || Listener.IsListening == false)
-                    return;
-                HttpListenerContext context = Listener.EndGetContext(result);
-                try
-                {
-                    Logrequest(context);
-
-                    string url = context.Request.Url.LocalPath;
-                    if (Enable )
-                    {
-                        if (url == "/") context.Response.Redirect(DefaultUrl);
-                        else
-                        {
-                            wasRestCallBack cb = FindRest(url);
-                            if (cb != null)
-                            {
-                                StringBuilder sb = new System.Text.StringBuilder();
-                                // TODO. De momento no cojo el semaforo....
-                                GlobalServices.GetWriteAccess((gdt) =>
-                                {
-                                    cb(context, sb, gdt);
-                                }, false);
-                                context.Response.ContentType = FileContentType(".json");
-                                Render(Encode(sb.ToString()), context.Response);
-                            }
-                            else
-                            {
-                                url = DefaultDir + url;
-                                if (url.Length > 1 && File.Exists(url.Substring(1)))
-                                {
-                                    /** Es un fichero lo envio... */
-                                    string file = url.Substring(1);
-                                    string ext = Path.GetExtension(file).ToLowerInvariant();
-
-                                    context.Response.ContentType = FileContentType(ext);
-                                    ProcessFile(context.Response, file);
-                                }
-                                else
-                                {
-                                    context.Response.StatusCode = 404;
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // Render(Encode(DisableCause), context.Response);
-                        // context.Response.StatusCode = 503;
-                        // context.Response.Redirect("/noserver.html");
-                        context.Response.ContentType = FileContentType(".html");
-                        ProcessFile(context.Response, (DefaultDir + "/disabled.html").Substring(1), "{{cause}}", DisableCause);
-                    }
-                }
-                catch (HttpListenerException x)
-                {
-                    // Si se produce una excepcion de este tipo, hay que reiniciar el LISTENER.
-                    LogException<OldWebAppServer>("", x, false);
-                    ResetListener();
-                }
-                catch (Exception x)
-                {
-                    LogException<OldWebAppServer>( "", x);
-                    context.Response.StatusCode = 500;
-                    // Todo. Render(Encode(x.Message), context.Response);
-                }
-                finally
-                {
-                    if (Listener != null && Listener.IsListening)
-                    {
-                        context.Response.Close();
-                        Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="response"></param>
-        /// <param name="file"></param>
-        protected void ProcessFile(HttpListenerResponse response, string file, string tag="", string valor="")
-        {
-            if (tag != "")
-            {
-                string str = File.ReadAllText(file).Replace(tag, valor);
-                byte[] content = Encoding.ASCII.GetBytes(str);
-                response.OutputStream.Write(content, 0, content.Length);
-            }
-            else
-            {
-                byte[] content = File.ReadAllBytes(file);
-                response.OutputStream.Write(content, 0, content.Length);
-            }
-            response.Close();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="msg"></param>
-        /// <param name="res"></param>
-        protected void Render(string msg, HttpListenerResponse res)
-        {
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(msg);
-            res.ContentLength64 = buffer.Length;
-
-            using (System.IO.Stream outputStream = res.OutputStream)
-            {
-                outputStream.Write(buffer, 0, buffer.Length);
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="entrada"></param>
-        /// <returns></returns>
-        protected string Encode(string entrada)
-        {
-            if (HtmlEncode == true)
-            {
-                char[] chars = entrada.ToCharArray();
-                StringBuilder result = new StringBuilder(entrada.Length + (int)(entrada.Length * 0.1));
-
-                foreach (char c in chars)
-                {
-                    int value = Convert.ToInt32(c);
-                    if (value > 127)
-                        result.AppendFormat("&#{0};", value);
-                    else
-                        result.Append(c);
-                }
-
-                return result.ToString();
-            }
-            return entrada;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        protected void SetRequestRootDirectory()
-        {
-            string exePath = System.Reflection.Assembly.GetEntryAssembly().Location;
-            string rootDirectory = Path.GetDirectoryName(exePath);
-            Directory.SetCurrentDirectory(rootDirectory);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        protected wasRestCallBack FindRest(string url)
-        {
-            if (CfgRest == null)
-                return null;
-
-            if (CfgRest.ContainsKey(url))
-                return CfgRest[url];
-
-            string[] urlComp = url.Split('/');
-            foreach (KeyValuePair<string, wasRestCallBack> item in CfgRest)
-            {
-                string[] keyComp = item.Key.Split('/');
-                if (keyComp.Count() != urlComp.Count())
-                    continue;
-
-                bool encontrado = true;
-                for (int index = 0; index < urlComp.Count(); index++)
-                {
-                    if (urlComp[index] != keyComp[index] && keyComp[index] != "*")
-                        encontrado = false;
-                }
-
-                if (encontrado == true)
-                    return item.Value;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="ext"></param>
-        /// <returns></returns>
-        Dictionary<string, string> _filetypes = new Dictionary<string, string>()
-        {
-            {".css","text/css"},
-            {".jpeg","image/jpg"},
-            {".jpg","image/jpg"},
-            {".htm","text/html"},
-            {".html","text/html"},
-            {".ico","image/ico"},
-            {".js","text/json"},
-            {".json","text/json"},
-            {".txt","text/text"},
-            {".bmp","image/bmp"}
-        };
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="ext"></param>
-        /// <returns></returns>
-        private string FileContentType(string ext)
-        {
-            if (_filetypes.ContainsKey(ext))
-                return _filetypes[ext];
-            return "text/text";
-        }
-
-        private void ResetListener()
-        {
-            LogDebug<OldWebAppServer>($"{Id} Reseting Listener");
-
-            Listener?.Close();
-            Listener = null;
-
-            LogDebug<OldWebAppServer>($"{Id} Listener Reset");
-        }
-        #endregion
-
-        #region Testing
-        private void Logrequest(HttpListenerContext context)
-        {
-#if DEBUG
-            if (context.Request.QueryString.Count > 0)
-            {
-                var array = (from key in context.Request.QueryString.AllKeys
-                             from value in context.Request.QueryString.GetValues(key)
-                             select string.Format("{0}={1}", key, value)).ToArray();
-
-                LogDebug<OldWebAppServer>($"{Id} URL: {context.Request.Url.OriginalString}, " +
-                    $"Raw URL: {context.Request.RawUrl}, " +
-                    $"Query: {String.Join("##", array)}");
-            }
-            else
-            {
-                LogDebug<OldWebAppServer>($"{Id} URL: {context.Request.Url.OriginalString}, " +
-                    $"Raw URL: {context.Request.RawUrl}, ");
-            }
-            ErrorTesting();
-#endif
-    }
-        private void ErrorTesting()
-        {
-#if DEBUG
-            DebuggingHelper.ThrowErrors.GetError((error) =>
-            {
-                if (error== DebuggingHelper.ThrowErrors.LaunchableErrors.WebListenerError)
-                {
-                    throw new HttpListenerException(1445, "Testing HttpListenerException");
-                }
-            });
-#endif
-        }
-        #endregion
-
-        #region Private
-
-        string Id => $"On WebAppServer:";
-        Task ExecutiveThread { get; set; } = null;
-        CancellationTokenSource ExecutiveThreadCancel { get; set; } = null;
-        HttpListener Listener { get; set; } = null;
-        Dictionary<string, wasRestCallBack> CfgRest { get; set; } = null;
-        object Locker { get; set; } = new Object();
-        static DateTime StartingDate { get; set; } = DateTime.Now;
-
-        #endregion
-    }
 
     public delegate void wasRestCallBack(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt);
-    class WebServerBase : BaseCode
+    public interface IHttpServer 
     {
-        #region Public
-        public class CfgServer
-        {
-            public string DefaultUrl { get; set; }
-            public string DefaultDir { get; set; }
-            public string LoginUrl { get; set; }
-            public string LogoutUrl { get; set; }
-            public bool HtmlEncode { get; set; }
-            //public int SessionDuration { get; set; }
-            public Dictionary<string, wasRestCallBack> CfgRest { get; set; }
-            public string LoginErrorTag { get; set; }
-            public List<string> SecureUris { get; set; }
-        }
-        public int SyncListenerSpvPeriod { get; set; } = 5;
-        public WebServerBase()
-        {
-            SetRequestRootDirectory();
-            Enable = true;
-            DisableCause = "";
-        }
-        public void Start(int port, CfgServer cfg)
-        {
-            lock (locker)
-            {
-                if (Listener != null)
-                    Stop();
-                Config = cfg;
-
-                ExecutiveThreadCancel = new CancellationTokenSource();
-                ExecutiveThread = Task.Run(() =>
-                {
-                    DateTime lastListenerTime = DateTime.MinValue;
-                    DateTime lastRefreshTime = DateTime.MinValue;
-                    // Supervisar la cancelacion.
-                    while (ExecutiveThreadCancel.IsCancellationRequested == false)
-                    {
-                        Task.Delay(TimeSpan.FromMilliseconds(100)).Wait();
-                        if (DateTime.Now - lastListenerTime >= TimeSpan.FromSeconds(SyncListenerSpvPeriod))
-                        {
-                            // Supervisar la disponibilidad del Listener.
-                            lock (locker)
-                            {
-                                if (Listener == null)
-                                {
-                                    try
-                                    {
-                                        LogDebug<WebServerBase>($"{Id} Starting HttpListener");
-                                        Listener = new HttpListener();
-                                        Listener.Prefixes.Add("http://*:" + port.ToString() + "/");
-                                        Listener.Start();
-                                        Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
-                                        LogDebug<WebServerBase>($"{Id} HttpListener Started");
-                                    }
-                                    catch (Exception x)
-                                    {
-                                        LogException<WebServerBase>($"{Id} ", x, false);
-                                        ResetListener();
-                                    }
-                                }
-                                Sessions.Tick4Idle();
-                                LogTrace<WebServerBase>($"{Sessions}");
-                            }
-                            lastListenerTime = DateTime.Now;
-                        }
-                    }
-                });
-            }
-        }
-        public virtual void Stop()
-        {
-            lock (locker)
-            {
-                if (Listener != null)
-                {
-                    Listener.Close();
-                    ExecutiveThreadCancel?.Cancel();
-                    ExecutiveThread?.Wait(TimeSpan.FromSeconds(5));
-                    Listener = null;
-                    Config = null;
-                }
-            }
-        }
-        #endregion
-        #region Protected
-        void GetContextCallback(IAsyncResult result)
-        {
-            lock (locker)
-            {
-                if (Listener == null || Listener.IsListening == false)
-                    return;
-                
-                ConfigCultureSet();
-
-                HttpListenerContext context = Listener.EndGetContext(result);
-                Logrequest(context);
-                try
-                {
-                    if (IsAuthenticated(context))
-                    {
-                        string url = context.Request.Url.LocalPath;
-                        if (url == "/") context.Response.Redirect(Config?.DefaultUrl);
-                        else
-                        {
-                            wasRestCallBack cb = FindRest(url);
-                            if (cb != null)
-                            {
-                                StringBuilder sb = new System.Text.StringBuilder();
-                                // TODO. De momento no cojo el semaforo....
-                                GlobalServices.GetWriteAccess((gdt) =>
-                                {
-                                    cb(context, sb, gdt);
-                                }, false);
-                                context.Response.ContentType = FileContentType(".json");
-                                Render(Encode(sb.ToString()), context.Response);
-                            }
-                            else
-                            {
-                                url = Config?.DefaultDir + url;
-                                if (url.Length > 1 && File.Exists(url.Substring(1)))
-                                {
-                                    /** Es un fichero lo envio... */
-                                    string file = url.Substring(1);
-                                    string ext = Path.GetExtension(file).ToLowerInvariant();
-
-                                    context.Response.ContentType = FileContentType(ext);
-                                    ProcessFile(context.Response, file);
-                                }
-                                else
-                                {
-                                    context.Response.StatusCode = 404;
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Exception x)
-                {
-                    LogException<WebServerBase>("", x);
-                    context.Response.StatusCode = 500;
-                }
-                finally
-                {
-                    context.Response.Close();
-                    if (Listener != null && Listener.IsListening)
-                        Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
-                }
-            }
-        }
-        protected void ProcessFile(HttpListenerResponse response, string file, string tag = "", string valor = "")
-        {
-            if (tag != "")
-            {
-                string str = File.ReadAllText(file).Replace(tag, valor);
-                byte[] content = Encoding.ASCII.GetBytes(str);
-                response.OutputStream.Write(content, 0, content.Length);
-            }
-            else
-            {
-                byte[] content = File.ReadAllBytes(file);
-                response.OutputStream.Write(content, 0, content.Length);
-            }
-            response.Close();
-        }
-        protected void Render(string msg, HttpListenerResponse res)
-        {
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(msg);
-            res.ContentLength64 = buffer.Length;
-
-            using (System.IO.Stream outputStream = res.OutputStream)
-            {
-                outputStream.Write(buffer, 0, buffer.Length);
-            }
-        }
-        protected string Encode(string entrada)
-        {
-            if (Config?.HtmlEncode == true)
-            {
-                char[] chars = entrada.ToCharArray();
-                StringBuilder result = new StringBuilder(entrada.Length + (int)(entrada.Length * 0.1));
-
-                foreach (char c in chars)
-                {
-                    int value = Convert.ToInt32(c);
-                    if (value > 127)
-                        result.AppendFormat("&#{0};", value);
-                    else
-                        result.Append(c);
-                }
-
-                return result.ToString();
-            }
-            return entrada;
-        }
-        protected void SetRequestRootDirectory()
-        {
-            string exePath = System.Reflection.Assembly.GetEntryAssembly().Location;
-            string rootDirectory = Path.GetDirectoryName(exePath);
-            Directory.SetCurrentDirectory(rootDirectory);
-        }
-        protected wasRestCallBack FindRest(string url)
-        {
-            if (Config?.CfgRest == null)
-                return null;
-
-            if (Config.CfgRest.ContainsKey(url))
-                return Config?.CfgRest[url];
-
-            string[] urlComp = url.Split('/');
-            foreach (KeyValuePair<string, wasRestCallBack> item in Config?.CfgRest)
-            {
-                string[] keyComp = item.Key.Split('/');
-                if (keyComp.Count() != urlComp.Count())
-                    continue;
-
-                bool encontrado = true;
-                for (int index = 0; index < urlComp.Count(); index++)
-                {
-                    if (urlComp[index] != keyComp[index] && keyComp[index] != "*")
-                        encontrado = false;
-                }
-
-                if (encontrado == true)
-                    return item.Value;
-            }
-            return null;
-        }
-        Dictionary<string, string> _filetypes = new Dictionary<string, string>()
-        {
-            {".css","text/css"},
-            {".jpeg","image/jpg"},
-            {".jpg","image/jpg"},
-            {".htm","text/html"},
-            {".html","text/html"},
-            {".ico","image/ico"},
-            {".js","text/json"},
-            {".json","text/json"},
-            {".txt","text/text"},
-            {".bmp","image/bmp"}
-        };
-        private string FileContentType(string ext)
-        {
-            if (_filetypes.ContainsKey(ext))
-                return _filetypes[ext];
-            return "text/text";
-        }
-        #endregion
-
-        #region Autenticacion
-        //protected DateTime SessionExpiredAt { get; set; } = DateTime.Now;
-        protected Action<string, Action<bool, string, Cookie>> AuthenticateUser { get; set; } = null;
-        protected bool Enable { get; set; }
-        protected string DisableCause { get; set; }
-        protected SessionsControl Sessions { get; set; } = new SessionsControl();
-        private bool IsAuthenticated(HttpListenerContext context)
-        {
-            // Control de los Post de Login
-            if (context.Request.RawUrl.ToLower().Contains(Config?.LoginUrl.ToLower()))
-            {
-                if (context.Request.HttpMethod == "POST")
-                {
-                    // Autenticar.
-                    if (!context.Request.HasEntityBody)
-                    {
-                        context.Response.Redirect(Config?.LoginUrl);
-                        return false;
-                    }
-                    /** Leer los datos asociados */
-                    using (System.IO.Stream body = context.Request.InputStream) // here we have data
-                    {
-                        using (System.IO.StreamReader reader = new System.IO.StreamReader(body, context.Request.ContentEncoding))
-                        {
-                            var data = reader.ReadToEnd();
-                            // Llamar a la rutina de AUT de la aplicacion.
-                            AuthenticateUser?.Invoke(WebUtility.UrlDecode(data), (accepted, cause, cookie) =>
-                            {
-                                if (accepted)
-                                {
-                                    LogTrace<WebServerBase>($"Set Cookie => {cookie}=>{cookie.Expires}");
-                                    context.Response.Cookies.Add(cookie);
-                                    context.Response.Redirect(Config?.DefaultUrl);
-                                }
-                                else
-                                {
-                                    ProcessFile(context.Response, (Config?.DefaultDir + Config?.LoginUrl).Substring(1),
-                                        Config.LoginErrorTag, Config.LoginErrorTag + cause);
-                                }
-                            });
-                        }
-                    }
-                    return false;
-                }
-                return true;
-            }
-            // Control de lo que tengo que dejar pasar
-            if (ContainsSecureUri(context.Request))
-            {
-                return true;
-            }
-            else
-            {
-                var allowed = Sessions.GetPermission(context.Request, (cookie) =>
-                {
-                    context.Response.Cookies.Add(cookie);
-                });
-                if (allowed)
-                {
-                    return true;
-                }
-            }
-            // Redireccionar.
-            context.Response.Redirect(Config?.LoginUrl);
-           return false;
-        }
-        private bool ContainsSecureUri(HttpListenerRequest request)
-        {
-            var path = request.RawUrl.Split('?').FirstOrDefault();
-            return path != null && Config.SecureUris.Contains(path);
-        }
-        #endregion Autentificacion
-        private void ResetListener()
-        {
-            LogDebug<OldWebAppServer>($"{Id} Reseting Listener");
-
-            Listener?.Close();
-            Listener = null;
-
-            LogDebug<OldWebAppServer>($"{Id} Listener Reset");
-        }
-        #region Testing
-        private void Logrequest(HttpListenerContext context)
-        {
-            LogDebug<WebServerBase>($"HTTP Request: {context.Request.HttpMethod} {context.Request.Url.OriginalString}");
-            if (context.Request.QueryString.Count > 0)
-            {
-                var array = (from key in context.Request.QueryString.AllKeys
-                             from value in context.Request.QueryString.GetValues(key)
-                             select string.Format("{0}={1}", key, value)).ToArray();
-
-                LogDebug<WebServerBase>($"Query: {String.Join("##", array)}");
-            }
-        }
-        #endregion
-
-        #region Private
-
-        string Id => $"On WebAppServer:";
-        HttpListener Listener { get; set; } = null;
-        Object locker { get; set; } = new Object();
-        CfgServer Config { get; set; }
-        //InactivityDetectorClass InactivityDetector { get; set; } = new InactivityDetectorClass();
-        Task ExecutiveThread { get; set; } = null;
-        CancellationTokenSource ExecutiveThreadCancel { get; set; } = null;
-        //Dictionary<string, Cookie> Sessions { get; set; } = new Dictionary<string, Cookie>();
-        #endregion
+        bool IsEnabled { get; set; }
+        Action<string, Action<bool, string, string>> AuthenticateUser { get; set; }
+        void Start(int port, CfgServer cfg);
+        void Stop();
+        void Logout(HttpListenerContext context);
     }
-    // TODO. Debe gestionar todas las sesiones activas...
+    public class CfgServer
+    {
+        public string DefaultUrl { get; set; }
+        public string DefaultDir { get; set; }
+        public string LoginUrl { get; set; }
+        public string LogoutUrl { get; set; }
+        public bool HtmlEncode { get; set; }
+        //public int SessionDuration { get; set; }
+        public Dictionary<string, wasRestCallBack> CfgRest { get; set; }
+        public string LoginErrorTag { get; set; }
+        public List<string> SecureUris { get; set; }
+    }
     public class InactivityDetectorClass : IDisposable
     {
         public TimeSpan IdleTime { get; set; } = TimeSpan.FromMinutes(2);
@@ -807,7 +52,7 @@ namespace U5kManServer.WebAppServer
                 var Elapsed = DateTime.Now - Control.When;
                 return Elapsed > IdleTime ? true : false;
             }
-            else if (LastRestReceived.Count()>0)
+            else if (LastRestReceived.Count() > 0)
             {
                 var LastReceivedOn = LastRestReceived.Values.Max();
                 var Elapsed = DateTime.Now - LastReceivedOn;
@@ -839,7 +84,7 @@ namespace U5kManServer.WebAppServer
         }
         string Key => string.Join("", LastRestReceived.Keys.OrderBy(n => n));
         //string Clicks { get; set; } = "";
-        dynamic Control { get; set; } = new { Clicks = "0", When=DateTime.Now };
+        dynamic Control { get; set; } = new { Clicks = "0", When = DateTime.Now };
         Dictionary<string, DateTime> LastRestReceived { get; set; } = new Dictionary<string, DateTime>();
     }
     public class SessionsControl : BaseCode
@@ -865,7 +110,7 @@ namespace U5kManServer.WebAppServer
             Cleanup();
             if (SessionsCount() < MaxSessions)
             {
-                var key = $"{userid}#{userprofile}#{GenetareKey()}" ;
+                var key = $"{userid}#{userprofile}#{GenetareKey()}";
                 lock (Locker)
                 {
                     Sessions.Add(new Session()
@@ -955,13 +200,13 @@ namespace U5kManServer.WebAppServer
                 Expired.ForEach((s) =>
                 {
                     var msg = $"La Sesion de {s.UserId} ha expirado";
-                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                    RecordEvent<HttpServer>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
                         new object[] { msg, "", "", "", "", "", "", "" });
                 });
                 Inactives.ForEach((s) =>
                 {
                     var msg = $"La Sesion de {s.UserId} se ha cancelado por inactividad.";
-                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                    RecordEvent<HttpServer>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
                         new object[] { msg, "", "", "", "", "", "", "" });
                 });
             });
@@ -984,6 +229,534 @@ namespace U5kManServer.WebAppServer
         private List<Session> Sessions { get; set; } = new List<Session>();
         private object Locker { get; set; } = new object();
         private Random RandomGenerator { get; set; } = new Random((int)DateTime.Now.Ticks);
+    }
+
+    public abstract class HttpServerBase: BaseCode
+    {
+        protected void ProcessFile(HttpListenerResponse response, string file, string tag = "", string valor = "")
+        {
+            if (tag != "")
+            {
+                string str = File.ReadAllText(file).Replace(tag, valor);
+                byte[] content = Encoding.ASCII.GetBytes(str);
+                response.OutputStream.Write(content, 0, content.Length);
+            }
+            else
+            {
+                byte[] content = File.ReadAllBytes(file);
+                response.OutputStream.Write(content, 0, content.Length);
+            }
+            response.Close();
+        }
+        protected void Render(string msg, HttpListenerResponse res)
+        {
+            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(msg);
+            res.ContentLength64 = buffer.Length;
+
+            using (System.IO.Stream outputStream = res.OutputStream)
+            {
+                outputStream.Write(buffer, 0, buffer.Length);
+            }
+        }
+        protected string Encode(string entrada)
+        {
+            if (Config?.HtmlEncode == true)
+            {
+                char[] chars = entrada.ToCharArray();
+                StringBuilder result = new StringBuilder(entrada.Length + (int)(entrada.Length * 0.1));
+
+                foreach (char c in chars)
+                {
+                    int value = Convert.ToInt32(c);
+                    if (value > 127)
+                        result.AppendFormat("&#{0};", value);
+                    else
+                        result.Append(c);
+                }
+
+                return result.ToString();
+            }
+            return entrada;
+        }
+        protected void SetRequestRootDirectory()
+        {
+            string exePath = System.Reflection.Assembly.GetEntryAssembly().Location;
+            string rootDirectory = Path.GetDirectoryName(exePath);
+            Directory.SetCurrentDirectory(rootDirectory);
+        }
+        protected wasRestCallBack FindRest(string url)
+        {
+            if (Config?.CfgRest == null)
+                return null;
+
+            if (Config.CfgRest.ContainsKey(url))
+                return Config?.CfgRest[url];
+
+            string[] urlComp = url.Split('/');
+            foreach (KeyValuePair<string, wasRestCallBack> item in Config?.CfgRest)
+            {
+                string[] keyComp = item.Key.Split('/');
+                if (keyComp.Count() != urlComp.Count())
+                    continue;
+
+                bool encontrado = true;
+                for (int index = 0; index < urlComp.Count(); index++)
+                {
+                    if (urlComp[index] != keyComp[index] && keyComp[index] != "*")
+                        encontrado = false;
+                }
+
+                if (encontrado == true)
+                    return item.Value;
+            }
+            return null;
+        }
+        #region Autenticacion        
+        protected string DisableCause { get; set; }
+        protected SessionsControl Sessions { get; set; } = new SessionsControl();
+        protected bool IsAuthenticated(HttpListenerContext context)
+        {
+            // Control de los Post de Login
+            if (context.Request.RawUrl.ToLower().Contains(Config?.LoginUrl.ToLower()))
+            {
+                if (context.Request.HttpMethod == "POST")
+                {
+                    // Autenticar.
+                    if (!context.Request.HasEntityBody)
+                    {
+                        context.Response.Redirect(Config?.LoginUrl);
+                        return false;
+                    }
+                    /** Leer los datos asociados */
+                    using (System.IO.Stream body = context.Request.InputStream) // here we have data
+                    {
+                        using (System.IO.StreamReader reader = new System.IO.StreamReader(body, context.Request.ContentEncoding))
+                        {
+                            var data = reader.ReadToEnd();
+                            // Llamar a la rutina de AUT de la aplicacion.
+                            //AuthenticateUser?.Invoke(WebUtility.UrlDecode(data), (accepted, userId, userPrf) =>
+                            IsUserAuthenticated(WebUtility.UrlDecode(data), (accepted, userId, userPrf) =>
+                            {
+                                if (accepted)
+                                {
+                                    // Miro si hay sesiones.
+                                    var sessionDuration = TimeSpan.FromMinutes(U5kManService.cfgSettings.WebInactivityTimeout);
+                                    Sessions.GetAccess(sessionDuration, userId, userPrf, (haysesiones, cookie) =>
+                                    {
+                                        if (haysesiones)
+                                        {
+                                            Task.Run(() =>
+                                            {
+                                                var msg = $"Usuario {userId}, {userPrf}, Inicia session";
+                                                RecordEvent<HttpServer>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                                                    new object[] { msg, "", "", "", "", "", "", "" });
+                                            });
+                                            LogTrace<HttpServer>($"Set Cookie => {cookie}=>{cookie.Expires}");
+                                            context.Response.Cookies.Add(cookie);
+                                            context.Response.Redirect(Config?.DefaultUrl);
+                                        }
+                                        else
+                                        {
+                                            ProcessFile(context.Response, (Config?.DefaultDir + Config?.LoginUrl).Substring(1),
+                                                Config.LoginErrorTag, Config.LoginErrorTag + "Maximo numero de Sesiones alcanzado");
+                                        }
+                                    });
+                                }
+                                else
+                                {
+                                    ProcessFile(context.Response, (Config?.DefaultDir + Config?.LoginUrl).Substring(1),
+                                        Config.LoginErrorTag, Config.LoginErrorTag + userId);
+                                }
+                            });
+                        }
+                    }
+                    return false;
+                }
+                return true;
+            }
+            // Control de lo que tengo que dejar pasar
+            if (ContainsSecureUri(context.Request))
+            {
+                return true;
+            }
+            else
+            {
+                var allowed = Sessions.GetPermission(context.Request, (cookie) =>
+                {
+                    context.Response.Cookies.Add(cookie);
+                });
+                if (allowed)
+                {
+                    return true;
+                }
+            }
+            // Redireccionar.
+            context.Response.Redirect(Config?.LoginUrl);
+            return false;
+        }
+        protected bool ContainsSecureUri(HttpListenerRequest request)
+        {
+            var path = request.RawUrl.Split('?').FirstOrDefault();
+            return path != null && Config.SecureUris.Contains(path);
+        }
+        protected abstract void IsUserAuthenticated(string queryData, Action<bool, string, string> response);
+        #endregion Autentificacion
+        protected void ProcessRequest(HttpListenerContext context)
+        {
+            Logrequest(context);
+            if (IsAuthenticated(context))
+            {
+                string url = context.Request.Url.LocalPath;
+                if (url == "/") context.Response.Redirect(Config?.DefaultUrl);
+                else
+                {
+                    wasRestCallBack cb = FindRest(url);
+                    if (cb != null)
+                    {
+                        StringBuilder sb = new System.Text.StringBuilder();
+                        // TODO. De momento no cojo el semaforo....
+                        GlobalServices.GetWriteAccess((gdt) =>
+                        {
+                            cb(context, sb, gdt);
+                        }, false);
+                        context.Response.ContentType = FileContentType(".json");
+                        Render(Encode(sb.ToString()), context.Response);
+                    }
+                    else
+                    {
+                        url = Config?.DefaultDir + url;
+                        if (url.Length > 1 && File.Exists(url.Substring(1)))
+                        {
+                            /** Es un fichero lo envio... */
+                            string file = url.Substring(1);
+                            string ext = Path.GetExtension(file).ToLowerInvariant();
+
+                            context.Response.ContentType = FileContentType(ext);
+                            ProcessFile(context.Response, file);
+                        }
+                        else
+                        {
+                            context.Response.StatusCode = 404;
+                        }
+                    }
+                }
+            }
+        }
+        protected void Logrequest(HttpListenerContext context)
+        {
+            LogDebug<HttpsServer>($"HTTP Request: {context.Request.HttpMethod} {context.Request.Url.OriginalString}");
+            if (context.Request.QueryString.Count > 0)
+            {
+                var array = (from key in context.Request.QueryString.AllKeys
+                             from value in context.Request.QueryString.GetValues(key)
+                             select string.Format("{0}={1}", key, value)).ToArray();
+
+                LogDebug<HttpsServer>($"Query: {String.Join("##", array)}");
+            }
+        }
+
+        protected Dictionary<string, string> _filetypes = new Dictionary<string, string>()
+        {
+            {".css","text/css"},
+            {".jpeg","image/jpg"},
+            {".jpg","image/jpg"},
+            {".htm","text/html"},
+            {".html","text/html"},
+            {".ico","image/ico"},
+            {".js","text/json"},
+            {".json","text/json"},
+            {".txt","text/text"},
+            {".bmp","image/bmp"}
+        };
+        protected string FileContentType(string ext)
+        {
+            if (_filetypes.ContainsKey(ext))
+                return _filetypes[ext];
+            return "text/text";
+        }
+        protected Object locker { get; set; } = new Object();
+        protected CfgServer Config { get; set; }
+    }
+
+    public class HttpServer : HttpServerBase, IHttpServer
+    {
+        #region Public
+        public bool IsEnabled { get; set; }
+        public int SyncListenerSpvPeriod { get; set; } = 5;
+        public Action<string, Action<bool, string, string>> AuthenticateUser { get; set; } = null;
+        public HttpServer()
+        {
+            SetRequestRootDirectory();
+            IsEnabled = true;
+            DisableCause = "";
+        }
+        public void Start(int port, CfgServer cfg)
+        {
+            lock (locker)
+            {
+                if (Listener != null)
+                    Stop();
+                Config = cfg;
+
+                ExecutiveThreadCancel = new CancellationTokenSource();
+                ExecutiveThread = Task.Run(() =>
+                {
+                    DateTime lastListenerTime = DateTime.MinValue;
+                    DateTime lastRefreshTime = DateTime.MinValue;
+                    // Supervisar la cancelacion.
+                    while (ExecutiveThreadCancel.IsCancellationRequested == false)
+                    {
+                        Task.Delay(TimeSpan.FromMilliseconds(100)).Wait();
+                        if (DateTime.Now - lastListenerTime >= TimeSpan.FromSeconds(SyncListenerSpvPeriod))
+                        {
+                            // Supervisar la disponibilidad del Listener.
+                            lock (locker)
+                            {
+                                if (Listener == null)
+                                {
+                                    try
+                                    {
+                                        LogDebug<HttpServer>($"{Id} Starting HttpListener");
+                                        Listener = new HttpListener();
+                                        Listener.Prefixes.Add("http://*:" + port.ToString() + "/");
+                                        //Listener.Prefixes.Add("https://*:" + port.ToString() + "/");
+                                        Listener.Start();
+                                        Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
+                                        LogDebug<HttpServer>($"{Id} HttpListener Started");
+                                    }
+                                    catch (Exception x)
+                                    {
+                                        LogException<HttpServer>($"{Id} ", x, false);
+                                        ResetListener();
+                                    }
+                                }
+                                Sessions.Tick4Idle();
+                                LogTrace<HttpServer>($"{Sessions}");
+                            }
+                            lastListenerTime = DateTime.Now;
+                        }
+                    }
+                });
+            }
+        }
+        public void Stop()
+        {
+            lock (locker)
+            {
+                if (Listener != null)
+                {
+                    Listener.Close();
+                    ExecutiveThreadCancel?.Cancel();
+                    ExecutiveThread?.Wait(TimeSpan.FromSeconds(5));
+                    Listener = null;
+                    Config = null;
+                }
+            }
+        }
+        public void Logout(HttpListenerContext context)
+        {
+            Sessions.Logout(context.Request, (user) =>
+            {
+                Task.Run(() =>
+                {
+                    var msg = $"Usuario {user}, Finaliza session";
+                    RecordEvent<HttpServer>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                        new object[] { msg, "", "", "", "", "", "", "" });
+                });
+            });
+        }
+        #endregion
+
+        #region private methods
+        void GetContextCallback(IAsyncResult result)
+        {
+            lock (locker)
+            {
+                if (Listener == null || Listener.IsListening == false)
+                    return;
+                
+                ConfigCultureSet();
+
+                HttpListenerContext context = Listener.EndGetContext(result);
+
+                try
+                {
+                    ProcessRequest(context);
+                }
+                catch (Exception x)
+                {
+                    LogException<HttpServer>("", x);
+                    context.Response.StatusCode = 500;
+                }
+                finally
+                {
+                    context.Response.Close();
+                    if (Listener != null && Listener.IsListening)
+                        Listener.BeginGetContext(new AsyncCallback(GetContextCallback), null);
+                }
+            }
+        }
+        void ResetListener()
+        {
+            LogDebug<HttpServer>($"{Id} Reseting Listener");
+
+            Listener?.Close();
+            Listener = null;
+
+            LogDebug<HttpServer>($"{Id} Listener Reset");
+        }
+        protected override void IsUserAuthenticated(string queryData, Action<bool, string, string> response) => 
+            AuthenticateUser?.Invoke(queryData, response);
+        #endregion
+
+        #region Private properties
+
+        string Id => $"On WebAppServer:";
+        HttpListener Listener { get; set; } = null;
+        Task ExecutiveThread { get; set; } = null;
+        CancellationTokenSource ExecutiveThreadCancel { get; set; } = null;
+        #endregion
+    }
+
+    public class HttpsServer : HttpServerBase, IHttpServer
+    {
+        #region public attr
+        public bool httpOnly { get; set; } = false;
+        public bool IsEnabled { get; set; }
+        public Action<string, Action<bool, string, string>> AuthenticateUser { get; set; } = null;
+        #endregion
+        public int SyncListenerSpvPeriod { get; set; } = 5;
+
+        public HttpsServer()
+        {
+            SetRequestRootDirectory();
+            IsEnabled = true;
+            disableCause = "";
+            cts = new CancellationTokenSource();
+            httpListener = new HttpListener();
+            httpsListener = new HttpListener();
+        }
+        public void Start(int port, CfgServer cfg)
+        {
+            LogInfo<HttpsServer>($"Starting HttpsServer...");
+            basePort = port;
+            Config = cfg;
+            httpListenerTask = Task.Run(() => HttpProcess());
+            httpsListenerTask = Task.Run(() => HttpsProcess());
+            supervisionTask = Task.Run(() => SupervisionProcess());
+            LogInfo<HttpsServer>($"HttpsServer started on port {port}, httpOnly = {httpOnly}.");
+        }
+        public void Stop()
+        {
+            LogInfo<HttpsServer>($"Stopping HttpsServer...");
+            cts?.Cancel();
+            httpListener?.Abort();
+            httpsListener?.Abort();
+            Task.WaitAll(httpListenerTask, httpsListenerTask, supervisionTask);
+            LogInfo<HttpsServer>($"HttpsServer Stopped.");
+        }
+        public void Logout(HttpListenerContext context)
+        {
+            Sessions.Logout(context.Request, (user) =>
+            {
+                Task.Run(() =>
+                {
+                    var msg = $"Usuario {user}, Finaliza session";
+                    RecordEvent<HttpServer>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
+                        new object[] { msg, "", "", "", "", "", "", "" });
+                });
+            });
+        }
+        protected override void IsUserAuthenticated(string queryData, Action<bool, string, string> response) =>
+            AuthenticateUser?.Invoke(queryData, response);
+
+        #region private methods
+
+        void HttpProcess()
+        {
+            LogInfo<HttpsServer>($"Starting Listening on port {basePort} for HTTP");
+            HttpListenerContext context = null;
+            httpListener.Prefixes.Add($"http://*:{basePort}/");
+            httpListener.Start();
+            while (cts.IsCancellationRequested == false)
+            {
+                try
+                {
+                    context = httpListener.GetContext();
+                    if (httpOnly == false)
+                    {
+                        var url = new UriBuilder(context.Request.Url) { Port = basePort + 1, Scheme="https" };
+                        context.Response.Redirect(url.ToString());
+                    }
+                    else
+                    {
+                        ProcessRequest(context);
+                    }
+                }
+                catch (Exception x)
+                {
+                    LogException<HttpsServer>("From HTTP", x);
+                }
+                finally
+                {
+                    context?.Response?.Close();
+                }
+            }
+            LogInfo<HttpsServer>($"Listening on port {basePort} for HTTP stopped");
+        }
+        void HttpsProcess()
+        {
+            LogInfo<HttpsServer>($"Starting Listening on port {basePort+1} for HTTPS");
+            HttpListenerContext context = null;
+            httpsListener.Prefixes.Add($"https://*:{basePort+1}/");
+            httpsListener.Start();
+            while (cts.IsCancellationRequested == false)
+            {
+                try
+                {
+                    context = httpsListener.GetContext();
+                    ProcessRequest(context);
+                }
+                catch (Exception x)
+                {
+                    LogException<HttpsServer>("From HTTPS", x);
+                }
+                finally
+                {
+                    context?.Response?.Close();
+                }
+            }
+            LogInfo<HttpsServer>($"Listening on port {basePort+1} for HTTPS stopped");
+        }
+        void SupervisionProcess()
+        {
+            DateTime lastListenerTime = DateTime.MinValue;
+            DateTime lastRefreshTime = DateTime.MinValue;
+            while (cts.IsCancellationRequested == false)
+            {
+                Task.Delay(TimeSpan.FromMilliseconds(500)).Wait();
+                if (DateTime.Now - lastListenerTime >= TimeSpan.FromSeconds(SyncListenerSpvPeriod))
+                {
+                    Sessions.Tick4Idle();
+                    LogTrace<HttpsServer>($"{Sessions}");
+                }
+            }
+        }
+
+        #endregion
+
+        #region private attr
+
+        int basePort = default;
+        string disableCause { get; set; }
+        HttpListener httpListener = null;
+        Task httpListenerTask = null;
+        HttpListener httpsListener = null;
+        Task httpsListenerTask = null;
+        Task supervisionTask = null;
+        CancellationTokenSource cts = null;
+
+        #endregion
     }
 }
 

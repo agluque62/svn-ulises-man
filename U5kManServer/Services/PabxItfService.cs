@@ -14,7 +14,7 @@ using WebSocket4Net;
 using Newtonsoft.Json;
 
 using Utilities;
-using NucleoGeneric;
+using U5kBaseDatos;
 using System.Threading.Tasks;
 
 namespace U5kManServer
@@ -253,7 +253,7 @@ namespace U5kManServer
                             _pabxStatus = EPabxStatus.epsDesconectado;
 
                             if (stdg.stdPabx.Estado != std.NoInfo)
-                                RecordEvent<PabxItfService>(DateTime.Now, U5kBaseDatos.eIncidencias.IGRL_U5KI_SERVICE_ERROR, U5kBaseDatos.eTiposInci.TEH_SISTEMA, "SPV",
+                                RecordEvent<PabxItfService>(DateTime.Now, eIncidencias.IGRL_U5KI_SERVICE_ERROR, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                                     Params(idiomas.strings.PBX_Desconectada/*"PBX Desconectada"*/, "", "", ""));
 
                             stdg.stdPabx.Estado = std.NoInfo;
@@ -395,7 +395,7 @@ namespace U5kManServer
                                         GlobalServices.GetWriteAccess((gdata) =>
                                         {
                                             if (gdata.STDG.stdPabx.Estado != std.NoInfo)
-                                                RecordEvent<PabxItfService>(DateTime.Now, U5kBaseDatos.eIncidencias.IGRL_U5KI_SERVICE_ERROR, U5kBaseDatos.eTiposInci.TEH_SISTEMA, "SPV",
+                                                RecordEvent<PabxItfService>(DateTime.Now, eIncidencias.IGRL_U5KI_SERVICE_ERROR, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                                                     Params(idiomas.strings.PBX_Desconectada/*"PBX Desconectada"*/, "", "", ""));
 
                                             gdata.STDG.stdPabx.Estado = std.NoInfo;
@@ -577,7 +577,7 @@ namespace U5kManServer
                     U5KStdGeneral stdg = gdata.STDG;
                     if (stdg.stdPabx.Estado != std.Ok)
                     {
-                        RecordEvent<PabxItfService>(DateTime.Now, U5kBaseDatos.eIncidencias.IGRL_U5KI_SERVICE_INFO, U5kBaseDatos.eTiposInci.TEH_SISTEMA, "SPV",
+                        RecordEvent<PabxItfService>(DateTime.Now, eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                             Params(idiomas.strings.PBX_Conectada/*"PBX Conectada"*/, "", "", ""));
                     }
                     stdg.stdPabx.Estado = std.Ok;
@@ -605,8 +605,8 @@ namespace U5kManServer
                 {
                     d.Estado = EstadoNotificado;
                     // Generar Historico de Conexion / Desconexion...
-                    RecordEvent<PabxItfService>(DateTime.Now, registrado ? U5kBaseDatos.eIncidencias.IPBX_SUBSC_ACTIVE :
-                        U5kBaseDatos.eIncidencias.IPBX_SUBSC_INACTIVE, U5kBaseDatos.eTiposInci.TEH_EXTERNO_TELEFONIA, info.User, Params());
+                    RecordEvent<PabxItfService>(DateTime.Now, registrado ? eIncidencias.IPBX_SUBSC_ACTIVE :
+                        eIncidencias.IPBX_SUBSC_INACTIVE, eTiposInci.TEH_EXTERNO_TELEFONIA, info.User, Params());
                 }
             });
             LogTrace<PabxItfService>(String.Format("Procesado Registro Usuario {0}, {1}", Name, info.User, info.Registered));

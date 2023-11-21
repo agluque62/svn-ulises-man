@@ -233,7 +233,7 @@ namespace Utilities
                 get
                 {
                     var ip = IPHelper.IsIpv4(Remote) ? Remote :
-                        IPHelper.IsIpv4(Refif) ? Refif : "127.0.0.1";
+                        IPHelper.IsIpv4(Refif) ? Refif : Remote;
                     return ip;
                 }
             }
@@ -461,11 +461,14 @@ namespace Utilities
         }
         private String ExecuteMeinberCommand()
         {
+            var fileDataPath = "./MeinbergData.txt";
 #if DEBUG1
-            string Text = "     remote           refid      st t when poll reach   delay   offset  jitter\r\n"
+            string Text =   "     remote           refid      st t when poll reach   delay   offset  jitter\r\n"
                           + "==============================================================================\r\n"
                           + " 192.168.0.129 ( 172.24.90.12     6 u  234  256  377    0.977   82.219  26.097\r\n"
-                          + "*DF1501  ( 172.24.90.12     6 u  234  256  377    0.977   82.219  26.097\r\n";
+                          + "*DF1501  ( 172.24.90.12           6 u  234  256  377    0.977   82.219  26.097\r\n";
+            Task.Delay(100).Wait();
+            Text = File.ReadAllText(fileDataPath);
             return Text;
 #else
             var filePath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) + "/ntp/bin/ntpq.exe";
@@ -478,7 +481,10 @@ namespace Utilities
             };
 
             var proc = Process.Start(psi);
-            return proc.StandardOutput.ReadToEnd();
+            Task.Delay(2000).Wait();
+            var data = proc.StandardOutput.ReadToEnd();
+            File.WriteAllText(fileDataPath, data);
+            return data;
 #endif
         }
         private void ProcessClientResponse(List<string> response)
