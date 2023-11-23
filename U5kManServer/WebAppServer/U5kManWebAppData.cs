@@ -309,15 +309,8 @@ namespace U5kManServer.WebAppServer
             return IdAgrupacion;
         }
     }
-
-    /// <summary>
-    /// Estado de Pasarelas
-    /// </summary>
     class U5kManWADGws : U5kManWebAppData
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public class GWData
         {
             public string name { get; set; }
@@ -332,24 +325,16 @@ namespace U5kManServer.WebAppServer
             public int cpu0 { get; set; }   // 0 NP, 1: Main, 2 Standby
             public int cpu1 { get; set; }   // 0 NP, 1: Main, 2 Standby
         };
-
-        /// <summary>
-        /// 
-        /// </summary>
         public List<GWData> lista = new List<GWData>();
-
         public int gdt { get; set; }
-
         public U5kManWADGws(U5kManStdData gdata, bool bGenerate = false)
         {
             if (bGenerate)
             {
-#if STD_ACCESS_V0
-                lock (U5kManService._std.stdgws)
-                {
-                    foreach (stdGw gw in U5kManService._std.stdgws)
-                    {
-                        lista.Add(new GWData()
+                List<stdGw> stdgws = gdata.STDGWS;
+                lista = stdgws
+                    .Select(gw => SafeExecute<GWData>($"CGW-{gw.name}", () =>
+                        new GWData()
                         {
                             name = gw.name,
                             ip = gw.ip,
@@ -357,55 +342,28 @@ namespace U5kManServer.WebAppServer
                             std = (int)gw.std,
                             main = gw.Dual == false ? 0 : gw.gwA.Seleccionada ? 0 : gw.gwB.Seleccionada ? 1 : -1,
                             lan1 = (gw.Dual == false || gw.gwA.Seleccionada) ? (gw.gwA.lan1 == std.Ok ? 1 : 0) : (gw.gwB.lan1 == std.Ok ? 1 : 0),
-                            lan2 = (gw.Dual == false || gw.gwA.Seleccionada) ? (gw.gwA.lan2 == std.Ok ? 1 : 0) : (gw.gwB.lan2 == std.Ok ? 1 : 0)
-                        });
-                    }
-                }
-#else
-                List<stdGw> stdgws = gdata.STDGWS;
-                lista = stdgws.Select(gw => new GWData()
-                {
-                    name = gw.name,
-                    ip = gw.ip,
-                    tipo = gw.Dual ? 1 : 0,
-                    std = (int)gw.std,
-                    main = gw.Dual == false ? 0 : gw.gwA.Seleccionada ? 0 : gw.gwB.Seleccionada ? 1 : -1,
-                    lan1 = (gw.Dual == false || gw.gwA.Seleccionada) ? (gw.gwA.lan1 == std.Ok ? 1 : 0) : (gw.gwB.lan1 == std.Ok ? 1 : 0),
-                    lan2 = (gw.Dual == false || gw.gwA.Seleccionada) ? (gw.gwA.lan2 == std.Ok ? 1 : 0) : (gw.gwB.lan2 == std.Ok ? 1 : 0),
-                    ntp = gw.cpu_activa.NtpInfo.GlobalStatus,
-                    cpu0 = gw.Dual == false ? (gw.gwA.presente ? 1 : 0) : (gw.gwA.presente ? (gw.gwA.Seleccionada ? 1 : 2) : (0)),
-                    cpu1 = gw.Dual == false ? (0) : (gw.gwB.presente ? (gw.gwB.Seleccionada ? 1 : 2) : (0))
-                }).ToList();
-
+                            lan2 = (gw.Dual == false || gw.gwA.Seleccionada) ? (gw.gwA.lan2 == std.Ok ? 1 : 0) : (gw.gwB.lan2 == std.Ok ? 1 : 0),
+                            ntp = gw.cpu_activa.NtpInfo.GlobalStatus,
+                            cpu0 = gw.Dual == false ? (gw.gwA.presente ? 1 : 0) : (gw.gwA.presente ? (gw.gwA.Seleccionada ? 1 : 2) : (0)),
+                            cpu1 = gw.Dual == false ? (0) : (gw.gwB.presente ? (gw.gwB.Seleccionada ? 1 : 2) : (0))
+                        })
+                    )
+                    .ToList();
                 gdt = Properties.u5kManServer.Default.GatewaysDualityType;
-#endif
             }
         }
     }
-
-    /// <summary>
-    /// Detalle de Pasarela
-    /// </summary>
     class U5kManWADGwData : U5kManWebAppData
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public class itemVersion
         {
             public string line { get; set; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public class itemTar
         {
             public int cfg { get; set; }
             public int not { get; set; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public class itemRec
         {
             public string name { get; set; }
@@ -413,9 +371,6 @@ namespace U5kManServer.WebAppServer
             public int not { get; set; }
             public int std { get; set; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public class itemCpu
         {
             public string ip { get; set; }
@@ -424,12 +379,10 @@ namespace U5kManServer.WebAppServer
             public int lan2 { get; set; }
             public List<itemTar> tars { get; set; }
             public List<itemRec> recs = new List<itemRec>();
-#if GW_STD_V1
             public int sipMod { get; set; }
             public int snmpMod { get; set; }
             public int cfgMod { get; set; }
             public int fa { get; set; }
-#endif
         }
 
         public string name { get; set; }
@@ -438,140 +391,60 @@ namespace U5kManServer.WebAppServer
         public int std { get; set; }
         public int main { get; set; }
         public int fa { get; set; }
-#if _GETVER_UNIFI_V0
-        public List<itemVersion> versiones = new List<itemVersion>();
-#else
         public string versiones { get; set; }
-#endif
         public List<itemCpu> cpus = new List<itemCpu>();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="name"></param>
         public U5kManWADGwData(U5kManStdData gdata, string Name, bool bGenerate = false)
         {
             if (bGenerate)
             {
-#if STD_ACCESS_V0
-                lock (U5kManService._std.stdgws)
-                {
-                    foreach (stdGw gw in U5kManService._std.stdgws)
-                    {
-                        if (gw.name == Name)
-                        {
-                            /** Parametros Generales */
-                            name = gw.name;
-                            ip = gw.ip;
-                            tipo = gw.Dual ? 1 : 0;
-                            std = (int)gw.std;
-                            main = gw.Dual == false ? 0 : gw.gwA.Seleccionada ? 0 : gw.gwB.Seleccionada ? 1 : -1;
-                            fa = std == 0 ? 0 : 1;
-
-                            /** Versiones */
-                            versiones = FormatVersiones((gw.Dual == false || gw.gwA.Seleccionada) ? gw.gwA.version : gw.gwB.version);
-
-                            /** Datos de Interfaces CPU 0/1 */
-                            for (int cpu = 0; cpu < 2; cpu++)
-                            {
-                                stdPhGw pgw = cpu == 0 ? gw.gwA : gw.gwB;
-                                cpus.Add(new itemCpu()
-                                {
-                                    ip = pgw.ip,
-                                    ntp = 0,
-                                    lan1 = pgw.lan1 == U5kManServer.std.Ok ? 1 : 0,
-                                    lan2 = pgw.lan2 == U5kManServer.std.Ok ? 1 : 0,
-                                    tars = PhysicalGwTars(pgw),
-                                    recs = PhysicalGwResources(pgw)
-                                });
-                            }
-                            return;
-                        }
-                    }
-                }
-#else
                 List<stdGw> stdgws = gdata.STDGWS;
                 stdGw gw = stdgws.Where(i => i.name == Name).FirstOrDefault();
                 if (gw != null)
                 {
                     /** Parametros Generales */
-                    name = gw.name;
-                    ip = gw.ip;
-                    tipo = gw.Dual ? 1 : 0;
-                    std = (int)gw.std;
-                    main = gw.Dual == false ? 0 : gw.gwA.Seleccionada ? 0 : gw.gwB.Seleccionada ? 1 : -1;
+                    name = SafeExecute<string>($"CGW-name", () => gw.name);
+                    ip = SafeExecute<string>($"CGW-{gw.name}-ip", () => gw.ip);
+                    tipo = SafeExecute<int>($"CGW-{gw.name}-tipo", () => gw.Dual ? 1 : 0);
+                    std = SafeExecute<int>($"CGW-{gw.name}-std", () => (int)gw.std);
+                    main = SafeExecute<int>($"CGW-{gw.name}-main", () => gw.Dual == false ? 0 : gw.gwA.Seleccionada ? 0 : gw.gwB.Seleccionada ? 1 : -1);
 
                     /** Versiones */
-                    versiones = FormatVersiones((gw.Dual == false || gw.gwA.Seleccionada) ? gw.gwA.version : gw.gwB.version);
+                    versiones = SafeExecute<string>($"CGW-{gw.name}-version", () => FormatVersiones((gw.Dual == false || gw.gwA.Seleccionada) ? gw.gwA.version : gw.gwB.version));
 
                     /** Datos de Interfaces CPU 0/1 */
                     for (int cpu = 0; cpu < 2; cpu++)
                     {
                         stdPhGw pgw = cpu == 0 ? gw.gwA : gw.gwB;
-                        cpus.Add(new itemCpu()
+                        SafeExecute($"CGW-{gw.name}-cpu {cpu}", () =>
                         {
-                            ip = pgw.ip,
-                            ntp = pgw.NtpInfo.GlobalStatus,
-                            lan1 = pgw.lan1 == U5kManServer.std.Ok ? 1 : 0,
-                            lan2 = pgw.lan2 == U5kManServer.std.Ok ? 1 : 0,
-                            tars = PhysicalGwTars(pgw),
-                            recs = PhysicalGwResources(pgw)
-#if GW_STD_V1
-                            , cfgMod = pgw.CfgMod.Std == U5kManServer.std.Ok ? 1 : 0
-                            , sipMod = pgw.SipMod.Std == U5kManServer.std.Ok ? 1 : 0
-                            , snmpMod = pgw.SnmpMod.Std == U5kManServer.std.Ok ? 1 : 0
-                            , fa = pgw.stdFA == U5kManServer.std.Ok ? 1 : 0
-#endif
+                            cpus.Add(new itemCpu()
+                            {
+                                ip = pgw.ip,
+                                ntp = pgw.NtpInfo.GlobalStatus,
+                                lan1 = pgw.lan1 == U5kManServer.std.Ok ? 1 : 0,
+                                lan2 = pgw.lan2 == U5kManServer.std.Ok ? 1 : 0,
+                                tars = PhysicalGwTars(pgw),
+                                recs = PhysicalGwResources(pgw),
+                                cfgMod = pgw.CfgMod.Std == U5kManServer.std.Ok ? 1 : 0,
+                                sipMod = pgw.SipMod.Std == U5kManServer.std.Ok ? 1 : 0,
+                                snmpMod = pgw.SnmpMod.Std == U5kManServer.std.Ok ? 1 : 0,
+                                fa = pgw.stdFA == U5kManServer.std.Ok ? 1 : 0
+                            });
+
                         });
                     }
-                    fa = gw.gwA.stdFA == U5kManServer.std.Ok || gw.gwB.stdFA == U5kManServer.std.Ok ? 1 : 0;
+                    fa = SafeExecute<int>($"CGW-{gw.name}-main", () => gw.gwA.stdFA == U5kManServer.std.Ok || gw.gwB.stdFA == U5kManServer.std.Ok ? 1 : 0);
                 }
-#endif
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public static void MainStandByChange(string name)
         {
-            U5kManService.stMainStandbyChange(name, 0);
+            SafeExecute($"M/S on {name}", () => U5kManService.stMainStandbyChange(name, 0));
         }
-
-#if _GETVER_UNIFI_V0
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="strVer"></param>
-        /// <returns></returns>
-        protected List<itemVersion> FormatVersiones(string strVer)
-        {
-            List<itemVersion> version = new List<itemVersion>();
-            // strVer = U5kGenericos.CleanInput(strVer);
-            using (StringReader reader = new StringReader(strVer))
-            {
-                string rline;
-                while ((rline = reader.ReadLine()) != null)
-                {
-                    // rline = U5kGenericos.CleanInput(rline);
-                    version.Add(new itemVersion() { line = rline });
-                }
-            }
-
-            return version;
-        }
-#else
         protected string FormatVersiones(string strVer)
         {
             return strVer;
         }
-#endif
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pgw"></param>
-        /// <returns></returns>
         protected List<itemRec> PhysicalGwResources(stdPhGw pgw)
         {
             List<itemRec> recursos = new List<itemRec>();
@@ -592,12 +465,6 @@ namespace U5kManServer.WebAppServer
 
             return recursos;
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pgw"></param>
-        /// <returns></returns>
         protected List<itemTar> PhysicalGwTars(stdPhGw pgw)
         {
             List<itemTar> tars = new List<itemTar>();

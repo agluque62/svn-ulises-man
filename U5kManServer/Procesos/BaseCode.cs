@@ -445,6 +445,7 @@ namespace NucleoGeneric
         {
             try
             {
+                LogDebug<BaseCode>($"Execute Function for {who}");
                 return action();
             }
             catch (Exception x)
@@ -458,6 +459,7 @@ namespace NucleoGeneric
         {
             try
             {
+                LogDebug<BaseCode>($"Execute Action for {who}");
                 action();
             }
             catch (Exception x)
