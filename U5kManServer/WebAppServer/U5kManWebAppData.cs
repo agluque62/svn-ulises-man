@@ -914,15 +914,8 @@ namespace U5kManServer.WebAppServer
             });
         }
     }
-
-    /// <summary>
-    /// 
-    /// </summary>
     class U5kManWADSnmpOptions : U5kManWebAppData
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public class snmpOption
         {
             public string id { get; set; }
@@ -932,9 +925,6 @@ namespace U5kManServer.WebAppServer
             public string key { get; set; }
             public int show { get; set; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public List<snmpOption> snmpOptions = new List<snmpOption>()
         {
             new snmpOption()
@@ -1000,30 +990,28 @@ namespace U5kManServer.WebAppServer
         {
             if (bGenerate)
             {
-                foreach (snmpOption item in snmpOptions)
+                SafeExecute("SnmpOptGet", () =>
                 {
-                    item.val = PropertyGet(item.key);
-                }
+                    foreach (snmpOption item in snmpOptions)
+                    {
+                        item.val = PropertyGet(item.key);
+                    }
+                });
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public void Save()
         {
-            foreach (snmpOption opt in snmpOptions)
+            SafeExecute("", () =>
             {
-                PropertySet(opt.key, opt.val);
-            }
-            U5kManServer.Properties.u5kManServer.Default.Save();
+                foreach (snmpOption opt in snmpOptions)
+                {
+                    PropertySet(opt.key, opt.val);
+                }
+                U5kManServer.Properties.u5kManServer.Default.Save();
+            });
             // Hay que Reiniciar el Servicio Temporizadamente...
             U5kGenericos.ResetService = true;
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
         protected object PropertyGet(string key)
         {
             U5kManServer.Properties.u5kManServer Prop = U5kManServer.Properties.u5kManServer.Default;
@@ -1044,11 +1032,6 @@ namespace U5kManServer.WebAppServer
             }
             return "";
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="val"></param>
         protected void PropertySet(string key, object val)
         {
             U5kManServer.Properties.u5kManServer Prop = U5kManServer.Properties.u5kManServer.Default;
@@ -1077,15 +1060,8 @@ namespace U5kManServer.WebAppServer
             }
         }
     }
-
-    /// <summary>
-    /// Configuracion de Opciones.
-    /// </summary>
     class U5kManWADOptions : U5kManWebAppData
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public class itemOptions
         {
             public string id { get; set; }
@@ -1094,25 +1070,15 @@ namespace U5kManServer.WebAppServer
             public List<string> opt { get; set; }
             public string key { get; set; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public string version { get; set; }
         public string bdt { get; set; }
         public List<itemOptions> lconf = new List<itemOptions>();
-
-        /// <summary>
-        /// 
-        /// </summary>
         class itemProperty
         {
             public string id { get; set; }
             public int tp { get; set; }
             public List<string> opt { get; set; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         Dictionary<string, itemProperty> prop = new Dictionary<string, itemProperty>()
         {
             {
@@ -1320,173 +1286,116 @@ namespace U5kManServer.WebAppServer
                 }
             },
         };
-
-        /// <summary>
-        /// 
-        /// </summary>
         public U5kManWADOptions(U5kManStdData gdata, bool bGenerate = false)
         {
             if (bGenerate)
             {
-#if STD_ACCESS_V0
-                lock (U5kManService._std._gen)
+                SafeExecute("GENOPT-GET", () =>
                 {
                     version = U5kGenericos.Version;
-                    bdt = U5kManService._std._gen.CfgId;        // .cfgVersion;
-                }
-#else
-                version = U5kGenericos.Version;
-                bdt = gdata.STDG.CfgId;        // .cfgVersion;
-#endif
-                foreach (KeyValuePair<string, itemProperty> p in prop)
-                {
-                    lconf.Add(new itemOptions()
+                    bdt = gdata.STDG.CfgId;        // .cfgVersion;
+                    foreach (KeyValuePair<string, itemProperty> p in prop)
                     {
-                        key = p.Key,
-                        id = p.Value.id,
-                        tp = p.Value.tp,
-                        opt = p.Value.opt,
-                        val = PropertyGet(p.Key)    // U5kManServer.Properties.u5kManServer.Default.
-                    });
-                }
+                        lconf.Add(new itemOptions()
+                        {
+                            key = p.Key,
+                            id = p.Value.id,
+                            tp = p.Value.tp,
+                            opt = p.Value.opt,
+                            val = PropertyGet(p.Key)    // U5kManServer.Properties.u5kManServer.Default.
+                        });
+                    }
+                });
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public void Save()
         {
-            foreach (itemOptions opt in lconf)
+            SafeExecute("GENOPT-SET", () =>
             {
-                PropertySet(opt.key, opt.val);
-            }
-            //U5kManServer.Properties.u5kManServer.Default.Save();
-            U5kManService.cfgSettings.Save();
+                foreach (itemOptions opt in lconf)
+                {
+                    PropertySet(opt.key, opt.val);
+                }
+                U5kManService.cfgSettings.Save();
+            });
             // Hay que Reiniciar el Servicio Temporizadamente...
             U5kGenericos.ResetService = true;
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
         protected string PropertyGet(string key)
         {
-            // U5kManServer.Properties.u5kManServer Prop = U5kManServer.Properties.u5kManServer.Default;
             var Prop = U5kManService.cfgSettings;
             switch (key)
             {
                 case "Idioma":
                     return Prop.Idioma == "es" ? "0" : Prop.Idioma == "fr" ? "1" : "2";
-
                 case "ServidorDual":
                     return Prop.ServidorDual ? "1" : "0";
-
                 case "HayReloj":
                     return Prop.HayReloj ? "1" : "0";
-
-                //case "HayPabx":
-                //    return Prop.HayPabx ? "1" : "0";
-
                 case "HaySacta":
                     return Prop.HaySacta ? "1" : "0";
-
                 case "HaySactaProxy":
                     return Prop.HaySactaProxy ? "1" : "0";
-
                 case "HayAltavozHF":
                     return Prop.HayAltavozHF ? "1" : "0";
-
                 case "OpcOpCableGrabacion":
                     return Prop.OpcOpeCableGrabacion ? "1" : "0";
-
                 case "SonidoAlarmas":
                     return Prop.SonidoAlarmas ? "1" : "0";
-
                 case "GenerarHistorico":
                     return Prop.GenerarHistoricos ? "1" : "0";
-
                 case "DiasEnHistorico":
                     return Prop.DiasEnHistorico <= 7 ? "0" :
                         Prop.DiasEnHistorico <= 14 ? "1" :
                         Prop.DiasEnHistorico <= 30 ? "2" :
                         Prop.DiasEnHistorico <= 92 ? "3" :
                         Prop.DiasEnHistorico <= 184 ? "4" : "5";
-
                 case "LineasIncidencias":
                     return Prop.LineasIncidencias <= 8 ? "0" :
                         Prop.LineasIncidencias <= 16 ? "1" :
                         Prop.LineasIncidencias <= 32 ? "2" : "3";
-
-                //case "GwsUnificadas":
-                //    return Prop.GwsUnificadas == false ? "0" : "1";
-
                 case "PttAndSqhOnBdt":
                     return Prop.Historico_PttSqhOnBdt == false ? "0" : "1";
-
                 case "WebInactivityTimeout":
                     return Prop.WebInactivityTimeout <= 5 ? "0" :
                         Prop.WebInactivityTimeout <= 15 ? "1" :
                         Prop.WebInactivityTimeout <= 30 ? "2" : "3";
-
                 default:
                     return "0";
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="val"></param>
         protected void PropertySet(string key, string val)
         {
-            //U5kManServer.Properties.u5kManServer Prop = U5kManServer.Properties.u5kManServer.Default;
             var Prop = U5kManService.cfgSettings;
             switch (key)
             {
                 case "Idioma":
                     Prop.Idioma = val == "0" ? "es" : val == "1" ? "fr" : "en";
                     break;
-
                 case "ServidorDual":
                     Prop.ServidorDual = (val == "1");
                     break;
-
                 case "HayReloj":
                     Prop.HayReloj = (val == "1");
                     break;
-
-                //case "HayPabx":
-                //    Prop.HayPabx = (val == "1");
-                //    break;
-
                 case "HaySacta":
                     Prop.HaySacta = (val == "1");
                     break;
-
                 case "HaySactaProxy":
                     Prop.HaySactaProxy = (val == "1");
                     break;
-
                 case "HayAltavozHF":
                     Prop.HayAltavozHF = (val == "1");
                     break;
-
                 case "OpcOpCableGrabacion":
                     Prop.OpcOpeCableGrabacion = (val == "1");
                     break;
-
                 case "SonidoAlarmas":
                     Prop.SonidoAlarmas = (val == "1");
                     break;
-
                 case "GenerarHistorico":
                     Prop.GenerarHistoricos = (val == "1");
                     break;
-
                 case "DiasEnHistorico":
                     Prop.DiasEnHistorico = val == "0" ? 7 :
                         val == "1" ? 14 :
@@ -1494,17 +1403,14 @@ namespace U5kManServer.WebAppServer
                         val == "3" ? 92 :
                         val == "4" ? 184 : 365;
                     break;
-
                 case "LineasIncidencias":
                     Prop.LineasIncidencias = val == "0" ? 8 :
                         val == "1" ? 16 :
                         val == "2" ? 32 : 64;
                     break;
-
                 case "PttAndSqhOnBdt":
                     Prop.Historico_PttSqhOnBdt = val == "1";
                     break;
-
                 case "WebInactivityTimeout":
                     Prop.WebInactivityTimeout =
                         val == "0" ? 5 :
@@ -1514,7 +1420,7 @@ namespace U5kManServer.WebAppServer
             }
         }
     }
-
+    
     /// <summary>
     /// 
     /// </summary>
