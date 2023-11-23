@@ -1503,7 +1503,7 @@ namespace U5kManServer
         {
             /** RM6956. Se excluye el FID porque en determinadas ccircustancias puede generar falsos históricos*/
             bool retorno = other == null ? false : (Id == other.Id && Ip1 == other.Ip1 && Tipo == other.Tipo && Modelo == other.Modelo && RxTx == other.RxTx && /*fid == other.fid && */sip_port == other.sip_port && sip_user == other.sip_user);
-#if DEBUG
+#if DEBUG1
                 if (!retorno && DebugHelper.checkEquals) 
                     Console.WriteLine("Hallada Discrepancia en EquipoEurocae");
 #endif

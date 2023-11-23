@@ -1420,11 +1420,7 @@ namespace U5kManServer.WebAppServer
             }
         }
     }
-    
-    /// <summary>
-    /// 
-    /// </summary>
-    class UG5kVersion : U5kManWebAppData
+    class UG5kVersion : U5kManWebAppData // No utilizada
     {
         public class Linea
         {
@@ -1447,21 +1443,13 @@ namespace U5kManServer.WebAppServer
 
             return sb.ToString();
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public string version { get; set; }
         public string cfgsver { get; set; }
         public string snmpver { get; set; }
         public string recsver { get; set; }
         public List<Linea> lines { get; set; }
     }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    class UG5KExtVersion : U5kManWebAppData
+    class UG5KExtVersion : U5kManWebAppData // No utilizada
     {
         public class Component
         {
@@ -1472,20 +1460,13 @@ namespace U5kManServer.WebAppServer
                 public string Size { get; set; }
                 public int Modo { get; set; }
             }
-
             public string Name { get; set; }
             public string Id { get; set; }
             public List<FileDesc> Files { get; set; }
         }
-
         public string Version { get; set; }
         public string Fecha { get; set; }
         public List<Component> Components { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
         public override string ToString()
         {
             StringWriter strWriter = new StringWriter();
@@ -1503,7 +1484,6 @@ namespace U5kManServer.WebAppServer
             return strWriter.ToString();
         }
     }
-
     public class SactaConfig : U5kManWebAppData
     {
         /* Estructura de la configuracion.

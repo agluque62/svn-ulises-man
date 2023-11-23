@@ -441,7 +441,7 @@ namespace NucleoGeneric
         }
 
         #region SafeExecute
-        protected static T SafeExecute<T>(string who, Func<T> action)
+        protected static T SafeExecute<T>(string who, Func<T> action, T def = default)
         {
             try
             {
@@ -452,7 +452,7 @@ namespace NucleoGeneric
             {
                 LogException<BaseCode>($"On SecureExecute {who} exception ", x);
                 LogDebug<BaseCode>($"{x}");
-                return default;
+                return def;
             }
         }
         protected static void SafeExecute(string who, Action action)
