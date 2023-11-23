@@ -18,6 +18,7 @@ using Newtonsoft.Json.Linq;
 using U5kBaseDatos;
 using Utilities;
 using NucleoGeneric;
+using System.Runtime.Remoting.Contexts;
 
 namespace U5kManServer.WebAppServer
 {
@@ -278,7 +279,7 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManAllhard>(new U5kManAllhard(gdt) { }));
+                sb.Append(SafeExecute<string>("restAllHard", () => U5kManWebAppData.JSerialize<U5kManAllhard>(new U5kManAllhard(gdt) { }), DefaultStringObject));
             }
             else
             {
@@ -368,7 +369,7 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADExtAtsDst>(new U5kManWADExtAtsDst(gdt, true) { }));
+                sb.Append(SafeExecute<string>("restExtAtsDest", () => U5kManWebAppData.JSerialize<U5kManWADExtAtsDst>(new U5kManWADExtAtsDst(gdt, true) { }), DefaultStringObject));
             }
             else
             {
@@ -486,7 +487,7 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(JsonConvert.SerializeObject(gdt.SystemUsers));
+                sb.Append(SafeExecute<string>("restDbSystemUsers", () => JsonConvert.SerializeObject(gdt.SystemUsers), DefaultStringObject));
             }
             else
             {
@@ -504,14 +505,17 @@ namespace U5kManServer.WebAppServer
             {
                 using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
                 {
-                    string strData = reader.ReadToEnd();
-                    U5kManWADOptions opts = U5kManWebAppData.JDeserialize<U5kManWADOptions>(strData);
-                    /** Sincronizar el otro servidor */
-                    _sync_server.Sync(cmdSync.Opciones, strData);
+                    SafeExecute("restOptions POST", () =>
+                    {
+                        string strData = reader.ReadToEnd();
+                        U5kManWADOptions opts = U5kManWebAppData.JDeserialize<U5kManWADOptions>(strData);
+                        /** Sincronizar el otro servidor */
+                        _sync_server.Sync(cmdSync.Opciones, strData);
 
-                    opts.Save();
-                    /** Generar Historico de la actuacion...*/
-                    RecordManualAction("Modificacion de opciones de Aplicacion");   // todo. Multi-Idioma.
+                        opts.Save();
+                        /** Generar Historico de la actuacion...*/
+                        RecordManualAction("Modificacion de opciones de Aplicacion");   // todo. Multi-Idioma.
+                    });
                 }
             }
             else
@@ -530,13 +534,16 @@ namespace U5kManServer.WebAppServer
             {
                 using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
                 {
-                    string strData = reader.ReadToEnd();
-                    U5kManWADSnmpOptions opts = U5kManWebAppData.JDeserialize<U5kManWADSnmpOptions>(strData);
-                    /** Sincronizar el otro servidor */
-                    _sync_server.Sync(cmdSync.OpcionesSnmp, strData);
-                    opts.Save();
-                    /** TODO. Generar Historico de la Actuacion */
-                    RecordManualAction("Modificacion de opciones de SNMP");   // todo. Multi-Idioma.
+                    SafeExecute("restSnmpOptions POST", () =>
+                    {
+                        string strData = reader.ReadToEnd();
+                        U5kManWADSnmpOptions opts = U5kManWebAppData.JDeserialize<U5kManWADSnmpOptions>(strData);
+                        /** Sincronizar el otro servidor */
+                        _sync_server.Sync(cmdSync.OpcionesSnmp, strData);
+                        opts.Save();
+                        /** TODO. Generar Historico de la Actuacion */
+                        RecordManualAction("Modificacion de opciones de SNMP");   // todo. Multi-Idioma.
+                    });
                 }
             }
             else
@@ -552,7 +559,7 @@ namespace U5kManServer.WebAppServer
 #if _HAY_NODEBOX__
                 sb.Append(JsonConvert.SerializeObject(U5kManService._sessions_data));
 #else
-                sb.Append(Services.CentralServicesMonitor.Monitor.RadioSessionsString);
+                sb.Append(SafeExecute<string>("restRdSessions", () => Services.CentralServicesMonitor.Monitor.RadioSessionsString, DefaultStringObject));
 #endif
             }
             else
@@ -568,7 +575,7 @@ namespace U5kManServer.WebAppServer
 #if _HAY_NODEBOX__
                 sb.Append(JsonConvert.SerializeObject(U5kManService._MNMan_data));
 #else
-                sb.Append(Services.CentralServicesMonitor.Monitor.RadioMNDataString);
+                sb.Append(SafeExecute<string>("restRdMNMan", () => Services.CentralServicesMonitor.Monitor.RadioMNDataString, DefaultStringObject));
 #endif
             }
             else
@@ -585,10 +592,13 @@ namespace U5kManServer.WebAppServer
                 var data = File.ReadAllText(".\\appweb\\simulate\\rddata.json");
                 sb.Append(data);
 #else
-                Services.CentralServicesMonitor.Monitor.GetRadioData((data) =>
+                SafeExecute("restRadioData", () =>
                 {
-                    var strData = U5kManWebAppData.JSerialize(data);
-                    sb.Append(strData);
+                    Services.CentralServicesMonitor.Monitor.GetRadioData((data) =>
+                    {
+                        var strData = U5kManWebAppData.JSerialize(data);
+                        sb.Append(strData);
+                    });
                 });
 #endif
             }
@@ -605,29 +615,32 @@ namespace U5kManServer.WebAppServer
                 /** Payload { id: "", ... }*/
                 using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
                 {
-                    var data = JsonConvert.DeserializeObject(reader.ReadToEnd()) as JObject;
-                    if (JsonHelper.JObjectPropertyExist(data, "id") && JsonHelper.JObjectPropertyExist(data, "command"))
+                    SafeExecute("restRadio11Control", () =>
                     {
-                        // var idEquipo = (string)data["id"];
-                        Services.CentralServicesMonitor.Monitor.RdUnoMasUnoCommand(data, (success, msg) =>
+                        var data = JsonConvert.DeserializeObject(reader.ReadToEnd()) as JObject;
+                        if (JsonHelper.JObjectPropertyExist(data, "id") && JsonHelper.JObjectPropertyExist(data, "command"))
                         {
-                            if (success)
+                            // var idEquipo = (string)data["id"];
+                            Services.CentralServicesMonitor.Monitor.RdUnoMasUnoCommand(data, (success, msg) =>
                             {
-                                context.Response.StatusCode = 200;
-                                sb.Append(JsonConvert.SerializeObject(new { res = "Operacion Realizada." }));
-                            }
-                            else
-                            {
-                                context.Response.StatusCode = 500;
-                                sb.Append(JsonConvert.SerializeObject(new { res = "Internal Error: " + msg }));
-                            }
-                        });
-                    }
-                    else
-                    {
-                        context.Response.StatusCode = 400;
-                        sb.Append(JsonConvert.SerializeObject(new { res = "Bad Request..." }));
-                    }
+                                if (success)
+                                {
+                                    context.Response.StatusCode = 200;
+                                    sb.Append(JsonConvert.SerializeObject(new { res = "Operacion Realizada." }));
+                                }
+                                else
+                                {
+                                    context.Response.StatusCode = 500;
+                                    sb.Append(JsonConvert.SerializeObject(new { res = "Internal Error: " + msg }));
+                                }
+                            });
+                        }
+                        else
+                        {
+                            context.Response.StatusCode = 400;
+                            sb.Append(JsonConvert.SerializeObject(new { res = "Bad Request..." }));
+                        }
+                    });
                 }
             }
             else
@@ -643,7 +656,7 @@ namespace U5kManServer.WebAppServer
 #if _HAY_NODEBOX__
                 sb.Append(JsonConvert.SerializeObject(U5kManService._txhf_data));
 #else
-                sb.Append(Services.CentralServicesMonitor.Monitor.HFRadioDataString);
+                sb.Append(SafeExecute<string>("restHFTxData", () => Services.CentralServicesMonitor.Monitor.HFRadioDataString, DefaultStringObject));
 #endif
             }
             else
@@ -659,7 +672,7 @@ namespace U5kManServer.WebAppServer
 #if _HAY_NODEBOX__
                 sb.Append(U5kManService._ps_data);
 #else
-                sb.Append(Services.CentralServicesMonitor.Monitor.PresenceDataString);
+                sb.Append(SafeExecute<string>("restTifxInfo", () => Services.CentralServicesMonitor.Monitor.PresenceDataString, DefaultStringObject));
 #endif
             }
             else
@@ -716,7 +729,7 @@ namespace U5kManServer.WebAppServer
 #endif
                 {
                     ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-                    sb.Append(sacta_srv.SactaConfGet());
+                    sb.Append(SafeExecute<string>("restSacta GET", () => sacta_srv.SactaConfGet(), DefaultStringObject));
                 }
             }
             else if (context.Request.HttpMethod == "POST")
@@ -731,14 +744,17 @@ namespace U5kManServer.WebAppServer
                         stdg.SactaServiceEnabled = true;
                         Task.Factory.StartNew(() =>
                         {
-                            ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-                            sacta_srv.StartSacta();
-                            GlobalServices.GetWriteAccess((data) =>
+                            SafeExecute("restSacta Activate", () =>
                             {
-                                U5kManService._main.EstadoSacta(16, stdg);
+                                ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
+                                sacta_srv.StartSacta();
+                                GlobalServices.GetWriteAccess((data) =>
+                                {
+                                    U5kManService._main.EstadoSacta(16, stdg);
+                                });
+                                /** TODO. Generar Historico de Actuacion */
+                                RecordManualAction("Activacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
                             });
-                            /** TODO. Generar Historico de Actuacion */
-                            RecordManualAction("Activacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
                         });
                     }
                     else if (activar == "false")
@@ -746,15 +762,17 @@ namespace U5kManServer.WebAppServer
                         stdg.SactaServiceEnabled = false;
                         Task.Factory.StartNew(() =>
                         {
-
-                            ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-                            sacta_srv.EndSacta();
-                            GlobalServices.GetWriteAccess((data) =>
+                            SafeExecute("restSacta Deactivate", () =>
                             {
-                                U5kManService._main.EstadoSacta(0, stdg);
+                                ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
+                                sacta_srv.EndSacta();
+                                GlobalServices.GetWriteAccess((data) =>
+                                {
+                                    U5kManService._main.EstadoSacta(0, stdg);
+                                });
+                                /** TODO. Generar Historico de Actuacion */
+                                RecordManualAction("Desactivacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
                             });
-                            /** TODO. Generar Historico de Actuacion */
-                            RecordManualAction("Desactivacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
                         });
                     }
                     else
@@ -768,14 +786,17 @@ namespace U5kManServer.WebAppServer
                     ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
                     using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
                     {
-                        string strData = reader.ReadToEnd();
-                        sacta_srv.SactaConfSet(strData);
+                        SafeExecute("restSacta Config.", () =>
+                        {
+                            string strData = reader.ReadToEnd();
+                            sacta_srv.SactaConfSet(strData);
 
-                        /** Sincronizar el otro servidor */
-                        _sync_server.Sync(cmdSync.OpcionesSacta, strData);
+                            /** Sincronizar el otro servidor */
+                            _sync_server.Sync(cmdSync.OpcionesSacta, strData);
 
-                        sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = idiomas.strings.WAP_MSG_001 /* "OK" */}));
-                        RecordManualAction("Cambio de opciones de Servicio SACTA");   // todo. Multi-Idioma.
+                            sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = idiomas.strings.WAP_MSG_001 /* "OK" */}));
+                            RecordManualAction("Cambio de opciones de Servicio SACTA");   // todo. Multi-Idioma.
+                        });
                     }
                 }
             }
@@ -867,21 +888,19 @@ namespace U5kManServer.WebAppServer
         {
             if (context.Request.HttpMethod == "GET")
             {
-#if STD_ACCESS_V0
-                List<Utilities.VersionDetails.VersionData> versiones = new List<Utilities.VersionDetails.VersionData>() 
-                    { JsonConvert.DeserializeObject<Utilities.VersionDetails.VersionData>(U5kManService._std._gen.stdServ1.jversion), 
-                      JsonConvert.DeserializeObject<Utilities.VersionDetails.VersionData>(U5kManService._std._gen.stdServ2.jversion) };
-#else
-                /** 20180327. Se obtinen las versiones al pedirlas no periodicamente */
-                U5KStdGeneral stdg = gdt.STDG;
-                GetVersionDetails(stdg);
+                SafeExecute("", () =>
+                {
+                    /** 20180327. Se obtinen las versiones al pedirlas no periodicamente */
+                    U5KStdGeneral stdg = gdt.STDG;
+                    GetVersionDetails(stdg);
 
-                /** */
-                List<Utilities.VersionDetails.VersionData> versiones = new List<Utilities.VersionDetails.VersionData>() 
-                    { JsonConvert.DeserializeObject<Utilities.VersionDetails.VersionData>(stdg.stdServ1.jversion), 
+                    /** */
+
+                    List<Utilities.VersionDetails.VersionData> versiones = new List<Utilities.VersionDetails.VersionData>()
+                    { JsonConvert.DeserializeObject<Utilities.VersionDetails.VersionData>(stdg.stdServ1.jversion),
                       JsonConvert.DeserializeObject<Utilities.VersionDetails.VersionData>(stdg.stdServ2.jversion) };
-#endif
-                sb.Append(JsonConvert.SerializeObject(versiones));
+                    sb.Append(JsonConvert.SerializeObject(versiones));
+                });
             }
             else
             {
@@ -987,7 +1006,9 @@ namespace U5kManServer.WebAppServer
                 U5kBaseDatos.eTiposInci.TEH_SISTEMA, "WEB",        
                 Params("WebApp", action));
         }
+        string DefaultStringObject => U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = "Error Interno. Ver Log" });
         public static MainStandbySyncServer _sync_server = new MainStandbySyncServer();
+
     }
 
 }
