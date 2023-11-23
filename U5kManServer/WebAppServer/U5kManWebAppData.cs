@@ -584,42 +584,17 @@ namespace U5kManServer.WebAppServer
             }
         }
     }
-
-    /// <summary>
-    /// Lista de Operadores.
-    /// </summary>
     class U5kManWADDbCwps : U5kManWebAppData
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public class itemDbCWP
         {
             public string id { get; set; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public List<itemDbCWP> lista = new List<itemDbCWP>();
-        /// <summary>
-        /// 
-        /// </summary>
         public U5kManWADDbCwps(U5kManStdData gdata, bool bGenerate = false)
         {
             if (bGenerate)
             {
-#if STD_ACCESS_V0
-                lock (U5kManService._std.stdpos)
-                {
-                    foreach (stdPos pos in U5kManService._std.stdpos)
-                    {
-                        lista.Add(new itemDbCWP()
-                        {
-                            id = pos.name
-                        });
-                    }
-                }
-#else
                 List<stdPos> stdpos = gdata.STDTOPS;
                 foreach (stdPos pos in stdpos)
                 {
@@ -628,53 +603,25 @@ namespace U5kManServer.WebAppServer
                         id = pos.name
                     });
                 }
-#endif
             }
         }
     }
-
-    /// <summary>
-    /// Lista de Pasarelas.
-    /// </summary>
     class U5kManWADDbGws : U5kManWebAppData
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public class itemDbGW
         {
             public string id { get; set; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public List<itemDbGW> lista = new List<itemDbGW>();
-        /// <summary>
-        /// 
-        /// </summary>
         public U5kManWADDbGws(U5kManStdData gdata, bool bGenerate)
         {
             if (bGenerate)
             {
-#if STD_ACCESS_V0
-                lock (U5kManService._std.stdgws)
-                {
-                    foreach (stdGw gw in U5kManService._std.stdgws)
-                    {
-                        lista.Add(new itemDbGW()
-                        {
-                            id = gw.name
-                        });
-                    }
-                }
-#else
                 List<stdGw> stdgws = gdata.STDGWS;
                 lista = stdgws.Select(gw => new itemDbGW() { id = gw.name }).ToList();
-#endif
             }
         }
     }
-
     class U5kManAllhard : U5kManWebAppData
     {
         public class itemHard
@@ -686,79 +633,26 @@ namespace U5kManServer.WebAppServer
         public U5kManAllhard(U5kManStdData gdata )
         {
             items = new List<itemHard>();
-#if STD_ACCESS_V0
-            /** Añado los Operadores */
-            lock (U5kManService._std.stdpos)
-            {
-                foreach (stdPos pos in U5kManService._std.stdpos)
-                {
-                    items.Add(new itemHard()
-                    {
-                        Id = pos.name, tipo = 0
-                    });
-                }
-            }
-            /** Añado las Pasarelas */
-            lock (U5kManService._std.stdgws)
-            {
-                foreach (stdGw gw in U5kManService._std.stdgws)
-                {
-                    items.Add(new itemHard()
-                    {
-                        Id = gw.name, tipo = 1
-                    });
-                }
-            }
-            /** Añado los equipos*/
-            lock (U5kManService._std.stdeqeu.Equipos)
-            {
-                foreach (U5kManStdEquiposEurocae.EquipoEurocae equipo in U5kManService._std.stdeqeu.Equipos)
-                {
-                    items.Add(new itemHard()
-                    {
-                        Id = equipo.sip_user ?? equipo.Id,
-                        tipo = equipo.Tipo
-                    });
-                }
-            }
-#else
             /** Añado los Operadores */
             items.AddRange(gdata.STDTOPS.Select(item => new itemHard() {Id = item.name, tipo = 0 }).ToList()); 
-
             /** Añado las Pasarelas */
             items.AddRange(gdata.STDGWS.Select(gw => new itemHard() { Id = gw.name, tipo = 1 }).ToList());
-
             /** Añado los equipos*/
             items.AddRange(gdata.STDEQS.Select(eq => new itemHard() { Id = eq.sip_user ?? eq.Id, tipo = eq.Tipo }).ToList());
-
-#endif
         }
     }
-
-    /// <summary>
-    /// Lista de ITEMS MN
-    /// </summary>
     class U5kManWADDbMNItems : U5kManWebAppData
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public class itemDb
         {
             public string id { get; set; }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public List<itemDb> lista = new List<itemDb>();
-        /// <summary>
-        /// 
-        /// </summary>
         public U5kManWADDbMNItems(bool bGenerate)
         {
             if (bGenerate)
             {
-                List<string> _lista = U5kManService.bdtListaItemsMN();
+                List<string> _lista = SafeExecute<List<string>>("DB-MN-LIST", () => U5kManService.bdtListaItemsMN());
                 foreach (String str in _lista)
                 {
                     lista.Add(new itemDb() { id = str });
@@ -766,26 +660,18 @@ namespace U5kManServer.WebAppServer
             }
         }
     }
-
-    /// <summary>
-    /// Configuracion de Tipo de Incidencias.
-    /// </summary>
     class U5kManWADDbInci : U5kManWebAppData
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public List<U5kIncidenciaDescr> lista = new List<U5kIncidenciaDescr>();
-        /// <summary>
-        /// 
-        /// </summary>
         public U5kManWADDbInci(bool bGenerate = false)
         {
             if (bGenerate)
             {
                 try
                 {
-                    lista = U5kManService.stListaIncidencias((idioma)=> { LogDebug<U5kManWADDbInci>("Lista de Incidencias en " + idioma); });
+                    lista = SafeExecute<List<U5kIncidenciaDescr>>("DB-INCI-LIST",
+                        () => U5kManService.stListaIncidencias((idioma) => { LogDebug<U5kManWADDbInci>("Lista de Incidencias en " + idioma); })
+                        );
                 }
                 catch (Exception x)
                 {
@@ -814,15 +700,8 @@ namespace U5kManServer.WebAppServer
             U5kGenericos.ResetService = true;
         }
     }
-
-    /// <summary>
-    /// Consulta de Historico
-    /// </summary>
     class U5kManWADDbHist : U5kManWebAppData
     {
-        /// <summary>
-        /// 
-        /// </summary>
         public class Filtro
         {
             public DateTime dtDesde { get; set; }
@@ -833,10 +712,6 @@ namespace U5kManServer.WebAppServer
             public string limit { get; set; }
             public List<string> Inci { get; set; }
 
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <returns></returns>
             public string SqlQuery
             {
                 get
@@ -852,20 +727,10 @@ namespace U5kManServer.WebAppServer
                     return strConsulta;
                 }
             }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="desde"></param>
-            /// <param name="hasta"></param>
-            /// <returns></returns>
             protected string FiltroFechas
             {
                 get
                 {
-                    //dtHasta += new TimeSpan(1, 0, 0, 0);
-                    //string filtro2 = string.Format("(  FECHAHORA BETWEEN '{0:yyyy-MM-dd}' AND '{1:yyyy-MM-dd}')",
-                    //                dtDesde, dtHasta);
                     DateTime dtDesdeF = dtDesde.ToLocalTime();    // new DateTime(dtDesde.Year, dtDesde.Month, dtDesde.Day);
                     DateTime dtHastaF = dtHasta.ToLocalTime();    // new DateTime(dtHasta.Year, dtHasta.Month, dtHasta.Day, 23, 59, 59);
                     string filtro2 = string.Format("(  FECHAHORA BETWEEN '{0:yyyy-MM-dd HH:mm}' AND '{1:yyyy-MM-dd HH:mm}')",
@@ -873,10 +738,6 @@ namespace U5kManServer.WebAppServer
                     return filtro2;
                 }
             }
-
-            /// <summary>
-            /// 
-            /// </summary>
             protected string FiltroTipoHardware
             {
                 get
@@ -897,29 +758,17 @@ namespace U5kManServer.WebAppServer
                     return strFiltro;
                 }
             }
-
-            /// <summary>
-            /// 
-            /// </summary>
             protected string FiltroIdHardware
             {
                 get
                 {
-                    if (/*tpMat == 0 || */
-                        /*tpMat == 3 || */
-                        /*tpMat == 4 || */
-                        /*tpMat == 5 || */
-                        Mat == "" ||
+                    if (Mat == "" ||
                         Mat == idiomas.strings.WAP_MSG_005 /* Todas */ ||
                         Mat == idiomas.strings.WAP_MSG_014 /* Todos */)
                         return "";
                     return string.Format(" AND (IDHW LIKE '{0}%')", Mat);
                 }
             }
-
-            /// <summary>
-            /// 
-            /// </summary>
             protected string FiltroGrupoIncidencias
             {
                 get
@@ -958,11 +807,6 @@ namespace U5kManServer.WebAppServer
                     return strFiltro;
                 }
             }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <returns></returns>
             protected string FiltroIncidencias()
             {
                 if (Inci.Count > 0)
@@ -981,26 +825,6 @@ namespace U5kManServer.WebAppServer
                 // Si no hay incidencias Seleccionadas o Se ha seleccionado 'todas'... Retorna Grupo de Incidencias..
                 return FiltroGrupoIncidencias;
             }
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <returns></returns>
-            protected string FiltroTexto_1
-            {
-                get
-                {
-                    string strFiltro = "";                    
-                    if (txt != null && txt != string.Empty)
-                    {
-                        strFiltro = " AND (Descripcion LIKE '%" + txt + "%')";
-                    }
-                    return strFiltro;
-                }
-            }
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <returns></returns>
             protected string FiltroTexto
             {
                 get
@@ -1019,9 +843,6 @@ namespace U5kManServer.WebAppServer
                     return strFiltro;
                 }
             }
-            /// <summary>
-            /// 
-            /// </summary>
             protected string FiltroRegexpTexto
             {
                 get
@@ -1034,11 +855,6 @@ namespace U5kManServer.WebAppServer
                     return strFiltro;
                 }
             }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <returns></returns>
             protected string FiltroRegexpTextoExt
             {
                 get
@@ -1058,27 +874,16 @@ namespace U5kManServer.WebAppServer
                 }
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public List<U5kHistLine> lista = null;
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="jFiltro"></param>
         public U5kManWADDbHist(string jFiltro)
         {
             Filtro f = JDeserialize<Filtro>(jFiltro);
             string strQuery = f.SqlQuery;
 
-            lista = U5kManService.bdtConsultaHistorico(strQuery);
+            lista = SafeExecute<List<U5kHistLine>>("HIS-QUERY", () => U5kManService.bdtConsultaHistorico(strQuery));
             LogDebug<U5kManWADDbHist>("HistQuery: " + strQuery);
         }
     }
-
-    /// <summary>
-    /// Consulta de Estadistica
-    /// </summary>
     class U5kManWADDbEstadistica : U5kManWebAppData
     {
         class Filtro
@@ -1097,19 +902,16 @@ namespace U5kManServer.WebAppServer
                     hasta = desde;
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
         public U5kEstadisticaResultado res = null;
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="jfiltro"></param>
         public U5kManWADDbEstadistica(string jfiltro)
         {
-            Filtro f = JDeserialize<Filtro>(jfiltro);
-            f.Normalize();
-            res = U5kEstadisticaProc.Estadisticas.Calcula(f.desde, f.hasta, f.tipo, f.elementos);
+            SafeExecute("STAT-PRE", () =>
+            {
+                Filtro f = JDeserialize<Filtro>(jfiltro);
+                f.Normalize();
+                res = SafeExecute<U5kEstadisticaResultado>("STAT-EXE", 
+                    () => U5kEstadisticaProc.Estadisticas.Calcula(f.desde, f.hasta, f.tipo, f.elementos));
+            });
         }
     }
 
