@@ -16,33 +16,40 @@ using Utilities;
 
 namespace U5kManServer.WebAppServer
 {
-    /// <summary>
-    /// Clase General...
-    /// </summary>
     public class U5kManWebAppData : BaseCode
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        // protected static Logger _logger = NLog.LogManager.GetCurrentClassLogger();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
         static public string JSerialize<JObject>(JObject obj)
         {
             return JsonConvert.SerializeObject(obj);
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="JObject"></typeparam>
-        /// <param name="strData"></param>
-        /// <returns></returns>
         static public JObject JDeserialize<JObject>(string strData)
         {
             return JsonConvert.DeserializeObject<JObject>(strData);
+        }
+        protected T SafeExecute<T>(string who, Func<T> action)
+        {
+            try
+            {
+                return action();
+            }
+            catch (Exception x)
+            {
+                LogException<U5kManWADStd>($"On SecureExecute {who} exception ", x);
+                LogDebug<U5kManWADStd>($"{x}");
+                return default;
+            }
+        }
+        protected void SafeExecute(string who, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception x)
+            {
+                LogException<U5kManWADStd>($"On SecureExecute {who} exception ", x);
+                LogDebug<U5kManWADStd>($"{x}");
+            }
         }
     }
 
@@ -199,7 +206,7 @@ namespace U5kManServer.WebAppServer
         /// <summary>
         /// 
         /// </summary>
-        public U5kManWADStd(U5kManStdData gdt, string user ="false", bool bGenerate = false)
+        public U5kManWADStd(string old, U5kManStdData gdt, string user ="false", bool bGenerate = false)
         {
             if (bGenerate)
             {
@@ -399,6 +406,127 @@ namespace U5kManServer.WebAppServer
 #endif
                     igmp_status = Services.IgmpMonitor.Status;
                 }
+            }
+        }
+        public U5kManWADStd(U5kManStdData gdt, string user = "false", bool bGenerate = false)
+        {
+            if (bGenerate)
+            {
+                U5KStdGeneral stdg = gdt.STDG;
+
+                version = SafeExecute<string>("version", () => U5kGenericos.Version);
+                cfg = SafeExecute<string>("cfg", () => stdg.CfgId);
+                hf = SafeExecute<int>("hf", () => U5kManService.cfgSettings.HayAltavozHF ? 1 : 0);
+                recw = SafeExecute<int>("recw", () => U5kManService.cfgSettings.OpcOpeCableGrabacion ? 1 : 0);
+
+                sv1 = SafeExecute<itemData>("sv1", () => new itemData()
+                {
+                    name = stdg.stdServ1.name,
+                    enable = 1,
+                    std = (int)stdg.stdServ1.Estado,
+                    sel = (int)stdg.stdServ1.Seleccionado,
+                    url = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual ?
+                            String.Format("http://{0}/UlisesV5000/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : "",
+                    ntp = SafeExecute<string>("sv1.ntp", () => stdg.stdServ1.NtpInfo.GlobalStatus)
+                });
+                sv2 = SafeExecute<itemData>("sv2", () => new itemData()
+                {
+                    name = stdg.stdServ2.name,
+                    enable = stdg.bDualServ ? 1 : 0,
+                    std = (int)stdg.stdServ2.Estado,
+                    sel = (int)stdg.stdServ2.Seleccionado,
+                    url = U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.ServidorDual ?
+                            String.Format("http://{0}/UlisesV5000/U5kCfg/Cluster/Default.aspx", U5kManServer.Properties.u5kManServer.Default.MySqlServer) : "",
+                    ntp = SafeExecute<string>("sv2.ntp", () => stdg.stdServ2.NtpInfo.GlobalStatus)
+                });
+
+                cwp = SafeExecute<itemData>("cwp", () => new itemData()
+                {
+                    name = idiomas.strings.WAP_MSG_003 /* "Puestos de Operador"*/,
+                    enable = 1,
+                    std = (int)stdg.stdGlobalPos,
+                    sel = 0,
+                    url = ""
+                });
+
+                gws = SafeExecute<itemData>("gws", () => new itemData()
+                {
+                    name = idiomas.strings.WAP_MSG_004 /* "Pasarelas"*/,
+                    enable = 1,
+                    std = (int)stdg.stdScv1.Estado,
+                    sel = 0,
+                    url = ""
+                });
+
+                SafeExecute("nbx", () =>
+                {
+                    Services.CentralServicesMonitor.Monitor.DataGetForWebServer((csid) =>
+                    {
+                        csi = csid;
+                    });
+                });
+
+                pbx = SafeExecute<itemData>("pbx", () => new itemData()
+                {
+                    name = stdg.stdPabx.name,
+                    enable = stdg.HayPbx ? 1 : 0,
+                    std = (int)stdg.stdPabx.Estado,
+                    sel = 0,
+                    url = U5kGenericos.PabxUrl(stdg.stdPabx.name)
+                });
+
+                ntp = SafeExecute<itemData>("ntp", () => new itemData()
+                {
+                    name = stdg.stdClock.name,
+                    enable = stdg.HayReloj ? 1 : 0,
+                    std = (int)stdg.stdClock.Estado,
+                    sel = 0,
+                    url = ""
+                });
+
+                sactaservicerunning = SafeExecute<bool>("sactaservicerunning", () => stdg.SactaService == std.Ok);
+                sactaserviceenabled = SafeExecute<bool>("sactaserviceenabled", () => stdg.SactaServiceEnabled);
+                sct1 = SafeExecute<itemData>("sct1", () => new itemData()
+                {
+                    name = "SACTA-1",
+                    enable = stdg.HaySacta ? 1 : 0,
+                    std = (int)stdg.stdSacta1,
+                    sel = 0,
+                    url = ""
+                });
+
+                sct2 = SafeExecute<itemData>("sct2", () => new itemData()
+                {
+                    name = "SACTA-2",
+                    enable = stdg.HaySacta ? 1 : 0,
+                    std = (int)stdg.stdSacta2,
+                    sel = 0,
+                    url = ""
+                });
+
+                ext = SafeExecute<itemData>("ext", () => new itemData()
+                {
+                    name = idiomas.strings.EquiposExternos,
+                    enable = 1,
+                    std = (int)stdg.stdGlobalExt,
+                    sel = 0,
+                    url = ""
+                });
+
+                lang = SafeExecute<string>("lang", () => U5kManService.cfgSettings/*Properties.u5kManServer.Default*/.Idioma);
+                rd_status = SafeExecute<int>("rd_status", () =>
+                {
+                    var rs = Services.CentralServicesMonitor.Monitor.GlobalRadioStatus;
+                    return rs == std.NoInfo ? -1 : rs == std.Alarma ? 2 : rs == std.Aviso ? 1 : 0;
+                });
+
+                ///** 20181010. De los datos obtenemos el estado de emergencia */
+                tf_status = SafeExecute<int>("tf_status", () =>
+                {
+                    var tfs = Services.CentralServicesMonitor.Monitor.GlobalPhoneStatus;
+                    return tfs == std.Ok ? 0 /** OK */ : tfs == std.Aviso ? 1 /** DEG */ : 2 /** EMG */;
+                });
+                igmp_status = SafeExecute<string>("igmp_status", () => Services.IgmpMonitor.Status);
             }
         }
     }
