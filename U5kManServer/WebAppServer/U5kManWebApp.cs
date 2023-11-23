@@ -21,13 +21,14 @@ using NucleoGeneric;
 
 namespace U5kManServer.WebAppServer
 {
-#if _WEBLOGIN_
-    class U5kManWebApp : WebServerBase
-#else
-    class U5kManWebApp : OldWebAppServer
-#endif
+    class U5kManWebApp : BaseCode /*WebServerBase*/
     {
-#if _WEBLOGIN_
+        IHttpServer _httpServer;
+        public U5kManWebApp(IHttpServer httpServer=null) 
+        {
+            //_httpServer = httpServer ?? new HttpServer();
+            _httpServer = httpServer ?? new HttpsServer() { httpOnly = Properties.u5kManServer.Default.https == false };
+        }
         public void Start(int port=8090)
         {
             Dictionary<string, wasRestCallBack> cfg = new Dictionary<string, wasRestCallBack>()
@@ -93,7 +94,7 @@ namespace U5kManServer.WebAppServer
                 "/db/systemusers"
             };
             /** Rutina a la que llama el servidor base para autentificar un usuario */
-            AuthenticateUser = (data, response) =>
+            _httpServer.AuthenticateUser = (data, response) =>
             {
                 /** Control de Disable */
                 if (Enable)
@@ -119,25 +120,7 @@ namespace U5kManServer.WebAppServer
                             response(false, "Usuario o password incorrecta", null);
                             return;
                         }
-                        // Miro si hay sesiones.
-                        var sessionDuration = TimeSpan.FromMinutes(U5kManService.cfgSettings.WebInactivityTimeout);
-                        Sessions.GetAccess(sessionDuration, loggeduser.id, loggeduser.ProfileId, (haysesiones, cookie) =>
-                        {
-                            if (haysesiones)
-                            {
-                                response(true, "", cookie);
-                                Task.Run(() =>
-                                {
-                                    var msg = $"Usuario {loggeduser.id}, {loggeduser.ProfileId}, Inicia session";
-                                    RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
-                                        new object[] { msg, "", "", "", "", "", "", "" });
-                                });
-                            }
-                            else
-                            {
-                                response(false, "Maximo numero de Sesiones alcanzado", null);
-                            }
-                        });
+                        response(true, loggeduser.id, loggeduser.ProfileId);
                     }
                     else
                     {
@@ -146,7 +129,7 @@ namespace U5kManServer.WebAppServer
                 }
                 else
                 {
-                    response(false, $"Servicio Web Inhabilitado: {DisableCause}", null);
+                    response(false, $"Servicio Web Inhabilitado ({DisableCause}).", null);
                 }
             };
             try
@@ -161,7 +144,7 @@ namespace U5kManServer.WebAppServer
             }
             try
             {
-                base.Start(port, new CfgServer()
+                _httpServer.Start(port, new CfgServer()
                 {
                     DefaultDir = "/appweb",
                     DefaultUrl = "/index.html",
@@ -179,21 +162,34 @@ namespace U5kManServer.WebAppServer
                 LogException<U5kManWebApp>("Arrancando HttpServer", x);
             }
         }
+        public void Stop()
+        {
+            try
+            {
+                _httpServer.Stop();
+                _sync_server.Stop();
+            }
+            catch (Exception x)
+            {
+                LogException<U5kManWebApp>("", x);
+            }
+        }
+        public void EnableDisable(bool enable, string cause = "")
+        {
+            _httpServer.IsEnabled = enable;
+            Enable = enable;
+            DisableCause = cause;
+        }
+
+        bool Enable { get; set; } = true;
+        string DisableCause { get; set; } = "";
+
         protected void RestLogout(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             context.Response.ContentType = "application/json";
             if (context.Request.HttpMethod == "POST")
             {
-                Sessions.Logout(context.Request, (user)=>
-                {
-                    Task.Run(() =>
-                    {
-                        var msg = $"Usuario {user}, Finaliza session";
-                        RecordEvent<WebServerBase>(DateTime.Now, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "MTTO",
-                            new object[] { msg, "", "", "", "", "", "", "" });
-                    });
-                });
-
+                _httpServer.Logout(context);
                 context.Response.Redirect("/login.html");
             }
             else
@@ -232,106 +228,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(JsonHelper.ToString(new { res = context.Request.HttpMethod + ": Metodo No Permitido" }, false));
             }
         }
-#else
-        /// <summary>
-        /// 
-        /// </summary>
-        public U5kManWebApp()
-            : base("/appweb", "/index.html", false)
-        {
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void Start()
-        {
-            try
-            {
-                Dictionary<string, wasRestCallBack> cfg = new Dictionary<string, wasRestCallBack>()
-                {
-                    {"/listinci",restListInci},     // GET & POST
-                    {"/std",restStd},               // GET
-                    {"/cwp",restCwps},              // GET
-                    {"/cwp/*/version",restCwpVersion},              // GET
-                    {"/exteq",restExtEqu},          // GET
-                    {"/pbxab",restPabx},            // GET
-                    {"/gws",restGws},               // GET
-                    {"/gws/*",restGwData},          // GET /gws/name & POST /gws/name {cmd: (getVersion, chgPR)}
-                    {"/db/operadores",restDbCwps},  // GET
-                    {"/db/pasarelas",restDbGws},    // GET
-                    {"/db/mnitems",restDbMNItems},    // GET
-                    {"/db/incidencias",restDbInci}, // GET & POST
-                    {"/db/historicos",restDbHist},  // POST para enviar el Filtro.
-                    {"/db/estadistica",restDbEstadistica},  // POST para enviar el Filtro.
-                    {"/db/systemusers",restDbSystemUsers},  // 
-                    {"/options",restOptions},               // GET & POST
-                    {"/snmpopts",restSnmpOptions},               // GET & POST
-                    {"/rdsessions",restRdSessions},         // GET
-                    {"/gestormn",restRdMNMan},         // GET
-                    {"/rdhf",restHFTxData},        // GET
-                    {"/rddata", restRadioData },    // GET
-                    {"/rd11", restRadio11Control }, // POST
-                    {"/sacta", restSacta},              // GET & POST
-                    {"/sacta/*", restSacta},              // GET & POST
-                    {"/extatssest",restExtAtsDest},
-                    {"/versiones",restVersiones},
-                    {"/allhard", restAllHard},
-                    {"/tifxinfo", restTifxInfo},
-                    {"/logs", restLogs},
-                    {"/logs/*", restLogs},
-                    {"/reset",(context, sb, gdt)=>
-                        {
-                            if (context.Request.HttpMethod == "POST")
-                            {
-                                U5kGenericos.ResetService = true;
-                                RecordManualAction("Reset Modulo");     // todo. Multiidioma...            
-                            }            
-                            else            
-                            {                
-                                context.Response.StatusCode = 404;                
-                                sb.Append(JsonConvert.SerializeObject( new{ res="Operacion no Soportada"} ));            
-                            }                        
-                        }
-                    }
-                };
-
-                //U5kGenericos.SetCurrentCulture();
-
-                _sync_server.Start(Properties.u5kManServer.Default.MiDireccionIP,
-                    Properties.u5kManServer.Default.MainStandByMcastAdd, 
-                    Properties.u5kManServer.Default.SyncserverPort);
-
-                base.Start(Properties.u5kManServer.Default.WebserverPort, cfg);
-            }
-            catch (Exception x)
-            {
-                LogException<WebAppServer>( "", x);
-            }
-        }
-#endif
-        public override void Stop()
-        {
-            try
-            {
-                base.Stop();
-                _sync_server.Stop();
-            }
-            catch (Exception x)
-            {
-                LogException<U5kManWebApp>( "", x);
-            }
-        }
-        public void EnableDisable(bool enable, string cause = "")
-        {
-            Enable = enable;
-            DisableCause = cause;
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restListInci(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -353,12 +249,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restStd(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -372,12 +262,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restCwps(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -390,11 +274,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restAllHard(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -407,11 +286,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restCwpVersion(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -438,12 +312,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restGws(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -456,12 +324,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restGwData(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             string name = context.Request.Url.LocalPath.Split('/')[2];
@@ -490,12 +352,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restExtEqu(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -508,12 +364,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restExtAtsDest(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -526,12 +376,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restPabx(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -544,12 +388,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restDbCwps(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -562,12 +400,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restDbGws(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -580,12 +412,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restDbMNItems(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -598,12 +424,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restDbInci(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -630,12 +450,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restDbHist(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "POST")
@@ -652,12 +466,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restDbEstadistica(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "POST")
@@ -674,12 +482,11 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
         protected void restDbSystemUsers(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(SafeExecute<string>("restDbSystemUsers", () => JsonConvert.SerializeObject(gdt.SystemUsers), "{}"));
+                sb.Append(JsonConvert.SerializeObject(gdt.SystemUsers));
             }
             else
             {
@@ -687,12 +494,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restOptions(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -719,11 +520,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restSnmpOptions(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -749,142 +545,14 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restRdSessions(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
-                sb.Append(SafeExecute<string>("restRdSessions", () => Services.CentralServicesMonitor.Monitor.RadioSessionsString, "[]"));
-            }
-            else
-            {
-                context.Response.StatusCode = 404;
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
-        protected void restRdMNMan(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
-        {
-            if (context.Request.HttpMethod == "GET")
-            {
-                sb.Append(SafeExecute<string>("restRdMNMan", () => Services.CentralServicesMonitor.Monitor.RadioMNDataString, "[]"));
-            }
-            else
-            {
-                context.Response.StatusCode = 404;
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
-        /// <param name="gdt"></param>
-        protected void restRadioData(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
-        {
-            if (context.Request.HttpMethod == "GET")
-            {
-                SafeExecute("restRadioData", () =>
-                {
-                    Services.CentralServicesMonitor.Monitor.GetRadioData((data) =>
-                    {
-                        var strData = U5kManWebAppData.JSerialize(data);
-                        sb.Append(strData);
-                    });
-                });
-            }
-            else
-            {
-                context.Response.StatusCode = 404;
-                sb.Append(U5kManWebAppData.JSerialize(new { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
-        /// <param name="gdt"></param>
-        protected void restRadio11Control(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
-        {
-            if (context.Request.HttpMethod == "POST")
-            {
-                /** Payload { id: "", ... }*/
-                using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
-                {
-                    SafeExecute("restRadio11Control", () =>
-                    {
-                        var data = JsonConvert.DeserializeObject(reader.ReadToEnd()) as JObject;
-                        if (JsonHelper.JObjectPropertyExist(data, "id") && JsonHelper.JObjectPropertyExist(data, "command"))
-                        {
-                            // var idEquipo = (string)data["id"];
-                            Services.CentralServicesMonitor.Monitor.RdUnoMasUnoCommand(data, (success, msg) =>
-                            {
-                                if (success)
-                                {
-                                    context.Response.StatusCode = 200;
-                                    sb.Append(JsonConvert.SerializeObject(new { res = "Operacion Realizada." }));
-                                }
-                                else
-                                {
-                                    context.Response.StatusCode = 500;
-                                    sb.Append(JsonConvert.SerializeObject(new { res = "Internal Error: " + msg }));
-                                }
-                            });
-                        }
-                        else
-                        {
-                            context.Response.StatusCode = 400;
-                            sb.Append(JsonConvert.SerializeObject(new { res = "Bad Request..." }));
-                        }
-                    });
-                }
-            }
-            else
-            {
-                context.Response.StatusCode = 404;
-                sb.Append(U5kManWebAppData.JSerialize(new { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
-        protected void restHFTxData(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
-        {
-            if (context.Request.HttpMethod == "GET")
-            {
-                sb.Append(SafeExecute<string>("restHFTxData", () => Services.CentralServicesMonitor.Monitor.HFRadioDataString, "[]"));
-            }
-            else
-            {
-                context.Response.StatusCode = 404;
-                sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
-            }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
-        protected void restTifxInfo(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
-        {
-            if (context.Request.HttpMethod == "GET")
-            {
 #if _HAY_NODEBOX__
-                sb.Append(U5kManService._ps_data);
+                sb.Append(JsonConvert.SerializeObject(U5kManService._sessions_data));
 #else
-                sb.Append(SafeExecute<string>("restTifxInfo", () => Services.CentralServicesMonitor.Monitor.PresenceDataString, "{}"));
+                sb.Append(Services.CentralServicesMonitor.Monitor.RadioSessionsString);
 #endif
             }
             else
@@ -893,16 +561,119 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
-        protected void restSacta(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
+        protected void restRdMNMan(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
+        {
+            if (context.Request.HttpMethod == "GET")
+            {
+#if _HAY_NODEBOX__
+                sb.Append(JsonConvert.SerializeObject(U5kManService._MNMan_data));
+#else
+                sb.Append(Services.CentralServicesMonitor.Monitor.RadioMNDataString);
+#endif
+            }
+            else
+            {
+                context.Response.StatusCode = 404;
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
+            }
+        }
+        protected void restRadioData(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
             {
 #if DEBUG1
+                var data = File.ReadAllText(".\\appweb\\simulate\\rddata.json");
+                sb.Append(data);
+#else
+                Services.CentralServicesMonitor.Monitor.GetRadioData((data) =>
+                {
+                    var strData = U5kManWebAppData.JSerialize(data);
+                    sb.Append(strData);
+                });
+#endif
+            }
+            else
+            {
+                context.Response.StatusCode = 404;
+                sb.Append(U5kManWebAppData.JSerialize(new { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
+            }
+        }
+        protected void restRadio11Control(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
+        {
+            if (context.Request.HttpMethod == "POST")
+            {
+                /** Payload { id: "", ... }*/
+                using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
+                {
+                    var data = JsonConvert.DeserializeObject(reader.ReadToEnd()) as JObject;
+                    if (JsonHelper.JObjectPropertyExist(data, "id") && JsonHelper.JObjectPropertyExist(data, "command"))
+                    {
+                        // var idEquipo = (string)data["id"];
+                        Services.CentralServicesMonitor.Monitor.RdUnoMasUnoCommand(data, (success, msg) =>
+                        {
+                            if (success)
+                            {
+                                context.Response.StatusCode = 200;
+                                sb.Append(JsonConvert.SerializeObject(new { res = "Operacion Realizada." }));
+                            }
+                            else
+                            {
+                                context.Response.StatusCode = 500;
+                                sb.Append(JsonConvert.SerializeObject(new { res = "Internal Error: " + msg }));
+                            }
+                        });
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = 400;
+                        sb.Append(JsonConvert.SerializeObject(new { res = "Bad Request..." }));
+                    }
+                }
+            }
+            else
+            {
+                context.Response.StatusCode = 404;
+                sb.Append(U5kManWebAppData.JSerialize(new { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
+            }
+        }
+        protected void restHFTxData(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
+        {
+            if (context.Request.HttpMethod == "GET")
+            {
+#if _HAY_NODEBOX__
+                sb.Append(JsonConvert.SerializeObject(U5kManService._txhf_data));
+#else
+                sb.Append(Services.CentralServicesMonitor.Monitor.HFRadioDataString);
+#endif
+            }
+            else
+            {
+                context.Response.StatusCode = 404;
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
+            }
+        }
+        protected void restTifxInfo(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
+        {
+            if (context.Request.HttpMethod == "GET")
+            {
+#if _HAY_NODEBOX__
+                sb.Append(U5kManService._ps_data);
+#else
+                sb.Append(Services.CentralServicesMonitor.Monitor.PresenceDataString);
+#endif
+            }
+            else
+            {
+                context.Response.StatusCode = 404;
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
+            }
+        }
+        protected void restSacta(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
+        {
+#if !_SACTA_API_V1_
+            if (context.Request.HttpMethod == "GET")
+            {
+#if DEBUG
                 if (DebuggingHelper.Simulating)
                 {
                     var sacta_config = new
@@ -945,7 +716,7 @@ namespace U5kManServer.WebAppServer
 #endif
                 {
                     ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
-                    sb.Append(SafeExecute<string>("SACTA-GET", () => sacta_srv.SactaConfGet(), "{}"));
+                    sb.Append(sacta_srv.SactaConfGet());
                 }
             }
             else if (context.Request.HttpMethod == "POST")
@@ -1013,13 +784,85 @@ namespace U5kManServer.WebAppServer
                 context.Response.StatusCode = 404;
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
-        }
+#else
+            ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
+            if (context.Request.HttpMethod == "GET")
+            {
+                sb.Append(sacta_srv.SactaConfGet());
+            }
+            else if (context.Request.HttpMethod == "POST")
+            {
+                string[] UrlFields = context.Request.Url.LocalPath.Split('/');
+                if (UrlFields.Length > 2)
+                {
+                    string activar = UrlFields[2];
+                    U5KStdGeneral stdg = gdt.STDG;
+                    if (activar == "true")
+                    {
+                        stdg.SactaServiceEnabled = true;
+                        sacta_srv.StartSacta();
+                        RecordManualAction("Activacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
+                        sb.Append(JsonConvert.SerializeObject(new { res = $"Estado SACTA {sacta_srv.GetEstadoSacta()} "}));
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
+                        //Task.Factory.StartNew(() =>
+                        //{
+                        //    sacta_srv.StartSacta();
+                        //    GlobalServices.GetWriteAccess((data) =>
+                        //    {
+                        //        U5kManService._main.EstadoSacta(16, stdg);
+                        //    });
+                        //    /** TODO. Generar Historico de Actuacion */
+                        //    RecordManualAction("Activacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
+                        //});
+                    }
+                    else if (activar == "false")
+                    {
+                        stdg.SactaServiceEnabled = false;
+                        sacta_srv.EndSacta();
+                        RecordManualAction("Desactivacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
+                        sb.Append(JsonConvert.SerializeObject(new { res = $"Estado SACTA {sacta_srv.GetEstadoSacta()} " }));
+
+                        //Task.Factory.StartNew(() =>
+                        //{
+
+                        //    //ServicioInterfazSacta sacta_srv = new ServicioInterfazSacta(U5kManServer.Properties.u5kManServer.Default.MySqlServer);
+                        //    sacta_srv.StartSacta();
+                        //    GlobalServices.GetWriteAccess((data) =>
+                        //    {
+                        //        U5kManService._main.EstadoSacta(0, stdg);
+                        //    });
+                        //    /** TODO. Generar Historico de Actuacion */
+                        //    RecordManualAction("Desactivacion Manual de Servicio SACTA");   // todo. Multi-Idioma.
+                        //});
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = 400;
+                        sb.Append(JsonConvert.SerializeObject(new { res = "Codigo no implementado: " + activar }));
+                    }
+                }
+                else
+                {
+                    using (var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding))
+                    {
+                        string strData = reader.ReadToEnd();
+                        sacta_srv.SactaConfSet(strData);
+
+                        /** Sincronizar el otro servidor */
+                        _sync_server.Sync(cmdSync.OpcionesSacta, strData);
+
+                        sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = idiomas.strings.WAP_MSG_001 /* "OK" */}));
+                        RecordManualAction("Cambio de opciones de Servicio SACTA");   // todo. Multi-Idioma.
+                    }
+                }
+            }
+            else
+            {
+                context.Response.StatusCode = 404;
+                sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
+            }
+#endif
+            }
         protected void restVersiones(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -1046,11 +889,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="sb"></param>
         protected void restLogs(HttpListenerContext context, StringBuilder sb, U5kManStdData gdt)
         {
             if (context.Request.HttpMethod == "GET")
@@ -1096,8 +934,6 @@ namespace U5kManServer.WebAppServer
                 sb.Append(U5kManWebAppData.JSerialize<U5kManWADResultado>(new U5kManWADResultado() { res = context.Request.HttpMethod + idiomas.strings.WAP_MSG_002 /*": Metodo No Permitido"*/ }));
             }
         }
-        /** */
-        /** 20180327. Se obtinen las versiones al pedirlas no periodicamente */
         void GetVersionDetails(U5KStdGeneral stdg)
         {
 #if DEBUG
@@ -1144,7 +980,6 @@ namespace U5kManServer.WebAppServer
             sw.Stop();
 #endif
         }
-
         protected void RecordManualAction(string action)
         {
             RecordEvent<U5kManWebApp>(DateTime.Now, 
@@ -1152,10 +987,6 @@ namespace U5kManServer.WebAppServer
                 U5kBaseDatos.eTiposInci.TEH_SISTEMA, "WEB",        
                 Params("WebApp", action));
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public static MainStandbySyncServer _sync_server = new MainStandbySyncServer();
     }
 

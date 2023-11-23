@@ -37,7 +37,7 @@ namespace U5kManServer.Services
                                 {
                                     var inci = e.Active == false ? eIncidencias.IGRL_NBXMNG_ALARM : eIncidencias.IGRL_NBXMNG_EVENT;
                                     var msg = e.Active == true ? $"Detectado IGMP Querier en {e.Where}" : $"Perdido Contacto con IGMP Querier en {e.Where}";
-                                    RecordEvent<IgmpMonitor>(DateTime.Now, inci, eTiposInci.TEH_SISTEMA, "SPV",
+                                    RecordEvent<IgmpMonitor>(DateTime.Now, inci, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                                         new object[] { msg, "", "", "", "", "", "", "" });
                                 }
                                 else
@@ -57,7 +57,7 @@ namespace U5kManServer.Services
                             {
                                 /** No hay Querier en el sistema */
                                 if (MasterInfo())
-                                    RecordEvent<IgmpMonitor>(DateTime.Now, eIncidencias.IGRL_NBXMNG_ALARM, eTiposInci.TEH_SISTEMA, "SPV",
+                                    RecordEvent<IgmpMonitor>(DateTime.Now, eIncidencias.IGRL_NBXMNG_ALARM, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                                         new object[] { "No se detecta IGMP Querier en el sistema.", "", "", "", "", "", "", "" });
                             }
                         });

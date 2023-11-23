@@ -1282,7 +1282,7 @@ namespace U5kManServer
                                         LogWarn<GwExplorer>(msg);
                                         RecordEvent<GwExplorer>(DateTime.Now, 
                                             eIncidencias.IGRL_U5KI_SERVICE_ERROR,
-                                            eTiposInci.TEH_SISTEMA, "SPV",
+                                            eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
                                             new Object[] { "Supervision Pasarelas", msg });
                                     }
                                     else
@@ -1693,10 +1693,7 @@ namespace U5kManServer
         /// <param name="gw"></param>
         protected void GwTrace(stdGw gw)
         {
-            NLog.LogLevel level = NLog.LogLevel.Info;
-
-            Log<GwExplorer>(level, String.Format("Name={0}, IP={1}, Presente={2}, Estado={3}", gw.name, gw.ip, gw.presente, gw.std), eIncidencias.IGNORE);
-            // String slots = String.Format("{0},[{1}{2}{3}{4}] 
+            LogInfo<GwExplorer>($"Name={gw.name}, IP={gw.ip}, Presente={gw.presente}, Estado={gw.std}");
         }
 
 #endregion

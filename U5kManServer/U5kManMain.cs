@@ -159,53 +159,18 @@ namespace U5kManServer
                 });
             U5kEstadisticaProc.Estadisticas.Start();
             /*****************************************************/
-//#if DEBUG1
-//            DateTime now = DateTime.Now.AddMinutes(1);
-//            SetUpTimerBackup(new TimeSpan(now.Hour, now.Minute, 0));
-//            //SetupTimerTest(new TimeSpan(0, 0, 20));
-//#else
-//            SetUpTimerBackup(new TimeSpan(0, 15, 0));
-//#endif
-            BackupAt.Setup(new TimeSpan(0, 15, 0), () =>
-            {
-                ConfigCultureSet();
-                Properties.u5kManServer cfg = Properties.u5kManServer.Default;
-                if (cfg.TipoBdt == 0)
-                {
-                    List<U5kiDbHelper.BackupInciItem> items =
-                        U5kiDbHelper.NewBackup(cfg.MySqlServer, cfg.BdtSchema, cfg.MySqlUser, cfg.MySqlPwd, Properties.u5kManServer.Default.MySqlDumpVersion);
-                    items.ForEach(item =>
-                    {
-                        LogDebug<U5kServiceMain>(item.What);
-                        RecordEvent<U5kServiceMain>(item.When, item.IsError == false ? eIncidencias.IGRL_NBXMNG_EVENT : eIncidencias.IGRL_NBXMNG_ALARM,
-                            eTiposInci.TEH_SISTEMA, "BKP", Params(item.What));
-                    });
-                }
-            });
+            //#if DEBUG1
+            //            DateTime now = DateTime.Now.AddMinutes(1);
+            //            SetUpTimerBackup(new TimeSpan(now.Hour, now.Minute, 0));
+            //            //SetupTimerTest(new TimeSpan(0, 0, 20));
+            //#else
+            //            SetUpTimerBackup(new TimeSpan(0, 15, 0));
+            //#endif
+            ChangeOfDay = new HourNotifier(new TimeSpan(0, 0, 0), new Action(ProcessChangeOfDay));
+            BackupAt = new HourNotifier(new TimeSpan(0, 15, 0), new Action(ProcessBackup));
+            
 
-            ChangeOfDay.Setup(new TimeSpan(0, 0, 0), () =>
-              {
-                  if (U5kManService._Master == true)
-                  {
-                      RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
-                      eIncidencias.IGRL_CAMBIO_DE_DIA, eTiposInci.TEH_SISTEMA, "SPV",
-                      new object[] { });
 
-                      if (U5kManService.Database != null)
-                      {
-                          long borrados = U5kManService.Database.SupervisaTablaIncidencia(U5kManService.cfgSettings.DiasEnHistorico);
-                          RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
-                              eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, "SPV",
-                              new object[] { "Supervision Tabla Historicos", borrados, "Registros Eliminados" });
-                      }
-                      else
-                      {
-                          RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
-                              eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, "SPV",
-                              new object[] { "Supervision Tabla Historicos. No es posible eliminar registros. No hay acceso a la base de datos" });
-                      }
-                  }
-              });
 
             Decimal interval = Properties.u5kManServer.Default.SpvInterval;
             using (timer = new TaskTimer(new TimeSpan(0, 0, 0, 0, Decimal.ToInt32(interval)), this.Cancel))
@@ -1048,42 +1013,8 @@ namespace U5kManServer
         {
             try
             {
-
                 StdServ TestingServer = new StdServ();
-                /** Chequear el TEAMING */
-#if _NEM_V0_
-                NICEventMonitor.NicEventMonitorConfig cfg = new NICEventMonitor.NicEventMonitorConfig(Properties.u5kManServer.Default.TeamingConfig);
-                using (NICEventMonitor monitor = new NICEventMonitor(cfg))
-                {
-                    if (monitor.NICList.Count > 0)
-                    {
-                        // Hay Eventos de TEAMING. Asumo que la red es dual...
-                        foreach (NICEventMonitor.NICItem item in monitor.NICList)
-                        {
-                            TestingServer.lanes[item.DeviceId] = item.Status == NICEventMonitor.LanStatus.Up ? std.Ok : std.Error;
-                        }
-                    }
-                    else
-                    {
-                        // No hay eventos de Teaming. Asumo que la red no es dual...
-                        /** Chequear el estado de la LAN que da servicio a la IP-FISICA del Servidor */
-                        string MyIp = Properties.u5kManServer.Default.MiDireccionIP;
-                        string eth_name = "";
-                        bool eth_up = false;
-                        if (Utilities.NICS.GetEthInterface(MyIp, ref eth_name, ref eth_up) == true)
-                        {
-                            TestingServer.lanes[eth_name] = eth_up ? std.Ok : std.Error;
-                        }
-                        else
-                        {
-                            LogError<U5kServiceMain>(
-                                String.Format("No se encuentra Interfaz ETH para la ip {0}", MyIp));
-                            return;
-                        }
-                    }
-                }
-#else
-                using (NicEventMonitor monitor = new NicEventMonitor(Properties.u5kManServer.Default.TeamingConfig,null,null))
+                using (NicEventMonitor monitor = new NicEventMonitor(Properties.u5kManServer.Default.TeamingConfig, null, null))
                 {
                     if (monitor.GetState((id, status) =>
                     {
@@ -1107,68 +1038,64 @@ namespace U5kManServer
                         }
                     }
                 }
-#endif
-                /** Chequear el Estado de Sincronismo */
-                //using (NtpClientStatus ntpc = new NtpClientStatus(Properties.u5kManServer.Default.NtpClient))
-                //{
-                //    TestingServer.ntp_sync = String.Join("##", ntpc.Status.ToArray());
-                //}
-                // TestingServer.ntp_sync = (new NtpMeinbergClientInfo()).LastClientResponse;
-
                 /** Actualizo los datos en la tabla... */
+                StdServ MyStdServer = null;
                 GlobalServices.GetWriteAccess((data) =>
                 {
                     U5KStdGeneral stdg = data.STDG;
-                    StdServ MyStdServer = stdg.LocalServer;
+                    MyStdServer = stdg.LocalServer;
 
                     if (MyStdServer == null)
                     {
                         LogWarn<U5kServiceMain>(
                             String.Format("No se determina si soy Servidor-1 o Servidor-2: {0} ?? ({1})-({2})",
-                            System.Environment.MachineName, stdg.stdServ1.name, stdg.stdServ2.name));
+                            Environment.MachineName, stdg.stdServ1.name, stdg.stdServ2.name));
                     }
                     else
                     {
                         /** Copio los datos obtenidos **/
                         MyStdServer.lanes.Clear();
-                        foreach(var lan in TestingServer.lanes)
+                        foreach (var lan in TestingServer.lanes)
                         {
                             MyStdServer.lanes[lan.Key] = lan.Value;
                         }
-                        // MyStdServer.ntp_sync = TestingServer.ntp_sync;
-                        MyStdServer.NtpInfo.Actualize("LocalServer", (connected, ip) =>
-                        {
-                            if (bMaster)
-                            {
-                                // Todo Generar Historicos.
-                                if (connected == true)
-                                {
-                                    GeneraIncidencia(0, eIncidencias.IGRL_NBXMNG_EVENT, eTiposInci.TEH_SISTEMA, "SPV",
-                                        new object[] { idiomas.strings.NTP_ServerConnected/*"Servidor NTP Conectado"*/, ip, "", "", "", "", "", "" });
-                                    stdg.stdClock.name = ip;
-                                    stdg.stdClock.Estado = std.Ok;
-                                }
-                                else
-                                {
-                                    GeneraIncidencia(0, eIncidencias.IGRL_NBXMNG_ALARM, eTiposInci.TEH_SISTEMA, "SPV",
-                                        new object[] { idiomas.strings.NTP_NoServer/*"No Hay Servidor NTP en el Sistema"*/, ip, "", "", "", "", "", "" });
-                                    stdg.stdClock.name = ip;
-                                    stdg.stdClock.Estado = std.NoInfo;
-                                }
-                            }
-                        });
-
-                        /** Si soy esclavo, notifico los datos al master */
-                        if (!bMaster)
-                            WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoLanes, MyStdServer.lanes2string);
-
-                        /** Si soy esclavo, notifico los datos al master */
-                        if (!bMaster)
-                            WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoNtpClient, MyStdServer.NtpInfo.LastInfoFromClient/* ntp_sync*/);
                     }
                 });
 
+                if (MyStdServer != null)
+                {
+                    LogDebug<U5kServiceMain>($"Entrando en NtpInfo.Actualize");
+                    var ntpPoll = new NtpInfoClass(MyStdServer.NtpInfo);
+                    ntpPoll.Actualize("LocalServer", (connected, ip) =>
+                    {
+                        if (bMaster)
+                        {
+                            GlobalServices.GetWriteAccess((data) =>
+                            {
+                                U5KStdGeneral stdg = data.STDG;
+                                stdg.stdClock.name = ip;
+                                stdg.stdClock.Estado = connected ? std.Ok : std.NoInfo;
+                                GeneraIncidencia(0, 
+                                    connected ? eIncidencias.IGRL_NBXMNG_EVENT : eIncidencias.IGRL_NBXMNG_ALARM, 
+                                    eTiposInci.TEH_SISTEMA, "SPV",
+                                    new object[] 
+                                    { 
+                                        connected ? idiomas.strings.NTP_ServerConnected : idiomas.strings.NTP_NoServer, 
+                                        ip, "", "", "", "", "", "" 
+                                    });
+                            });
+                        }
+                    });
+                    MyStdServer.NtpInfo.CopyFrom(ntpPoll);
+                    LogDebug<U5kServiceMain>($"Saliendo en NtpInfo.Actualize");
 
+                    /** Si soy esclavo, notifico los datos al master */
+                    if (!bMaster)
+                    {
+                        WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoLanes, MyStdServer.lanes2string);
+                        WebAppServer.U5kManWebApp._sync_server.Sync(WebAppServer.cmdSync.InfoNtpClient, MyStdServer.NtpInfo.LastInfoFromClient/* ntp_sync*/);
+                    }
+                }
             }
             catch (Exception x)
             {
@@ -1440,10 +1367,49 @@ namespace U5kManServer
             List<OnCLusterServerData> servers = new List<OnCLusterServerData>();
         };
 
-        private HourNotifier BackupAt = new HourNotifier();
-        private HourNotifier ChangeOfDay = new HourNotifier();
-    }
+        private void ProcessBackup()
+        {
+            ConfigCultureSet();
+            Properties.u5kManServer cfg = Properties.u5kManServer.Default;
+            if (cfg.TipoBdt == 0)
+            {
+                List<U5kiDbHelper.BackupInciItem> items =
+                    U5kiDbHelper.NewBackup(cfg.MySqlServer, cfg.BdtSchema, cfg.MySqlUser, cfg.MySqlPwd, Properties.u5kManServer.Default.MySqlDumpVersion);
+                items.ForEach(item =>
+                {
+                    LogDebug<U5kServiceMain>(item.What);
+                    RecordEvent<U5kServiceMain>(item.When, item.IsError == false ? eIncidencias.IGRL_NBXMNG_EVENT : eIncidencias.IGRL_NBXMNG_ALARM,
+                        eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(), Params(item.What));
+                });
+            }
+        }
+        private void ProcessChangeOfDay()
+        {
+            if (U5kManService._Master == true)
+            {
+                RecordEvent<HistThread>(DateTime.Now /*+ new TimeSpan(0, 1, 0)*/,
+                eIncidencias.IGRL_CAMBIO_DE_DIA, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
+                new object[] { });
 
+                if (U5kManService.Database != null)
+                {
+                    long borrados = U5kManService.Database.SupervisaTablaIncidencia(U5kManService.cfgSettings.DiasEnHistorico);
+                    RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
+                        eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
+                        new object[] { "Supervision Tabla Historicos", borrados, "Registros Eliminados" });
+                }
+                else
+                {
+                    RecordEvent<HistThread>(DateTime.Now + new TimeSpan(0, 1, 0),
+                        eIncidencias.IGRL_U5KI_SERVICE_INFO, eTiposInci.TEH_SISTEMA, eTiposHw.MTTO.ToString(),
+                        new object[] { "Supervision Tabla Historicos. No es posible eliminar registros. No hay acceso a la base de datos" });
+                }
+            }
+
+        }
+        private HourNotifier BackupAt = null;
+        private HourNotifier ChangeOfDay = null;
+    }
 
 
 #if DEBUG

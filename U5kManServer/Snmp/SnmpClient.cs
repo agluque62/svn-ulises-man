@@ -28,9 +28,10 @@ namespace U5kManServer
         /// <param name="lineNumber"></param>
         /// <param name="caller"></param>
         void LogException(Exception x, 
-            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0, 
+            [System.Runtime.CompilerServices.CallerMemberName] string caller = null)
         {
-            LogException<SnmpClient>("", x, false, false, lineNumber, caller);
+            LogException<SnmpClient>("", x, default, default, default, lineNumber, caller);
         }
         /// <summary>
         /// 
