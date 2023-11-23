@@ -1,7 +1,7 @@
 {
 	"Server": "SERV01",
-	"Version" : "2.6.2.3",
-	"Fecha": "07-09-2023",
+	"Version" : "3.0.0.x",
+	"Fecha": "23-11-2023",
 	"Components": [
 		{
 			"Name": "UV5K-SGM Gestor Cluster",
