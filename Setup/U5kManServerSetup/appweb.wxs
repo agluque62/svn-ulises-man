@@ -568,6 +568,9 @@
             <Component Id="cmpB461CB7FC04402F0A430FAF8E5CD4C79" Directory="dir7D5DC6EF6FD38261A9C031687125BE19" Guid="*">
                 <File Id="fil58A24F9F0AE019DFD2969E54EB62A647" KeyPath="yes" Source="$(var.SourcePath)\scripts\sprintf\sprintf.min.js.map" />
             </Component>
+            <Component Id="cmp1975E0FF2EE65B61FD26190478A43261" Directory="dirD24EF8CCDED4C89A8CED71EE1DFB76FF" Guid="*">
+                <File Id="filFF02E2306546A6740CB00737CC5E63C3" KeyPath="yes" Source="$(var.SourcePath)\simulate\alive.json" />
+            </Component>
             <Component Id="cmpA7F2A9870A734579A91C3AC44AFA6B26" Directory="dirD24EF8CCDED4C89A8CED71EE1DFB76FF" Guid="*">
                 <File Id="fil97C8A14CF26F8EA72DEAB22E1E6DB1A6" KeyPath="yes" Source="$(var.SourcePath)\simulate\cwp.json" />
             </Component>
