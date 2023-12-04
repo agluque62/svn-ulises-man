@@ -89,10 +89,12 @@ namespace U5kManServer.WebAppServer
                 "/scripts/datatables.min.js",
                 "/simulate/listinci.json",
                 "/listinci",
-                "/images/corporativo-a.png",
                 "/favicon.ico",
                 "/images/corporativo-a.png",
-                "/db/systemusers"
+                "/images/speakeron.png",
+                "/images/speakeroff.png",
+                "/db/systemusers",
+                "/ALARM.wav"
             };
             /** Rutina a la que llama el servidor base para autentificar un usuario */
             _httpServer.AuthenticateUser = (data, response) =>

@@ -1452,3 +1452,8 @@ div.dataTables_length {
 .new-inci .dataTables_paginate {
     font-size: 85%;
 }
+
+.row-align-bottom {
+    display: flex;
+    align-items: flex-end;
+}
